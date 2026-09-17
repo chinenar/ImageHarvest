@@ -1,0 +1,11 @@
+node_modules/
+release/
+release-*/
+installer-dist/
+test-results/
+*.log
+*.b64
+deploy.py
+PACKAGE_PATH.txt
+.DS_Store
+Thumbs.db

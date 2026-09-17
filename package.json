@@ -1,0 +1,47 @@
+{
+  "name": "imageharvest",
+  "productName": "ImageHarvest",
+  "version": "1.0.1",
+  "description": "Ordered website image collector for Windows",
+  "private": true,
+  "main": "src/main.cjs",
+  "author": "chinenar",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/unit.test.cjs",
+    "test:e2e": "node test/e2e.cjs",
+    "package": "node scripts/package.cjs",
+    "dist": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "44.4.1",
+    "@electron/packager": "20.3.0",
+    "electron-builder": "26.15.3",
+    "playwright-core": "1.63.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "build": {
+    "appId": "com.cileclo.imageharvest",
+    "productName": "ImageHarvest",
+    "asar": true,
+    "directories": { "output": "installer-dist" },
+    "files": ["src/**/*", "assets/**/*", "package.json"],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "assets/icon.ico",
+      "artifactName": "ImageHarvest-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ImageHarvest",
+      "uninstallDisplayName": "ImageHarvest",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true
+    }
+  }
+}
