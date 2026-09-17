@@ -22,7 +22,7 @@ function networkDescription(mode) {
 function syncCaptureControls() {
   $('capturePages').textContent = captureActive ? '■ หยุดจับทีละหน้า' : '◎ จับทีละหน้า';
   $('capturePages').disabled = busy;
-  for (const id of ['open', 'scan', 'browserMode', 'networkMode', 'applyNetwork', 'renameTool']) $(id).disabled = busy || captureActive;
+  for (const id of ['open', 'scan', 'siteCompatibility', 'browserMode', 'networkMode', 'applyNetwork', 'renameTool']) $(id).disabled = busy || captureActive;
   $('url').disabled = busy || captureActive;
   $('restartNetwork').disabled = busy || captureActive;
   $('statusDot').classList.toggle('working', busy || captureActive);
@@ -178,7 +178,7 @@ async function refreshRenamePreview() {
 async function action(fn) { try { await fn(); } catch (error) { status(error.message, true); } }
 $('open').addEventListener('click', () => action(async () => {
   setBusy(true);
-  try { const result = await call('open', { url: $('url').value, show: true, backend: $('browserMode').value }); currentURL = result.url; $('url').value = result.url; }
+  try { const result = await call('open', { url: $('url').value, show: true, backend: $('browserMode').value, siteCompatibility: $('siteCompatibility').checked }); currentURL = result.url; $('url').value = result.url; }
   finally { setBusy(false); }
 }));
 $('scan').addEventListener('click', () => action(async () => {
@@ -187,7 +187,7 @@ $('scan').addEventListener('click', () => action(async () => {
     const input = $('url').value.trim();
     if (!input) throw new Error('กรุณาใส่ลิงก์เว็บไซต์ก่อนค่ะ');
     if (!currentURL || (input !== currentURL && `https://${input}` !== currentURL)) {
-      const opened = await call('open', { url: input, show: false, backend: $('browserMode').value }); currentURL = opened.url; $('url').value = opened.url;
+      const opened = await call('open', { url: input, show: false, backend: $('browserMode').value, siteCompatibility: $('siteCompatibility').checked }); currentURL = opened.url; $('url').value = opened.url;
     }
     const result = await call('scan', { autoScroll: $('autoScroll').checked, backgrounds: $('backgrounds').checked, canvases: $('canvases').checked,
       selector: $('selector').value, waitMs: Number($('waitMs').value), maxSteps: Number($('maxSteps').value) });
@@ -207,7 +207,7 @@ $('capturePages').addEventListener('click', () => action(async () => {
     const input = $('url').value.trim();
     if (!input) throw new Error('กรุณาใส่ลิงก์เว็บไซต์ก่อนค่ะ');
     if (!currentURL || (input !== currentURL && `https://${input}` !== currentURL)) {
-      const opened = await call('open', { url: input, show: true, backend: $('browserMode').value });
+      const opened = await call('open', { url: input, show: true, backend: $('browserMode').value, siteCompatibility: $('siteCompatibility').checked });
       currentURL = opened.url; $('url').value = opened.url;
     } else await call('showBrowser');
     await call('startCapture', { backgrounds: $('backgrounds').checked, canvases: $('canvases').checked, selector: $('selector').value, intervalMs: Number($('captureInterval').value) });
@@ -215,6 +215,12 @@ $('capturePages').addEventListener('click', () => action(async () => {
     status('กำลังจับทีละหน้า — ไปที่หน้าต่างเว็บแล้วกดเปลี่ยนหน้าได้เลย');
   } finally { setBusy(false); }
 }));
+$('siteCompatibility').addEventListener('change', () => {
+  currentURL = '';
+  if ($('siteCompatibility').checked) { $('browserMode').value = 'chrome'; $('browserMode').dispatchEvent(new Event('change')); }
+  $('siteCompatibilityNote').textContent = $('siteCompatibility').checked ? 'เปิดแล้ว — ใช้กฎเฉพาะสองเว็บ; ต้องเปิดหน้าใหม่ • Pengi เปลี่ยนโค้ดจะหยุดให้ตรวจใหม่' : 'ปิดอยู่ — ไม่ปรับสคริปต์ของเว็บ';
+  status('กดเปิดเว็บหรือสแกนเพื่อใช้การตั้งค่าใหม่');
+});
 $('browserMode').addEventListener('change', () => {
   currentURL = '';
   $('browserModeNote').textContent = $('browserMode').value === 'chrome'
@@ -343,6 +349,10 @@ $('applyRename').addEventListener('click', () => action(async () => {
 $('closePreview').addEventListener('click', () => $('preview').close());
 $('preview').addEventListener('close', () => $('previewImage').removeAttribute('src'));
 window.eiw.on(event => {
+  if (event.type === 'site-compatibility') {
+    $('siteCompatibilityNote').textContent = event.error || `${event.site}: ใช้กฎแล้ว ${event.events.length} รายการ • เฉพาะเซสชันของแอป`;
+    if (event.error) status(event.error, true);
+  }
   if (event.type === 'status' || event.type === 'rate-limit' || event.type === 'error') status(event.message, event.type !== 'status');
   if (event.type === 'navigation') { currentURL = event.url; if (/^https?:\/\//i.test(event.url)) $('url').value = event.url; else status('หน้าเว็บนำทางออกไป ' + event.url + ' — กรุณาตรวจหน้าต่างเว็บ', true); }
   if (event.type === 'scan-start') { all = []; sequence = []; selected.clear(); states.clear(); removedSnapshot = null; mainScope = 'unknown'; render(); status('กำลังรวบรวมภาพและเลื่อนหน้า…'); }
@@ -368,6 +378,8 @@ window.eiw.on(event => {
 });
 call('settings').then(settings => {
   if (settings.outputRoot) $('folderLabel').textContent = settings.outputRoot;
+  $('siteCompatibility').checked = settings.siteCompatibility === true;
+  if (settings.siteCompatibility) { $('browserMode').value = 'chrome'; $('siteCompatibilityNote').textContent = 'เปิดโหมดเฉพาะเว็บไว้ — กดเปิดเว็บเพื่อเริ่ม'; }
   $('networkMode').value = settings.networkMode || 'auto';
   $('networkModeNote').textContent = networkDescription(settings.networkMode || 'auto') + (settings.compatibilityActive ? ' • Compatibility ทำงานอยู่' : '');
   $('restartNetwork').hidden = true;

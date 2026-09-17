@@ -1,11 +1,11 @@
-# ImageHarvest 1.0.9
+# ImageHarvest 1.0.10
 
 แอป Windows สำหรับรวบรวมไฟล์ภาพจากหน้าเว็บ ดูตัวอย่าง กรอง จัดลำดับ และบันทึกไฟล์ต้นฉบับลงเครื่อง รวมโหมดจับเว็บที่เปลี่ยนทีละหน้าโดยให้ผู้ใช้กดเปลี่ยนหน้าเอง
 
 Repository: https://github.com/chinenar/ImageHarvest
 
 ## ติดตั้งและเปิดใช้งาน
-หลัง build แล้ว ตัวติดตั้งอยู่ที่ `installer-dist\ImageHarvest-Setup-1.0.9.exe`
+หลัง build แล้ว ตัวติดตั้งอยู่ที่ `installer-dist\ImageHarvest-Setup-1.0.10.exe`
 
 - Installer เป็นแบบหลายขั้นตอนและ **เลือกโฟลเดอร์ติดตั้งได้**
 - สร้าง Desktop shortcut และ Start Menu shortcut
@@ -157,3 +157,23 @@ Run `npm.cmd run test:chrome` on a Windows machine with Google Chrome installed.
 The local fixture verifies lazy Canvas capture while a dimension-based inspect detector continues running.
 It is a synthetic test, not a clone of any third-party site's complete protection system.
 API references: https://playwright.dev/docs/api/class-browsertype ; https://playwright.dev/docs/api/class-cdpsession
+
+## 1.0.10 — โหมดเฉพาะ NTRNaja / Pengi (ทดลอง)
+
+ติ๊ก **โหมดเฉพาะ NTRNaja / Pengi** ก่อนเปิด URL; แอปจะเลือก Google Chrome จริงให้โดยอัตโนมัติ
+โหมดนี้ปิดเป็นค่าเริ่มต้น บันทึกตัวเลือกไว้ในเครื่อง และมีผลเฉพาะโดเมนที่ระบุตรงตัวเท่านั้น
+
+- NTRNaja: ยกเลิกเฉพาะคำขอสคริปต์ตรวจจับสองรายการที่ตรวจไว้ ไม่บล็อก CDN ทั้งโดเมน
+- Pengi: ตรวจ SHA-256 ของ reader bundle ก่อนปรับเฉพาะจุดเริ่ม detector และ callback ที่ทำให้แท็บค้าง
+  ส่วน reader, การตรวจสิทธิ์, API, ลายน้ำ และ MutationObserver เดิมไม่ถูกแก้
+- หาก Pengi เปลี่ยน bundle ที่ตรวจพบ จะหยุดและแจ้งให้อัปเดตกฎ ไม่พยายามแทนโค้ดแบบเดาสุ่ม
+- ตัวเลื่อนใช้ `scrollTo/scrollBy` แบบ instant โดยไม่เขียน inline style ของหน้าเว็บ
+- เก็บต้นฉบับจาก image response ที่ Chrome ได้รับสำเร็จแล้ว และผูกกลับกับลำดับภาพใน DOM
+- ในโหมดเฉพาะเว็บ ภาพ HTTP ที่ Chrome ยังไม่ได้โหลดสำเร็จจะรายงานว่าขาดข้อมูล ไม่ยิง HTTP client ซ้ำ
+- แคช response จำกัด 32 MiB ต่อภาพ และ 512 MiB ต่อเซสชัน; ใช้โปรไฟล์ชั่วคราวของแอปและล้างเมื่อปิด
+- ชุดภาพที่สแกนสำเร็จมี snapshot แยกสำหรับ Preview/Export และ `report.json` มี SHA-256 กับวิธีรับภาพ
+- ไม่มีการแก้ response 401/403/429 เป็นสำเร็จ ไม่แก้ CAPTCHA, การล็อกอิน, หรือสิทธิ์ซื้อตอน
+- หน้าเว็บยังอาจเปลี่ยนโครงสร้างหรือเงื่อนไขการเข้าถึงได้; ไม่รับประกันทุกตอนหรือทุกเว็บไซต์
+
+ทดสอบกฎและการเก็บ response ด้วย `npm test` และ `npm run test:sites`
+การทดสอบเว็บจริงแยกอยู่ใน `test-results/` ซึ่งไม่ส่งขึ้น Git และไม่เป็นส่วนหนึ่งของ regression อัตโนมัติ

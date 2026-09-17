@@ -5,11 +5,16 @@ const os = require('node:os');
 const { chromeFetchManual } = require('./chrome-http.cjs');
 const { chromeArgs, normalizeNetworkMode } = require('./network.cjs');
 
+const { siteForURL } = require('./site-rules.cjs');
+const { SiteCompatibility } = require('./site-compatibility.cjs');
+const { ChromeImageStore } = require('./chrome-image-store.cjs');
+
 // Google Chrome is a separate, visible browser. Never attach to a personal profile.
 class ChromeBrowser {
   constructor(notify = () => {}) {
     this.notify = notify; this.context = null; this.page = null; this.cdp = null;
     this.profile = ''; this.lastStatus = null; this.lastTitle = ''; this.userAgent = '';
+    this.site = ''; this.guard = null; this.images = null;
     this.navigation = []; this.closing = false; this.networkMode = 'auto';
   }
   alive() { return Boolean(this.context && this.page && !this.page.isClosed()); }
@@ -23,7 +28,7 @@ class ChromeBrowser {
       const { chromium } = await import('playwright-core');
       this.context = await chromium.launchPersistentContext(this.profile, {
         channel: 'chrome', headless: false, viewport: null, chromiumSandbox: true,
-        acceptDownloads: false, timeout: 45000, args: chromeArgs(this.networkMode)
+        acceptDownloads: false, ...(this.site ? { serviceWorkers: 'block' } : {}), timeout: 45000, args: chromeArgs(this.networkMode)
       });
       this.page = this.context.pages()[0] || await this.context.newPage();
       // This mode owns one tab. Extra popups are closed, not silently scanned.
@@ -40,23 +45,35 @@ class ChromeBrowser {
       });
       this.page.on('close', () => { if (!this.closing) this.notify('browser-closed', { backend: 'chrome' }); });
       this.cdp = await this.context.newCDPSession(this.page);
+      this.guard = new SiteCompatibility(this.site, this.page, this.cdp, this.notify);
+      await this.guard.install();
+      if (this.site) {
+        this.images = new ChromeImageStore(this.cdp, path.join(this.profile, 'image-responses'));
+        await this.images.install();
+      }
       this.userAgent = await this.page.evaluate(() => navigator.userAgent);
     } catch (error) {
       await this.close();
       throw new Error(`เปิด Google Chrome ไม่สำเร็จ ตรวจว่าติดตั้ง Chrome แล้วและไม่มีนโยบายองค์กรปิดการควบคุม: ${error.message.split('\n')[0]}`);
     }
   }
-  async open(url) {
+  async open(url, enabled = false) {
+    const site = enabled ? siteForURL(url) : '';
+    if (site !== this.site) { await this.close(); this.site = site; }
     await this.start(); this.lastStatus = null;
     const response = await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
     this.lastStatus = response?.status() ?? this.lastStatus;
     this.lastTitle = await this.page.title();
     return { url: this.url(), title: this.lastTitle, httpStatus: this.lastStatus, backend: 'chrome' };
   }
+  compatibilityInfo() { return { ...(this.guard?.info() || { site: '', events: [], error: '' }), images: this.images?.info() || null }; }
+  async loadedImage(url) { return this.images ? this.images.read(url) : null; }
+  async settleImages() { if (this.images) await this.images.settle(); }
   async evaluate(code) {
+    if (this.guard?.error) throw new Error(this.guard.error);
     if (!this.alive()) throw new Error('หน้าต่าง Chrome ปิดแล้ว กรุณาเปิดเว็บใหม่');
     if (!/^https?:\/\//i.test(this.url())) throw new Error('หน้าอ่านเปลี่ยนไปหรือถูกส่งออกไป about:blank กรุณาตรวจหน้าต่าง Chrome');
-    // CDP transport is not the DevTools UI. No Debugger.enable or script interception.
+    // Isolated DOM evaluation; site-specific response changes are opt-in in SiteCompatibility.
     const { frameTree } = await this.cdp.send('Page.getFrameTree');
     const { executionContextId } = await this.cdp.send('Page.createIsolatedWorld', {
       frameId: frameTree.frame.id, worldName: 'ImageHarvestCollector', grantUniveralAccess: false
@@ -89,6 +106,9 @@ class ChromeBrowser {
     const context = this.context, profile = this.profile;
     this.context = null; this.page = null; this.cdp = null; this.profile = '';
     if (context) await context.close().catch(() => {});
+    if (this.guard) await this.guard.dispose();
+    if (this.images) await this.images.close();
+    this.guard = null; this.images = null;
     if (profile) await fs.rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }).catch(() => {});
   }
 }

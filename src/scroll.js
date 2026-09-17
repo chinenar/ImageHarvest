@@ -12,8 +12,8 @@
         /(auto|scroll)/.test(getComputedStyle(el).overflowY);
     }).slice(0, 4);
     state.targets = [doc, ...nested].filter(Boolean);
-    state.saved = state.targets.map(el => ({ el, top: el.scrollTop, behavior: el.style.scrollBehavior }));
-    for (const el of state.targets) { el.style.scrollBehavior = 'auto'; el.scrollTop = 0; }
+    state.saved = state.targets.map(el => ({ el, top: el.scrollTop, left: el.scrollLeft }));
+    for (const el of state.targets) { el.scrollTo({ top: 0, left: el.scrollLeft, behavior: 'instant' }); }
   }
   if (action === 'step') {
     for (const el of state.targets) {
@@ -32,11 +32,11 @@
         if (style.visibility === 'hidden' || style.display === 'none') continue;
         amount = Math.max(amount, Math.floor(r.bottom - viewportTop - height * 0.8));
       }
-      el.scrollTop += amount;
+      el.scrollBy({ top: amount, behavior: 'instant' });
     }
   }
   if (action === 'restore') {
-    for (const item of state.saved) { item.el.scrollTop = item.top; item.el.style.scrollBehavior = item.behavior; }
+    for (const item of state.saved) { item.el.scrollTo({ top: item.top, left: item.left, behavior: 'instant' }); }
     state.targets = []; state.saved = [];
     return true;
   }
