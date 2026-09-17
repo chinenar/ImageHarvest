@@ -1,7 +1,7 @@
 {
   "name": "imageharvest",
   "productName": "ImageHarvest",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Ordered website image collector for Windows",
   "private": true,
   "main": "src/main.cjs",
@@ -26,10 +26,23 @@
     "appId": "com.cileclo.imageharvest",
     "productName": "ImageHarvest",
     "asar": true,
-    "directories": { "output": "installer-dist" },
-    "files": ["src/**/*", "assets/**/*", "package.json"],
+    "directories": {
+      "output": "installer-dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "assets/icon.ico",
       "artifactName": "ImageHarvest-Setup-${version}.${ext}"
     },

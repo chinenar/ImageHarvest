@@ -3,8 +3,9 @@ const { app, BrowserWindow, ipcMain, session, protocol, net, dialog, shell, Menu
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const { randomUUID } = require('node:crypto');
 const { fetchManual } = require('./http.cjs');
-const { pageURL, imageURL, safeName, imageType, publicItem, orderItems, uniqueItems, idFor, delay, ByteCache } = require('./core.cjs');
+const { pageURL, imageURL, safeName, imageType, publicItem, orderItems, uniqueItems, isImageFilename, renamePlan, idFor, delay, ByteCache } = require('./core.cjs');
 
 const MAX_IMAGE = 32 * 1024 * 1024, MAX_IMAGES = 5000;
 protocol.registerSchemesAsPrivileged([
@@ -16,7 +17,7 @@ if (testMode) app.setPath('userData', path.join(app.getPath('temp'), `eiw-test-$
 app.setName('ImageHarvest');
 let mainWindow, browser, browsingSession, quitting = false, busy = null, job = null;
 let records = new Map(), cache = new ByteCache(), pending = new Map(), failedImages = new Map(), generation = 0;
-let pageInfo = { title: '', url: '' }, lastFolder = '', outputRoot = '', blockedHosts = new Map();
+let pageInfo = { title: '', url: '' }, lastFolder = '', outputRoot = '', renameFolder = '', blockedHosts = new Map();
 let queue = Promise.resolve(), requestGate = 0;
 let collector, scrollScript;
 const emit = (type, data = {}) => {
@@ -252,12 +253,68 @@ async function chooseFolder() {
 async function saveSettings() {
   await fs.writeFile(path.join(app.getPath('userData'), 'settings.json'), JSON.stringify({ outputRoot }), 'utf8');
 }
+async function readRenameFolder() {
+  if (!renameFolder) throw new Error('กรุณาเลือกโฟลเดอร์รูปก่อน');
+  const entries = await fs.readdir(renameFolder, { withFileTypes: true });
+  return entries.filter(e => e.isFile() && isImageFilename(e.name)).map(e => e.name);
+}
+async function chooseRenameFolder() {
+  ensureIdle();
+  const result = await dialog.showOpenDialog(mainWindow, { title: 'เลือกโฟลเดอร์รูปที่จะตั้งเลขหน้า', properties: ['openDirectory'] });
+  if (result.canceled) return null;
+  renameFolder = path.resolve(result.filePaths[0]);
+  const files = await readRenameFolder();
+  return { folder: renameFolder, files };
+}
+async function previewRename(input = {}) {
+  const files = await readRenameFolder(), plan = renamePlan(files, input);
+  return { folder: renameFolder, count: plan.length, plan };
+}
 async function uniqueFolder(root, base) {
   for (let i = 0; i < 1000; i++) {
     const folder = path.join(root, `${base}${i ? `-${i + 1}` : ''}`);
     try { await fs.mkdir(folder); return folder; } catch (e) { if (e.code !== 'EEXIST') throw e; }
   }
   throw new Error('สร้างโฟลเดอร์ใหม่ไม่สำเร็จ');
+}
+async function renameImages(input = {}, skipConfirm = false) {
+  ensureIdle();
+  const files = await readRenameFolder(), plan = renamePlan(files, input);
+  if (!plan.length) throw new Error('ไม่พบไฟล์ภาพที่รองรับในโฟลเดอร์นี้');
+  const current = new Set(files.map(x => x.toLowerCase()));
+  const targets = new Set();
+  for (const row of plan) {
+    const key = row.to.toLowerCase();
+    if (targets.has(key)) throw new Error('ชื่อปลายทางซ้ำกัน กรุณาปรับเลขเริ่มต้น');
+    targets.add(key);
+  }
+  const entries = await fs.readdir(renameFolder, { withFileTypes: true });
+  const foreign = new Set(entries.filter(e => !current.has(e.name.toLowerCase())).map(e => e.name.toLowerCase()));
+  if (plan.some(row => foreign.has(row.to.toLowerCase()))) throw new Error('มีไฟล์หรือโฟลเดอร์ชื่อปลายทางอยู่แล้ว');
+  const changed = plan.filter(row => row.from !== row.to);
+  if (!changed.length) return { folder: renameFolder, renamed: 0, plan };
+  const sample = plan.slice(0,3).map(x => `${x.from}  →  ${x.to}`).join('\n');
+  if (!skipConfirm) {
+    const answer = await dialog.showMessageBox(mainWindow, { type:'warning', title:'ยืนยันการตั้งเลขหน้า',
+      message:`จะเปลี่ยนชื่อรูป ${plan.length} ภาพ${input.reverse ? ' แบบย้อนกลับ' : ''}`, detail:`${sample}${plan.length>3?'\n…':''}\n\nระบบจะเปลี่ยนชื่อไฟล์จริงในโฟลเดอร์นี้`,
+      buttons:['ยกเลิก','เปลี่ยนชื่อ'], defaultId:0, cancelId:0, noLink:true });
+    if (answer.response !== 1) return { folder: renameFolder, cancelled:true, renamed:0, plan };
+  }
+  busy = 'rename';
+  const moved = plan.map((row, i) => ({ ...row, tmp: `.__imageharvest_${randomUUID()}_${i}${path.extname(row.from)}`, state:'original' }));
+  try {
+    for (const row of moved) { await fs.rename(path.join(renameFolder,row.from), path.join(renameFolder,row.tmp)); row.state='temp'; }
+    for (const row of moved) { await fs.rename(path.join(renameFolder,row.tmp), path.join(renameFolder,row.to)); row.state='target'; }
+    return { folder: renameFolder, renamed: changed.length, plan };
+  } catch (error) {
+    for (const row of moved.filter(x=>x.state==='target').reverse()) {
+      try { await fs.rename(path.join(renameFolder,row.to), path.join(renameFolder,row.tmp)); row.state='temp'; } catch {}
+    }
+    for (const row of moved.filter(x=>x.state==='temp').reverse()) {
+      try { await fs.rename(path.join(renameFolder,row.tmp), path.join(renameFolder,row.from)); row.state='original'; } catch {}
+    }
+    throw new Error(`เปลี่ยนชื่อไม่สำเร็จและพยายามคืนชื่อเดิมแล้ว: ${error.message}`);
+  } finally { busy = null; }
 }
 async function download(input) {
   ensureIdle(); const items = selectedItems(input);
@@ -341,11 +398,14 @@ async function main() {
   handle('scan', scan);
   handle('cancel', () => { if (job) { job.cancelled = true; job.abort.abort(); } return true; });
   handle('chooseFolder', chooseFolder);
+  handle('chooseRenameFolder', chooseRenameFolder);
+  handle('previewRename', previewRename);
+  handle('renameImages', renameImages);
   handle('download', download);
   handle('exportLinks', exportLinks);
   handle('openFolder', async () => { const folder = lastFolder || outputRoot; if (!folder) throw new Error('ยังไม่มีโฟลเดอร์'); const error = await shell.openPath(folder); if (error) throw new Error(error); return true; });
   handle('settings', () => ({ outputRoot, version: app.getVersion() }));
-  if (testMode) global.__eiwTest = { openPage, scan, download, getImage, setOutput: value => { outputRoot = value; }, getState: () => ({ busy, count: records.size, browserId: browser?.webContents.id }),
+  if (testMode) global.__eiwTest = { openPage, scan, download, getImage, renameImages: input => renameImages(input, true), setOutput: value => { outputRoot = value; }, setRenameFolder: value => { renameFolder = value; }, getState: () => ({ busy, count: records.size, browserId: browser?.webContents.id }),
     cancel: () => { if (job) { job.cancelled = true; job.abort.abort(); } } };
   await mainWindow.loadURL('eiw://app/');
 }

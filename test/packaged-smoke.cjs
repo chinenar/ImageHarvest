@@ -14,6 +14,8 @@ const assert = require('node:assert/strict');
     assert.equal(settings.ok, true);
     assert.equal(await page.locator('#scan').count(), 1);
     assert.equal(await page.locator('#download').count(), 1);
+    assert.equal(await page.locator('#reverseOrder').count(), 1);
+    assert.equal(await page.locator('#renameTool').count(), 1);
     const packaged = await instance.evaluate(({ app }) => app.isPackaged);
     assert.equal(packaged, true);
     console.log('PASS: packaged Windows EXE opens, IPC works, scan/export controls present');

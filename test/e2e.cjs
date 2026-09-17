@@ -75,6 +75,9 @@ function pass(name) { tests.push(name); console.log('PASS:', name); }
   const content = await page.evaluate(()=>visibleItems()); assert.ok(content.every(x=>x.width>=300&&x.height>=300)); pass('minimum-dimension content filter');
   await page.locator('.card').first().locator('.card-tools button').last().click();
   assert.equal(await page.inputValue('#sort'),'manual');
+  const manualOrder = await page.evaluate(()=>sequence.slice());
+  await page.click('#reverseOrder');
+  assert.deepEqual(await page.evaluate(()=>sequence.slice()), [...manualOrder].reverse()); pass('one-click reverse flips the collected image order');
   const chosen = await page.evaluate(()=>exportItems()); assert.notEqual(chosen[0].id,content[0].id); pass('manual order controls update export order');
   await app.evaluate((_,folder)=>global.__eiwTest.setOutput(folder),testRoot);
   await page.click('#download');
@@ -88,6 +91,14 @@ function pass(name) { tests.push(name); console.log('PASS:', name); }
   await page.screenshot({path:path.join(testRoot,'02-collection.png'),fullPage:true});
   const run2=await app.evaluate((_,ids)=>global.__eiwTest.download({ids,name:'Second run'}),[chosen[0].id]);
   assert.notEqual(run2.folder,folder);assert.equal(run2.saved,1);pass('repeat export creates a new folder without overwriting');
+  const renameDir=path.join(testRoot,'rename-fixture'); await fs.mkdir(renameDir);
+  await fs.copyFile(path.join(fixtureDir,'first.png'),path.join(renameDir,'1.webp'));
+  await fs.copyFile(path.join(fixtureDir,'second.png'),path.join(renameDir,'2.png'));
+  await fs.copyFile(path.join(fixtureDir,'third.png'),path.join(renameDir,'10.jpg'));
+  await app.evaluate((_,dir)=>global.__eiwTest.setRenameFolder(dir),renameDir);
+  const renamed=await app.evaluate(()=>global.__eiwTest.renameImages({reverse:true,start:1,padding:4}));
+  assert.equal(renamed.renamed,3); assert.deepEqual((await fs.readdir(renameDir)).sort(),['0001.jpg','0002.png','0003.webp']);
+  assert.equal(hash(await fs.readFile(path.join(renameDir,'0001.jpg'))),hash(images.third)); pass('folder renamer uses natural order, reverse mode and collision-safe page names');
   const browserSecurity=await app.evaluate(async ({webContents})=>{const wc=webContents.fromId(global.__eiwTest.getState().browserId);return wc.executeJavaScript('({node:typeof require,bridge:typeof window.eiw})');});
   assert.deepEqual(browserSecurity,{node:'undefined',bridge:'undefined'});pass('remote web pages cannot access Node or app IPC');
   await app.evaluate((_,url)=>global.__eiwTest.openPage({url,show:false}),`${base}/nested`);

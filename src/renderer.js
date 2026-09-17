@@ -11,7 +11,7 @@ async function call(method, args) {
 }
 function setBusy(value) {
   busy = value;
-  for (const id of ['open', 'scan', 'chooseFolder', 'exportLinks', 'sort', 'dedupe', 'contentPreset', 'selectAll', 'deselectAll']) $(id).disabled = value;
+  for (const id of ['open', 'scan', 'chooseFolder', 'exportLinks', 'sort', 'dedupe', 'contentPreset', 'selectAll', 'deselectAll', 'reverseOrder', 'renameTool']) $(id).disabled = value;
   $('url').disabled = value; $('cancel').hidden = !value;
   $('statusDot').classList.toggle('working', value); $('progress').hidden = !value;
   if (!value) $('progress').value = 0;
@@ -38,6 +38,7 @@ function counts() {
   $('totalCount').textContent = all.length ? `${visibleItems().length} / ${all.length}` : '0';
   $('download').disabled = busy || !count;
   $('exportLinks').disabled = busy || !count;
+  $('reverseOrder').disabled = busy || sequence.length < 2;
 }
 function applySort() {
   const mode = $('sort').value;
@@ -115,6 +116,16 @@ function render() {
   grid.replaceChildren(fragment); $('empty').hidden = all.length > 0; $('noMatches').hidden = !all.length || visible.length > 0;
   counts();
 }
+let renameChosen = false;
+function renameOptions() { return { reverse: $('renameDirection').value === 'reverse', start:Number($('renameStart').value), padding:Number($('renamePadding').value) }; }
+async function refreshRenamePreview() {
+  if (!renameChosen) return;
+  const result = await call('previewRename', renameOptions());
+  $('renameSummary').textContent = `พบ ${result.count} ภาพ • ${renameOptions().reverse ? 'เรียงย้อนกลับ (ไฟล์ชื่อมากเป็นหน้าแรก)' : 'เรียงปกติ'}`;
+  $('renamePreview').replaceChildren(...result.plan.slice(0,80).map(row => el('div','rename-row',`${row.from}  →  ${row.to}`)));
+  if (result.plan.length > 80) $('renamePreview').append(el('div','rename-more',`… และอีก ${result.plan.length - 80} ภาพ`));
+  $('applyRename').disabled = !result.count;
+}
 async function action(fn) { try { await fn(); } catch (error) { status(error.message, true); } }
 $('open').addEventListener('click', () => action(async () => {
   setBusy(true);
@@ -143,6 +154,7 @@ $('showBrowser').addEventListener('click', () => action(() => call('showBrowser'
 $('cancel').addEventListener('click', () => action(async () => { await call('cancel'); status('กำลังหยุดงาน เก็บไฟล์ที่บันทึกแล้วไว้…'); }));
 $('advancedToggle').addEventListener('click', () => { $('advanced').hidden = !$('advanced').hidden; });
 $('sort').addEventListener('change', () => { applySort(); render(); });
+$('reverseOrder').addEventListener('click', () => { if (busy || sequence.length < 2) return; sequence.reverse(); $('sort').value='manual'; render(); status('กลับลำดับภาพแล้ว — ภาพท้ายสุดถูกย้ายมาเป็นหน้าแรก'); });
 for (const id of ['minWidth', 'minHeight', 'search']) $(id).addEventListener('input', () => { clearTimeout(renderTimer); renderTimer = setTimeout(render, 180); });
 $('dedupe').addEventListener('change', render);
 $('contentPreset').addEventListener('click', () => { $('minWidth').value = '300'; $('minHeight').value = '300'; render(); });
@@ -161,6 +173,22 @@ $('download').addEventListener('click', () => action(async () => {
   } finally { setBusy(false); render(); }
 }));
 $('exportLinks').addEventListener('click', () => action(async () => { if (await call('exportLinks', { ids: exportItems().map(item => item.id) })) status('บันทึกลิงก์ตามลำดับแล้ว'); }));
+$('renameTool').addEventListener('click', () => { if (!busy) $('renameDialog').showModal(); });
+$('closeRename').addEventListener('click', () => $('renameDialog').close());
+$('chooseRenameSource').addEventListener('click', () => action(async () => {
+  const result = await call('chooseRenameFolder'); if (!result) return;
+  renameChosen = true; $('renameFolderLabel').textContent = result.folder; await refreshRenamePreview();
+}));
+for (const id of ['renameDirection','renameStart','renamePadding']) $(id).addEventListener('change', () => action(refreshRenamePreview));
+$('applyRename').addEventListener('click', () => action(async () => {
+  $('applyRename').disabled = true;
+  try {
+    const result = await call('renameImages', renameOptions());
+    if (result.cancelled) { status('ยกเลิกการเปลี่ยนชื่อรูป'); return; }
+    status(result.renamed ? `เปลี่ยนชื่อรูปเป็นเลขหน้าแล้ว ${result.renamed} ภาพ — ${result.folder}` : 'ชื่อไฟล์เป็นเลขหน้าถูกต้องอยู่แล้ว');
+  } finally { await refreshRenamePreview(); }
+}));
+
 $('closePreview').addEventListener('click', () => $('preview').close());
 $('preview').addEventListener('close', () => $('previewImage').removeAttribute('src'));
 window.eiw.on(event => {

@@ -12,13 +12,13 @@
   <aside>
     <div class="brand"><span class="mark">▧</span><div>Image<span class="brand-accent">Harvest</span><small>EXPORT IMAGE FROM WEB</small></div></div>
     <div class="side-label">YOUR WORKSPACE</div>
-    <div class="side-active">▦ <span>เก็บภาพจากเว็บไซต์</span><span class="pill">1.0.1</span></div>
+    <div class="side-active">▦ <span>เก็บภาพจากเว็บไซต์</span><span class="pill">1.0.2</span></div>
     <div class="side-guide"><div class="step"><b>1</b><div>เปิดเว็บไซต์<small>วาง URL หน้าที่ต้องการเก็บรูป</small></div></div><div class="step"><b>2</b><div>สแกนและเลือกภาพ<small>กรองภาพเล็ก แล้วจัดลำดับ</small></div></div><div class="step"><b>3</b><div>บันทึกลงเครื่อง<small>ชื่อไฟล์เรียง 0001, 0002…</small></div></div></div>
     <div class="side-note"><span>LOCAL FIRST</span><p>รูปบันทึกลงเครื่องโดยตรง<br>ไม่มีการส่งผ่านเซิร์ฟเวอร์ของแอป</p><small>ใช้กับภาพที่พี่มีสิทธิ์ดาวน์โหลด<br>ไม่ข้าม paywall หรือข้อจำกัดของเว็บ</small></div>
     <footer>Made for your collection <span>✦</span></footer>
   </aside>
   <main>
-    <header><div><div class="eyebrow">A LITTLE MORE ORGANIZED.</div><h1>เก็บภาพให้ครบ เรียงให้พร้อม</h1><p>วางลิงก์ เลือกภาพ แล้วเก็บเป็นชุดในลำดับที่ต้องการ</p></div><button id="openFolder" class="quiet">▣ เปิดโฟลเดอร์</button></header>
+    <header><div><div class="eyebrow">A LITTLE MORE ORGANIZED.</div><h1>เก็บภาพให้ครบ เรียงให้พร้อม</h1><p>วางลิงก์ เลือกภาพ แล้วเก็บเป็นชุดในลำดับที่ต้องการ</p></div><div class="header-actions"><button id="renameTool" class="quiet">✎ ตั้งเลขหน้ารูป</button><button id="openFolder" class="quiet">▣ เปิดโฟลเดอร์</button></div></header>
     <section class="panel source-panel">
       <label class="field-label" for="url">ลิงก์หน้าเว็บไซต์ <span>หนึ่ง URL ต่อการสแกน ไม่ไล่ทั้งเว็บไซต์</span></label>
       <div class="url-row"><span class="link-icon">↗</span><input id="url" type="url" placeholder="https://example.com/chapter/1" autocomplete="off" spellcheck="false"><button id="open" class="secondary">เปิดเว็บ</button><button id="scan" class="primary">✦ สแกนภาพ</button></div>
@@ -38,7 +38,7 @@
       <label class="dimension">กว้าง ≥ <input id="minWidth" type="number" min="0" value="0"> px</label>
       <label class="dimension">สูง ≥ <input id="minHeight" type="number" min="0" value="0"> px</label>
       <button id="contentPreset" class="quiet small" title="ตั้งกว้างและสูงอย่างน้อย 300 px ไม่ใช่ AI แยกประเภทภาพ">ภาพเนื้อหา</button>
-      <select id="sort" aria-label="การเรียงภาพ"><option value="visual">ตามตำแหน่งบนหน้า</option><option value="right">บนลงล่าง / ขวาไปซ้าย</option><option value="dom">ตามลำดับที่ตรวจพบใน DOM</option><option value="name">ตามชื่อไฟล์ (1, 2, 10)</option><option value="manual">จัดลำดับเอง</option></select>
+      <select id="sort" aria-label="การเรียงภาพ"><option value="visual">ตามตำแหน่งบนหน้า</option><option value="right">บนลงล่าง / ขวาไปซ้าย</option><option value="dom">ตามลำดับที่ตรวจพบใน DOM</option><option value="name">ตามชื่อไฟล์ (1, 2, 10)</option><option value="manual">จัดลำดับเอง</option></select><button id="reverseOrder" class="quiet small" title="กลับลำดับภาพทั้งหมดที่สแกนได้">↕ กลับลำดับ</button>
       <label class="check dedupe"><input id="dedupe" type="checkbox" checked> ซ่อน URL ซ้ำ</label>
     </section>
     <div id="notice" class="notice" hidden></div>
@@ -50,6 +50,7 @@
   </main>
 </div>
 <dialog id="preview"><div class="preview-head"><span id="previewTitle"></span><button id="closePreview" class="quiet">ปิด ✕</button></div><div class="preview-body"><img id="previewImage" alt="ภาพขยาย"></div><p id="previewUrl"></p></dialog>
+<dialog id="renameDialog" class="rename-dialog"><div class="preview-head"><strong>ตั้งชื่อรูปเป็นเลขหน้า</strong><button id="closeRename" class="quiet">ปิด ✕</button></div><div class="rename-body"><p class="rename-help">ใช้กับรูปที่มีอยู่แล้วในโฟลเดอร์ ระบบเรียงตามชื่อเดิมแบบตัวเลข (1, 2, 10) แล้วเปลี่ยนเป็น 0001, 0002…</p><button id="chooseRenameSource" class="secondary">เลือกโฟลเดอร์รูป…</button><div id="renameFolderLabel" class="rename-folder">ยังไม่ได้เลือกโฟลเดอร์</div><div class="rename-options"><label>ลำดับ<select id="renameDirection"><option value="normal">ปกติ — ชื่อน้อยไปมาก</option><option value="reverse">ย้อนกลับ — ชื่อมากไปน้อย</option></select></label><label>เลขหน้าเริ่มต้น<input id="renameStart" type="number" min="0" max="99999999" value="1"></label><label>จำนวนหลัก<input id="renamePadding" type="number" min="1" max="8" value="4"></label></div><div id="renameSummary" class="rename-summary">เลือกโฟลเดอร์เพื่อดูตัวอย่าง</div><div id="renamePreview" class="rename-preview"></div><div class="rename-actions"><button id="applyRename" class="primary" disabled>เปลี่ยนชื่อเป็นเลขหน้า</button></div></div></dialog>
 <script src="renderer.js"></script>
 </body>
 </html>

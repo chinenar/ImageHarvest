@@ -7,7 +7,7 @@ const fs = require('node:fs/promises');
   const output = await packager({ dir: root, name: 'ImageHarvest', platform: 'win32', arch: 'x64',
     out: path.join(root, 'release'), overwrite: true, asar: true, prune: true,
     icon: path.join(root, 'assets', 'icon.ico'),
-    appVersion: '1.0.1', appCopyright: 'Personal image collection tool',
+    appVersion: '1.0.2', appCopyright: 'Personal image collection tool',
     win32metadata: { ProductName: 'ImageHarvest', FileDescription: 'Ordered website image collector' },
     ignore: [/^\/release($|\/)/, /^\/installer-dist($|\/)/, /^\/test($|\/)/, /^\/scripts($|\/)/, /^\/\.git($|\/)/,
       /^\/test-results($|\/)/, /\.b64$/, /^\/deploy\.py$/, /^\/node_modules($|\/)/, /^\/package-lock\.json$/,

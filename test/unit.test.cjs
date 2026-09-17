@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { pageURL, imageURL, safeName, imageType, orderItems, uniqueItems, idFor, ByteCache } = require('../src/core.cjs');
+const { pageURL, imageURL, safeName, imageType, orderItems, uniqueItems, renamePlan, idFor, ByteCache } = require('../src/core.cjs');
 test('normalizes plain domain; keeps http loopback for development', () => {
   assert.equal(pageURL('example.com/a'), 'https://example.com/a');
   assert.equal(pageURL('http://127.0.0.1:123/a'), 'http://127.0.0.1:123/a');
@@ -45,4 +45,10 @@ test('bounded LRU cache accounts for replacement and eviction', () => {
   c.set('a',{buffer:Buffer.alloc(1)}); assert.equal(c.bytes,3);
   c.set('z',{buffer:Buffer.alloc(10)}); assert.equal(c.bytes,3);
   c.clear(); assert.equal(c.bytes,0);
+});
+
+test('page rename plan uses natural order and can reverse it', () => {
+  const files = ['10.jpg','2.png','1.webp','note.txt'];
+  assert.deepEqual(renamePlan(files).map(x=>[x.from,x.to]), [['1.webp','0001.webp'],['2.png','0002.png'],['10.jpg','0003.jpg']]);
+  assert.deepEqual(renamePlan(files,{reverse:true,start:5,padding:3}).map(x=>[x.from,x.to]), [['10.jpg','005.jpg'],['2.png','006.png'],['1.webp','007.webp']]);
 });

@@ -63,6 +63,18 @@ function uniqueItems(items) {
   const seen = new Set();
   return items.filter(item => { if (seen.has(item.url)) return false; seen.add(item.url); return true; });
 }
+const IMAGE_FILE_RE = /\.(?:jpe?g|png|webp|avif|gif|bmp|ico|svg)$/i;
+function isImageFilename(name) { return IMAGE_FILE_RE.test(String(name || '')); }
+function renamePlan(names, { reverse = false, start = 1, padding = 4 } = {}) {
+  start = Math.max(0, Math.min(99999999, Math.trunc(Number(start) || 1)));
+  padding = Math.max(1, Math.min(8, Math.trunc(Number(padding) || 4)));
+  const ordered = names.filter(isImageFilename).sort((a,b) => a.localeCompare(b, undefined, { numeric:true, sensitivity:'base' }));
+  if (reverse) ordered.reverse();
+  return ordered.map((from, i) => {
+    const dot = from.lastIndexOf('.'), ext = from.slice(dot).toLowerCase();
+    return { from, to: `${String(start + i).padStart(padding, '0')}${ext}`, page: start + i };
+  });
+}
 const idFor = key => crypto.createHash('sha256').update(key).digest('hex').slice(0, 24);
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 class ByteCache {
@@ -83,4 +95,4 @@ class ByteCache {
   }
   clear() { this.map.clear(); this.bytes = 0; }
 }
-module.exports = { pageURL, imageURL, safeName, imageType, publicItem, orderItems, uniqueItems, idFor, delay, ByteCache };
+module.exports = { pageURL, imageURL, safeName, imageType, publicItem, orderItems, uniqueItems, isImageFilename, renamePlan, idFor, delay, ByteCache };
