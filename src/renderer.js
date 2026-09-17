@@ -3,6 +3,8 @@ const $ = id => document.getElementById(id);
 let all = [], sequence = [], selected = new Set(), busy = false, currentURL = '', states = new Map();
 let dragged = null, renderTimer = null;
 let mainScope = 'unknown', removedSnapshot = null;
+let captureActive = false, networkRestartRequired = false;
+let downloadPending = false;
 const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; };
 function status(message, error = false) { $('status').textContent = message; $('statusDot').classList.toggle('error', error); }
 async function call(method, args) {
@@ -10,12 +12,38 @@ async function call(method, args) {
   if (!result.ok) throw new Error(result.error);
   return result.data;
 }
+function networkDescription(mode) {
+  if (mode === 'cloudflare') return 'ใช้ Cloudflare DNS-over-HTTPS; ดาวน์โหลดในโหมด Chrome ใช้ 1.1.1.1';
+  if (mode === 'google') return 'ใช้ Google DNS-over-HTTPS; ดาวน์โหลดในโหมด Chrome ใช้ 8.8.8.8';
+  if (mode === 'compat') return 'Compatibility ใช้ Cloudflare DNS และปิด HTTP/2 + QUIC หลังรีสตาร์ต';
+  return 'Smart Auto: ใช้ Secure DNS ของ Cloudflare/Google อัตโนมัติ และสลับสำรองเมื่อเกิด timeout หรือหาโดเมนไม่เจอ';
+}
+function syncCaptureControls() {
+  $('capturePages').textContent = captureActive ? '■ หยุดจับทีละหน้า' : '◎ จับทีละหน้า';
+  $('capturePages').disabled = busy;
+  for (const id of ['open', 'scan', 'browserMode', 'networkMode', 'applyNetwork', 'renameTool']) $(id).disabled = busy || captureActive;
+  $('url').disabled = busy || captureActive;
+  $('restartNetwork').disabled = busy || captureActive;
+  $('statusDot').classList.toggle('working', busy || captureActive);
+  if (captureActive) $('progress').hidden = true;
+}
+function appendCaptured(items) {
+  if (!Array.isArray(items) || !items.length) return;
+  const known = new Set(all.map(item => item.id));
+  for (const item of items) {
+    if (known.has(item.id)) continue;
+    known.add(item.id); all.push(item); sequence.push(item.id); selected.add(item.id);
+  }
+  mainScope = ImageHarvestFilters.mainScope(all);
+  render();
+}
 function setBusy(value) {
   busy = value;
-  for (const id of ['open', 'scan', 'chooseFolder', 'exportLinks', 'sort', 'dedupe', 'contentPreset', 'selectAll', 'deselectAll', 'reverseOrder', 'renameTool', 'hideChrome', 'mainOnly', 'sourceFilter', 'resetFilters', 'search', 'minWidth', 'minHeight', 'setName', 'browserMode']) $(id).disabled = value;
+  for (const id of ['open', 'scan', 'capturePages', 'applyNetwork', 'restartNetwork', 'chooseFolder', 'exportLinks', 'sort', 'dedupe', 'contentPreset', 'selectAll', 'deselectAll', 'reverseOrder', 'renameTool', 'hideChrome', 'mainOnly', 'sourceFilter', 'resetFilters', 'search', 'minWidth', 'minHeight', 'setName', 'browserMode', 'networkMode']) $(id).disabled = value;
   $('url').disabled = value; $('cancel').hidden = !value;
   $('statusDot').classList.toggle('working', value); $('progress').hidden = !value;
   if (!value) $('progress').value = 0;
+  syncCaptureControls();
   counts();
 }
 function sortedItems() {
@@ -43,13 +71,13 @@ function counts() {
   $('selectionCount').textContent = `เลือก ${count} ภาพ`;
   $('downloadCount').textContent = count;
   $('totalCount').textContent = all.length ? `${visibleItems().length} / ${all.length}` : '0';
-  $('download').disabled = busy || !count;
-  $('exportLinks').disabled = busy || !count;
-  $('reverseOrder').disabled = busy || sequence.length < 2;
-  $('removeSelected').disabled = busy || !count;
+  $('download').disabled = busy || captureActive || !count;
+  $('exportLinks').disabled = busy || captureActive || !count;
+  $('reverseOrder').disabled = busy || captureActive || sequence.length < 2;
+  $('removeSelected').disabled = busy || captureActive || !count;
   $('removeCount').textContent = count;
-  $('clearResults').disabled = busy || (!all.length && !removedSnapshot);
-  $('undoRemove').disabled = busy || !removedSnapshot;
+  $('clearResults').disabled = busy || captureActive || (!all.length && !removedSnapshot);
+  $('undoRemove').disabled = busy || captureActive || !removedSnapshot;
   const hidden = all.length - visibleItems().length;
   const scopeNote = $('mainOnly').checked ? (mainScope === 'unknown' ? ' • ระบุเขตหลักไม่ชัด: คงภาพที่ไม่แน่ใจไว้' : mainScope === 'reader' ? ' • ใช้บริเวณตัวอ่าน' : ' • ใช้บริเวณ main/article') : '';
   $('filterSummary').textContent = `แสดง ${all.length - hidden} / ${all.length} ภาพ • ซ่อนด้วยตัวกรอง/ภาพซ้ำ ${hidden} ภาพ${scopeNote} • คัดจากชื่อและโครงสร้างเว็บ อาจผิดได้`;
@@ -65,7 +93,7 @@ function applySort() {
   sequence = items.map(item => item.id);
 }
 function moveItem(id, target) {
-  if (busy || id === target) return;
+  if (busy || captureActive || id === target) return;
   const a = sequence.indexOf(id), b = sequence.indexOf(target);
   if (a < 0 || b < 0) return;
   sequence.splice(a, 1); sequence.splice(b, 0, id);
@@ -119,7 +147,7 @@ function render() {
       down.addEventListener('click', () => { const v = visibleItems(), index = v.findIndex(x => x.id === item.id); if (index + 1 < v.length) moveItem(item.id, v[index + 1].id); });
       buttons.append(up, down); tools.append(state, buttons);
       card.append(thumb, top, meta, tools);
-      card.addEventListener('dragstart', event => { if (busy) { event.preventDefault(); return; } dragged = item.id; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.id); });
+      card.addEventListener('dragstart', event => { if (busy || captureActive) { event.preventDefault(); return; } dragged = item.id; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.id); });
       card.addEventListener('dragover', event => { if (dragged) { event.preventDefault(); card.classList.add('drag-over'); } });
       card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
       card.addEventListener('drop', event => { event.preventDefault(); card.classList.remove('drag-over'); if (dragged) moveItem(dragged, item.id); dragged = null; });
@@ -169,6 +197,23 @@ $('scan').addEventListener('click', () => action(async () => {
     status(`${result.cancelled ? 'หยุดสแกนแล้ว เก็บผลที่พบไว้' : result.truncated ? 'สแกนได้บางส่วน' : 'สแกนเสร็จ'} — พบ ${all.length} ภาพ (${result.steps} รอบ)`);
   } finally { setBusy(false); render(); }
 }));
+$('capturePages').addEventListener('click', () => action(async () => {
+  if (captureActive) {
+    await call('stopCapture'); status('กำลังหยุดจับทีละหน้า…'); return;
+  }
+  setBusy(true); $('notice').hidden = true;
+  try {
+    const input = $('url').value.trim();
+    if (!input) throw new Error('กรุณาใส่ลิงก์เว็บไซต์ก่อนค่ะ');
+    if (!currentURL || (input !== currentURL && `https://${input}` !== currentURL)) {
+      const opened = await call('open', { url: input, show: true, backend: $('browserMode').value });
+      currentURL = opened.url; $('url').value = opened.url;
+    } else await call('showBrowser');
+    await call('startCapture', { backgrounds: $('backgrounds').checked, canvases: $('canvases').checked, selector: $('selector').value, intervalMs: Number($('captureInterval').value) });
+    captureActive = true; syncCaptureControls(); counts();
+    status('กำลังจับทีละหน้า — ไปที่หน้าต่างเว็บแล้วกดเปลี่ยนหน้าได้เลย');
+  } finally { setBusy(false); }
+}));
 $('browserMode').addEventListener('change', () => {
   currentURL = '';
   $('browserModeNote').textContent = $('browserMode').value === 'chrome'
@@ -176,12 +221,21 @@ $('browserMode').addEventListener('change', () => {
     : 'ใช้เบราว์เซอร์ที่มากับแอป';
   status('เลือกเบราว์เซอร์แล้ว — กดเปิดเว็บหรือสแกนเพื่อใช้โหมดนี้');
 });
-$('url').addEventListener('keydown', event => { if (event.key === 'Enter' && !busy) $('scan').click(); });
+$('applyNetwork').addEventListener('click', () => action(async () => {
+  const result = await call('networkMode', { mode: $('networkMode').value });
+  networkRestartRequired = result.restartRequired;
+  $('restartNetwork').hidden = !result.restartRequired;
+  $('networkModeNote').textContent = networkDescription(result.mode) + (result.restartRequired ? ' • ต้องรีสตาร์ตแอป' : ' • ใช้งานแล้ว');
+  currentURL = '';
+  status(result.restartRequired ? 'บันทึกโหมดเครือข่ายแล้ว — รีสตาร์ตเพื่อให้ Compatibility มีผลครบ' : 'เปลี่ยนโหมดเครือข่ายแล้ว — เปิดเว็บใหม่เพื่อใช้การเชื่อมต่อใหม่');
+}));
+$('restartNetwork').addEventListener('click', () => action(() => call('restartForNetwork')));
+$('url').addEventListener('keydown', event => { if (event.key === 'Enter' && !busy && !captureActive) $('scan').click(); });
 $('showBrowser').addEventListener('click', () => action(() => call('showBrowser')));
 $('cancel').addEventListener('click', () => action(async () => { await call('cancel'); status('กำลังหยุดงาน เก็บไฟล์ที่บันทึกแล้วไว้…'); }));
 $('advancedToggle').addEventListener('click', () => { $('advanced').hidden = !$('advanced').hidden; });
 $('sort').addEventListener('change', () => { applySort(); render(); });
-$('reverseOrder').addEventListener('click', () => { if (busy || sequence.length < 2) return; sequence.reverse(); $('sort').value='manual'; render(); status('กลับลำดับภาพแล้ว — ภาพท้ายสุดถูกย้ายมาเป็นหน้าแรก'); });
+$('reverseOrder').addEventListener('click', () => { if (busy || captureActive || sequence.length < 2) return; sequence.reverse(); $('sort').value='manual'; render(); status('กลับลำดับภาพแล้ว — ภาพท้ายสุดถูกย้ายมาเป็นหน้าแรก'); });
 for (const id of ['minWidth', 'minHeight', 'search']) $(id).addEventListener('input', () => { clearTimeout(renderTimer); renderTimer = setTimeout(render, 180); });
 $('dedupe').addEventListener('change', render);
 for (const id of ['hideChrome', 'mainOnly', 'sourceFilter']) $(id).addEventListener('change', render);
@@ -259,16 +313,17 @@ $('chooseFolder').addEventListener('click', () => action(async () => { const fol
 $('openFolder').addEventListener('click', () => action(() => call('openFolder')));
 $('download').addEventListener('click', () => action(async () => {
   const items = exportItems(); if (!items.length) return;
-  setBusy(true); render();
+  downloadPending = true; setBusy(true); render();
   try {
     const result = await call('download', { ids: items.map(item => item.id), name: $('setName').value });
+    downloadPending = false; // Ignore progress queued before the completed IPC result.
     if (!result.folder) { status('ยังไม่ได้เลือกโฟลเดอร์'); return; }
     status(`${result.cancelled ? 'หยุดแล้ว' : 'บันทึกเสร็จ'} — สำเร็จ ${result.saved} ภาพ / ไม่สำเร็จ ${result.failed} ภาพ${result.notAttempted ? ` / ยังไม่บันทึก ${result.notAttempted} ภาพ` : ''} — ${result.folder}`, result.failed > 0);
     const settings = await call('settings'); $('folderLabel').textContent = settings.outputRoot;
-  } finally { setBusy(false); render(); }
+  } finally { downloadPending = false; setBusy(false); render(); }
 }));
 $('exportLinks').addEventListener('click', () => action(async () => { if (await call('exportLinks', { ids: exportItems().map(item => item.id) })) status('บันทึกลิงก์ตามลำดับแล้ว'); }));
-$('renameTool').addEventListener('click', () => { if (!busy) $('renameDialog').showModal(); });
+$('renameTool').addEventListener('click', () => { if (!busy && !captureActive) $('renameDialog').showModal(); });
 $('closeRename').addEventListener('click', () => $('renameDialog').close());
 $('chooseRenameSource').addEventListener('click', () => action(async () => {
   const result = await call('chooseRenameFolder'); if (!result) return;
@@ -290,9 +345,30 @@ window.eiw.on(event => {
   if (event.type === 'status' || event.type === 'rate-limit' || event.type === 'error') status(event.message, event.type !== 'status');
   if (event.type === 'navigation') { currentURL = event.url; if (/^https?:\/\//i.test(event.url)) $('url').value = event.url; else status('หน้าเว็บนำทางออกไป ' + event.url + ' — กรุณาตรวจหน้าต่างเว็บ', true); }
   if (event.type === 'scan-start') { all = []; sequence = []; selected.clear(); states.clear(); removedSnapshot = null; mainScope = 'unknown'; render(); status('กำลังรวบรวมภาพและเลื่อนหน้า…'); }
+  if (event.type === 'capture-start') {
+    captureActive = true; all = []; sequence = []; selected.clear(); states.clear(); removedSnapshot = null; mainScope = 'unknown';
+    $('pageTitle').textContent = event.title || event.url || 'กำลังจับทีละหน้า';
+    syncCaptureControls(); render(); status('กำลังจับทีละหน้า — เปลี่ยนหน้าในหน้าต่างเว็บได้เลย');
+  }
+  if (event.type === 'capture-progress') {
+    appendCaptured(event.items);
+    if (event.title || event.url) $('pageTitle').textContent = event.title || event.url;
+    const extra = event.lastError ? ` • ล่าสุดลองไม่สำเร็จ: ${event.lastError}` : '';
+    status(`จับทีละหน้า • เก็บแล้ว ${event.count} ภาพ • รอบล่าสุดเพิ่ม ${event.items?.length || 0} • ซ้ำ ${event.duplicates || 0}${extra}`);
+  }
+  if (event.type === 'capture-stop') {
+    captureActive = false; syncCaptureControls(); counts();
+    status(`${event.reason ? event.reason + ' • ' : ''}${event.cancelled ? 'หยุดจับทีละหน้าแล้ว' : 'จบการจับทีละหน้า'} — เก็บ ${event.count} ภาพ`);
+  }
   if (event.type === 'scan-progress') { status(`กำลังสแกน • พบ ${event.count} ภาพ • รอบ ${event.step}/${event.maxSteps}`); $('progress').value = Math.round(event.progress * 100); }
-  if (event.type === 'download-progress') { status(`กำลังบันทึกภาพ ${event.index}/${event.total} • สำเร็จ ${event.saved} • ไม่สำเร็จ ${event.failed}`); $('progress').value = ((event.index - 1) / event.total) * 100; }
+  if (event.type === 'download-progress' && downloadPending) { status(`กำลังบันทึกภาพ ${event.index}/${event.total} • สำเร็จ ${event.saved} • ไม่สำเร็จ ${event.failed}`); $('progress').value = ((event.index - 1) / event.total) * 100; }
   if (event.type === 'image-saved') updateState(event.id, `✓ ${event.filename}`);
   if (event.type === 'image-failed') updateState(event.id, event.message, true);
 });
-call('settings').then(settings => { if (settings.outputRoot) $('folderLabel').textContent = settings.outputRoot; }).catch(error => status(error.message, true));
+call('settings').then(settings => {
+  if (settings.outputRoot) $('folderLabel').textContent = settings.outputRoot;
+  $('networkMode').value = settings.networkMode || 'auto';
+  $('networkModeNote').textContent = networkDescription(settings.networkMode || 'auto') + (settings.compatibilityActive ? ' • Compatibility ทำงานอยู่' : '');
+  $('restartNetwork').hidden = true;
+  syncCaptureControls(); counts();
+}).catch(error => status(error.message, true));

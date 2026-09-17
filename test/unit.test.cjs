@@ -77,3 +77,33 @@ test('metadata filtering is opt-in and does not reject short or wide reader page
   assert.equal(filters.matches(short, { source: 'img' }), false);
   assert.equal(filters.matches(short, { source: 'canvas', minHeight: 300 }), false);
 });
+
+const network = require('../src/network.cjs');
+test('network modes normalize and expose deterministic DNS settings', () => {
+  assert.equal(network.normalizeNetworkMode('CLOUDFLARE'), 'cloudflare');
+  assert.equal(network.normalizeNetworkMode('unknown'), 'auto');
+  assert.deepEqual(network.electronResolverOptions('cloudflare').secureDnsServers, ['https://cloudflare-dns.com/dns-query']);
+  assert.deepEqual(network.electronResolverOptions('google').secureDnsServers, ['https://dns.google/dns-query']);
+  assert.equal(network.electronResolverOptions('auto').secureDnsMode, 'automatic');
+  assert.deepEqual(network.electronResolverOptions('auto').secureDnsServers, ['https://cloudflare-dns.com/dns-query', 'https://dns.google/dns-query']);
+});
+test('compatibility mode disables HTTP2 and QUIC only when selected', () => {
+  assert.deepEqual(network.chromeArgs('auto'), []);
+  assert.ok(network.chromeArgs('cloudflare').some(x => x.startsWith('--dns-over-https-templates=')));
+  assert.ok(network.chromeArgs('compat').includes('--disable-http2'));
+  assert.ok(network.chromeArgs('compat').includes('--disable-quic'));
+  assert.equal(network.isCompatibility('compat'), true);
+  assert.equal(network.isCompatibility('google'), false);
+});
+test('Smart Auto retries only retryable network failures and remembers public DNS order', () => {
+  for (const error of [
+    new Error('net::ERR_CONNECTION_TIMED_OUT'),
+    new Error('net::ERR_NAME_NOT_RESOLVED'),
+    new Error('ETIMEDOUT'),
+    new Error('page.goto: Timeout 45000ms exceeded')
+  ]) assert.equal(network.isRetryableNetworkError(error), true);
+  assert.equal(network.isRetryableNetworkError(new Error('HTTP 403')), false);
+  assert.deepEqual(network.autoFallbackModes(''), ['cloudflare', 'google']);
+  assert.deepEqual(network.autoFallbackModes('cloudflare'), ['cloudflare', 'google']);
+  assert.deepEqual(network.autoFallbackModes('google'), ['google', 'cloudflare']);
+});

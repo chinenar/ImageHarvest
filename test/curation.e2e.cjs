@@ -67,6 +67,14 @@ const pass = name => { passed.push(name); console.log('PASS:', name); };
   const savedHashes = {};
   for (const entry of report.files) savedHashes[entry.filename] = hash(await fs.readFile(path.join(savedRoot, entry.filename)));
   pass('export uses only selected visible images with contiguous numbers and reversed order');
+  const completedStatus = await page.textContent('#status');
+  await instance.evaluate(({BrowserWindow}) => {
+    const main = BrowserWindow.getAllWindows().find(w => w.webContents.getURL().startsWith('eiw://app'));
+    main.webContents.send('eiw:event', {type:'download-progress',index:6,total:6,saved:5,failed:0});
+  });
+  await page.waitForTimeout(150);
+  assert.equal(await page.textContent('#status'), completedStatus);
+  pass('late download progress cannot overwrite a completed export status');
   const beforeOrder = await page.evaluate(() => sequence.slice());
   await page.click('#removeSelected'); await page.click('#collectionCancel');
   assert.equal(await page.evaluate(() => all.length), 13);

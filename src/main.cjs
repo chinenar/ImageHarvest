@@ -1,11 +1,13 @@
 'use strict';
 const { app, BrowserWindow, ipcMain, session, protocol, net, dialog, shell, Menu } = require('electron');
 const fs = require('node:fs/promises');
+const fsSync = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { randomUUID } = require('node:crypto');
+const { randomUUID, createHash } = require('node:crypto');
 const { fetchManual } = require('./http.cjs');
 const { ChromeBrowser } = require('./chrome-browser.cjs');
+const { normalizeNetworkMode, electronResolverOptions, isCompatibility, isRetryableNetworkError, autoFallbackModes } = require('./network.cjs');
 const { pageURL, imageURL, safeName, imageType, publicItem, orderItems, uniqueItems, isImageFilename, renamePlan, idFor, delay, ByteCache } = require('./core.cjs');
 
 const MAX_IMAGE = 32 * 1024 * 1024, MAX_IMAGES = 5000;
@@ -15,9 +17,21 @@ protocol.registerSchemesAsPrivileged([
 ]);
 const testMode = process.argv.includes('--eiw-test');
 if (testMode) app.setPath('userData', path.join(app.getPath('temp'), `eiw-test-${process.pid}`));
+let startupNetworkMode = 'auto';
+try {
+  const startupSettings = JSON.parse(fsSync.readFileSync(path.join(app.getPath('userData'), 'settings.json'), 'utf8'));
+  startupNetworkMode = normalizeNetworkMode(startupSettings.networkMode);
+} catch {}
+if (isCompatibility(startupNetworkMode)) {
+  app.commandLine.appendSwitch('disable-http2');
+  app.commandLine.appendSwitch('disable-quic');
+}
 app.setName('ImageHarvest');
 let mainWindow, browser, browsingSession, quitting = false, busy = null, job = null;
-let browserMode = 'electron';
+let browserMode = 'electron', networkMode = startupNetworkMode, activeNetworkMode = startupNetworkMode;
+const autoFallbackHosts = new Map();
+const compatibilityActive = isCompatibility(startupNetworkMode);
+let captureSession = null;
 let records = new Map(), cache = new ByteCache(), pending = new Map(), failedImages = new Map(), generation = 0;
 let pageInfo = { title: '', url: '' }, lastFolder = '', outputRoot = '', renameFolder = '', canvasTempDir = '', blockedHosts = new Map();
 let queue = Promise.resolve(), requestGate = 0;
@@ -31,6 +45,7 @@ const chromeBrowser = new ChromeBrowser((type, data) => {
   if (type === 'navigation') { pageInfo.url = data.url; emit(type, data); }
   if (type === 'browser-closed') {
     if (job) { job.cancelled = true; job.abort.abort(); }
+    if (captureSession) { captureSession.cancelled = true; captureSession.abort.abort(); }
     emit('error', { message: 'หน้าต่าง Chrome ปิดแล้ว กดเปิดเว็บเพื่อเริ่มเซสชันใหม่' });
   }
 });
@@ -45,7 +60,7 @@ function handle(name, fn) {
     catch (error) { return { ok: false, error: error.message || String(error) }; }
   });
 }
-function ensureIdle() { if (busy) throw new Error('มีงานกำลังทำอยู่ กรุณาหยุดหรือรอให้งานจบก่อน'); }
+function ensureIdle() { if (busy || captureSession) throw new Error('มีงานกำลังทำอยู่ กรุณาหยุดงานปัจจุบันก่อน'); }
 function allowedWeb(url) { try { return ['https:', 'http:'].includes(new URL(url).protocol); } catch { return false; } }
 function secureSession(ses) {
   ses.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
@@ -69,7 +84,11 @@ function createBrowser() {
   wc.on('did-navigate', (_event, url) => { if (browserMode !== 'electron') return; pageInfo.url = url; emit('navigation', { url }); });
   wc.on('did-navigate-in-page', (_event, url, main) => { if (main && browserMode === 'electron') { pageInfo.url = url; emit('navigation', { url }); } });
   wc.on('page-title-updated', (_event, title) => { if (browserMode === 'electron') pageInfo.title = title; });
-  wc.on('render-process-gone', () => { if (job) { job.cancelled = true; job.abort.abort(); } emit('error', { message: 'หน้าต่างเว็บหยุดทำงาน กรุณาเปิดเว็บใหม่' }); });
+  wc.on('render-process-gone', () => {
+    if (job) { job.cancelled = true; job.abort.abort(); }
+    if (captureSession) { captureSession.cancelled = true; captureSession.abort.abort(); }
+    emit('error', { message: 'หน้าต่างเว็บหยุดทำงาน กรุณาเปิดเว็บใหม่' });
+  });
   browser.on('close', event => { if (!quitting) { event.preventDefault(); browser.hide(); } });
   return browser;
 }
@@ -86,28 +105,85 @@ async function withTimeout(promise, ms, message) {
   try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(message)), ms); })]); }
   finally { clearTimeout(timer); }
 }
+async function applyNetworkRuntime(mode) {
+  const targetMode = normalizeNetworkMode(mode);
+  app.configureHostResolver(electronResolverOptions(targetMode));
+  for (const ses of [browsingSession, session.defaultSession].filter(Boolean)) {
+    await ses.clearHostResolverCache().catch(() => {});
+    await ses.closeAllConnections().catch(() => {});
+  }
+  await chromeBrowser.setNetworkMode(targetMode);
+  activeNetworkMode = targetMode;
+}
+async function changeNetworkMode(input = {}) {
+  ensureIdle();
+  networkMode = normalizeNetworkMode(input.mode);
+  autoFallbackHosts.clear();
+  await saveSettings();
+  const restartRequired = isCompatibility(networkMode) !== compatibilityActive;
+  if (!restartRequired) await applyNetworkRuntime(networkMode);
+  return { mode: networkMode, activeMode: activeNetworkMode, restartRequired, compatibilityActive };
+}
+function restartForNetwork() {
+  app.relaunch();
+  app.exit(0);
+  return true;
+}
+async function openPageAttempt(url, mode, show = true) {
+  if (mode === 'chrome') {
+    if (browser && !browser.isDestroyed()) browser.hide();
+    return chromeBrowser.open(url);
+  }
+  const win = createBrowser();
+  if (show !== false) win.show();
+  await withTimeout(win.loadURL(url), 45000, 'เปิดเว็บนานเกินกำหนด ลองเปิดหน้าต่างเว็บเพื่อตรวจสอบ');
+  return { url: win.webContents.getURL(), title: win.webContents.getTitle(), backend: mode };
+}
+function networkErrorMessage(error) {
+  const raw = error?.message || String(error);
+  let hint = '';
+  if (/ERR_HTTP2_PROTOCOL_ERROR|HTTP2/i.test(raw)) hint = ' • ลองเครือข่าย Compatibility แล้วรีสตาร์ตแอป';
+  else if (isRetryableNetworkError(error)) hint = ' • Auto ลอง DNS สำรองแล้ว; ลองเลือก Cloudflare หรือ Google เองได้จากเมนูเครือข่าย';
+  return `เปิดเว็บไม่สำเร็จ: ${raw}${hint}`;
+}
 async function openPage(input) {
   ensureIdle();
   const url = pageURL(input?.url), mode = input?.backend || browserMode;
   if (!['electron', 'chrome'].includes(mode)) throw new Error('ชนิดเบราว์เซอร์ไม่ถูกต้อง');
   busy = 'open'; browserMode = mode;
-  emit('status', { message: mode === 'chrome' ? 'กำลังเปิด Google Chrome (โปรไฟล์แยก)…' : 'กำลังเปิดเว็บไซต์…' });
+  const hostname = new URL(url).hostname.toLowerCase();
+  const cachedFallback = networkMode === 'auto' ? autoFallbackHosts.get(hostname) || '' : '';
+  const attempts = networkMode === 'auto' ? autoFallbackModes(cachedFallback) : [networkMode];
+  let lastError, fallbackUsed = '';
   try {
-    if (mode === 'chrome') {
-      if (browser && !browser.isDestroyed()) browser.hide();
-      pageInfo = await chromeBrowser.open(url);
-    } else {
-      const win = createBrowser();
-      if (input?.show !== false) win.show();
-      await withTimeout(win.loadURL(url), 45000, 'เปิดเว็บนานเกินกำหนด ลองเปิดหน้าต่างเว็บเพื่อตรวจสอบ');
-      pageInfo = { url: win.webContents.getURL(), title: win.webContents.getTitle(), backend: mode };
+    for (let i = 0; i < attempts.length; i++) {
+      const attemptMode = attempts[i];
+      if (activeNetworkMode !== attemptMode) await applyNetworkRuntime(attemptMode);
+      const fallback = networkMode === 'auto' && attemptMode !== 'auto';
+      emit('status', { message: fallback
+        ? `Smart Auto • กำลังเปิดด้วย ${attemptMode === 'cloudflare' ? 'Cloudflare' : 'Google'} DNS…`
+        : (mode === 'chrome' ? 'กำลังเปิด Google Chrome (โปรไฟล์แยก)…' : 'กำลังเปิดเว็บไซต์…') });
+      try {
+        pageInfo = await openPageAttempt(url, mode, input?.show !== false);
+        if (networkMode === 'auto') {
+          if (fallback) { autoFallbackHosts.set(hostname, attemptMode); fallbackUsed = attemptMode; }
+          else autoFallbackHosts.delete(hostname);
+        }
+        const gated = /Open in Browser|403 Forbidden|Just a moment/i.test(pageInfo.title);
+        const fallbackText = fallbackUsed ? ` • Smart Auto: ${fallbackUsed === 'cloudflare' ? 'Cloudflare' : 'Google'} DNS` : '';
+        const message = gated
+          ? `เว็บไซต์ตอบกลับแล้ว แต่ยังอยู่ที่หน้าแจ้ง/ตรวจสอบการเข้าถึง${fallbackText}`
+          : `เปิดเว็บแล้ว กดสแกนเพื่อรวบรวมภาพ${fallbackText}`;
+        emit('status', { message });
+        return { ...pageInfo, gated, networkFallback: fallbackUsed, activeNetworkMode };
+      } catch (error) {
+        lastError = error;
+        if (mode === 'electron' && browser && !browser.isDestroyed()) browser.webContents.stop();
+        const canRetry = networkMode === 'auto' && i + 1 < attempts.length && isRetryableNetworkError(error);
+        if (!canRetry) throw new Error(networkErrorMessage(error));
+      }
     }
-    const gated = /Open in Browser|403 Forbidden|Just a moment/i.test(pageInfo.title);
-    const message = gated ? 'เว็บไซต์ยังไม่เปิดหน้าอ่าน กรุณาตรวจหน้าต่างเว็บก่อนสแกน' : 'เปิดเว็บแล้ว กดสแกนเพื่อรวบรวมภาพ';
-    emit('status', { message }); return { ...pageInfo, gated };
-  } catch (error) {
-    if (mode === 'electron' && browser && !browser.isDestroyed()) browser.webContents.stop();
-    throw new Error(`เปิดเว็บไม่สำเร็จ: ${error.message}`);
+    throw new Error(networkErrorMessage(lastError || new Error('ไม่สามารถเชื่อมต่อได้')));
   } finally { busy = null; }
 }
 async function clearCollection() {
@@ -154,7 +230,7 @@ async function scan(input = {}) {
     canvasTempDir = path.join(app.getPath('temp'), 'ImageHarvest', `${process.pid}-${generation}-${Date.now()}`);
     await fs.mkdir(canvasTempDir, { recursive: true });
   }
-  const startURL = webURL(), found = new Map(), canvasFailures = new Set();
+  const startURL = webURL(), found = new Map(), canvasFailures = new Set(), blobFailures = new Map();
   let truncated = false, reason = '', steps = 0, previousHeight = -1, stable = 0, metadata = {}, canvasPositionRetries = 0;
   emit('scan-start');
   try {
@@ -172,6 +248,22 @@ async function scan(input = {}) {
         if (existing) Object.assign(existing, item, { order: existing.order, id: existing.id });
         else if (found.size < MAX_IMAGES) found.set(key, { ...item, url, id: idFor(`${generation}:${key}`), order: found.size });
         else { truncated = true; reason = 'ถึงขีดจำกัด 5,000 ภาพแล้ว'; break; }
+        const record = found.get(key);
+        // Blob URLs can be revoked by lazy readers before a full scan finishes.
+        // Preserve original bytes now; a failed attempt must remain retryable.
+        if (url.startsWith('blob:') && record && !record.capturePath) {
+          try {
+            const data = await acquireImage({ ...record, referrer: startURL, backend: browserMode }, job.abort.signal);
+            if (job.cancelled) break;
+            const dir = await ensureCaptureTempDir(), capturePath = path.join(dir, `${record.id}.${data.ext}`);
+            await fs.writeFile(capturePath, data.buffer);
+            Object.assign(record, { capturePath, ext: data.ext, contentHash: snapshotHash(data.buffer) });
+            blobFailures.delete(key);
+          } catch (error) {
+            if (job.cancelled) break;
+            blobFailures.set(key, error.message || String(error));
+          }
+        }
       }
       let retryCanvasPosition = false;
       if (options.canvases && !truncated) {
@@ -205,7 +297,10 @@ async function scan(input = {}) {
       // Three quiet bottom checks allow delayed lazy/infinite loaders to settle.
       if (stable >= 3) break;
       if (step === maxSteps - 1) { truncated = true; reason = 'ถึงจำนวนรอบเลื่อนที่ตั้งไว้ เพิ่มรอบแล้วสแกนใหม่ได้'; break; }
-      if (!pos.bottom) await runPage(`(${scrollScript})('step')`);
+      if (!pos.bottom) {
+        const readyBlobs = [...found.values()].filter(x => x.url.startsWith('blob:') && x.capturePath).map(x => x.url);
+        await runPage(`(${scrollScript})(${JSON.stringify({ action: 'step', readyBlobs })})`);
+      }
       await delay(waitMs);
     }
     const all = orderItems([...found.values()], 'visual');
@@ -213,13 +308,133 @@ async function scan(input = {}) {
     pageInfo = { title: metadata.title || await webTitle(), url: startURL };
     const cancelled = job.cancelled;
     return { items: all.map(publicItem), ...pageInfo, cancelled, truncated, reason, steps,
-      notice: [metadata.frames ? `พบ iframe ${metadata.frames} ส่วน: ยังไม่สแกนภายใน iframe` : '',
+      notice: [blobFailures.size ? `เก็บภาพชั่วคราวไม่สำเร็จ ${blobFailures.size} รายการ: อาจต้องสแกนใหม่` : '', metadata.frames ? `พบ iframe ${metadata.frames} ส่วน: ยังไม่สแกนภายใน iframe` : '',
         metadata.canvases ? (options.canvases ? `พบ canvas ${metadata.canvases} ส่วน: จับเฉพาะ canvas ที่วาดเสร็จและ browser อนุญาตให้อ่าน` : `พบ canvas ${metadata.canvases} ส่วน: เปิด “รวม Canvas” หากต้องการเก็บภาพที่วาดแล้ว`) : ''].filter(Boolean).join(' • ') };
   } finally {
     if (auto && webAlive() && webURL() === startURL) await runPage(`(${scrollScript})('restore')`).catch(() => {});
     job = null; busy = null;
   }
 }
+async function ensureCaptureTempDir() {
+  if (!canvasTempDir) {
+    canvasTempDir = path.join(app.getPath('temp'), 'ImageHarvest', `${process.pid}-${generation}-${Date.now()}`);
+    await fs.mkdir(canvasTempDir, { recursive: true });
+  }
+  return canvasTempDir;
+}
+function snapshotHash(buffer) { return createHash('sha256').update(buffer).digest('hex'); }
+async function storeSnapshot(candidate, data, sourceURL, state) {
+  const hash = snapshotHash(data.buffer);
+  if (state.hashes.has(hash)) return { duplicate: true };
+  if (records.size >= MAX_IMAGES) return { full: true };
+  const id = idFor(`snapshot:${hash}`), dir = await ensureCaptureTempDir();
+  const capturePath = path.join(dir, `${id}.${data.ext}`);
+  try { await fs.writeFile(capturePath, data.buffer, { flag: 'wx' }); }
+  catch (error) { if (error.code !== 'EEXIST') throw error; }
+  state.hashes.add(hash);
+  const item = { ...candidate, id, order: records.size, referrer: sourceURL, backend: browserMode,
+    capturePath, contentHash: hash, ext: data.ext };
+  records.set(id, item);
+  return { item: publicItem(item) };
+}
+async function captureVisiblePass(state) {
+  const sourceURL = webURL();
+  if (!allowedWeb(sourceURL)) throw new Error('หน้าต่างเว็บยังไม่อยู่บนหน้า http/https');
+  const options = { selector: state.selector, backgrounds: state.backgrounds, canvases: state.canvases, visibleOnly: true };
+  const snap = await withTimeout(runPage(`(${collector})(${JSON.stringify(options)})`), 15000, 'หน้าเว็บไม่ตอบสนองต่อการจับภาพ');
+  const added = [], attempted = new Set();
+  let duplicates = 0, failed = 0;
+  for (const raw of snap.items || []) {
+    if (state.cancelled || state.abort.signal.aborted || records.size >= MAX_IMAGES) break;
+    const url = imageURL(raw.url, sourceURL);
+    if (!url) continue;
+    const attemptKey = `${raw.source}|${url}`;
+    if (attempted.has(attemptKey)) continue;
+    attempted.add(attemptKey);
+    const candidate = { ...raw, url, referrer: sourceURL, backend: browserMode };
+    try {
+      const data = await acquireImage(candidate, state.abort.signal);
+      const stored = await storeSnapshot(candidate, data, sourceURL, state);
+      if (stored.item) added.push(stored.item);
+      else if (stored.duplicate) duplicates++;
+      if (stored.full) break;
+    } catch (error) {
+      if (state.cancelled || state.abort.signal.aborted) break;
+      failed++; state.lastError = error.message || String(error);
+    }
+  }
+  for (const canvas of snap.canvasItems || []) {
+    if (state.cancelled || state.abort.signal.aborted || records.size >= MAX_IMAGES) break;
+    try {
+      const captured = await withTimeout(runPage(`(${canvasCaptureScript})(${JSON.stringify(canvas.captureId)})`), 15000, 'Canvas ใช้เวลาส่งออกนานเกินไป');
+      if (!captured || captured.error) { failed++; state.lastError = captured?.error || 'อ่าน Canvas ไม่สำเร็จ'; continue; }
+      const comma = captured.data.indexOf(','), buffer = Buffer.from(captured.data.slice(comma + 1), 'base64');
+      if (!buffer.length || buffer.length > MAX_IMAGE) { failed++; continue; }
+      const typed = imageType(buffer, 'image/png');
+      const candidate = { ...canvas, key: `canvas:${canvas.captureId}`,
+        url: `canvas-capture://${generation}/${canvas.captureId}`, source: 'canvas',
+        label: canvas.alt ? `Canvas — ${canvas.alt}` : `Canvas ${String(canvas.captureId).padStart(3, '0')}`,
+        width: captured.width, height: captured.height };
+      const stored = await storeSnapshot(candidate, { buffer, ...typed }, sourceURL, state);
+      if (stored.item) added.push(stored.item);
+      else if (stored.duplicate) duplicates++;
+      if (stored.full) break;
+    } catch (error) {
+      if (state.cancelled || state.abort.signal.aborted) break;
+      failed++; state.lastError = error.message || String(error);
+    }
+  }
+  pageInfo = { title: snap.title || await webTitle(), url: sourceURL };
+  return { items: added, duplicates, failed, title: pageInfo.title, url: sourceURL };
+}
+async function runCaptureSession(state) {
+  emit('capture-start', { title: await webTitle().catch(() => ''), url: webURL() });
+  let reason = '';
+  try {
+    while (!state.cancelled) {
+      if (!webAlive()) { reason = 'หน้าต่างเว็บถูกปิด'; break; }
+      try {
+        const result = await captureVisiblePass(state);
+        emit('capture-progress', { ...result, count: records.size, lastError: state.lastError || '' });
+        state.lastError = '';
+      } catch (error) {
+        if (state.cancelled || state.abort.signal.aborted) break;
+        state.lastError = error.message || String(error);
+        emit('capture-progress', { items: [], duplicates: 0, failed: 1, count: records.size, lastError: state.lastError });
+      }
+      if (records.size >= MAX_IMAGES) { reason = 'ถึงขีดจำกัด 5,000 ภาพแล้ว'; break; }
+      await delay(state.intervalMs);
+    }
+  } finally {
+    if (captureSession === state) captureSession = null;
+    emit('capture-stop', { count: records.size, reason, cancelled: state.cancelled });
+  }
+}
+async function startCaptureSession(input = {}) {
+  ensureIdle();
+  if (!webAlive() || !allowedWeb(webURL())) throw new Error('กรุณาเปิดเว็บไซต์ก่อนเริ่มจับทีละหน้า');
+  await clearCollection();
+  await ensureCaptureTempDir();
+  const state = {
+    cancelled: false, abort: new AbortController(), hashes: new Set(), lastError: '',
+    intervalMs: Math.max(500, Math.min(5000, Number(input.intervalMs) || 900)),
+    selector: String(input.selector || '').trim().slice(0, 500),
+    backgrounds: Boolean(input.backgrounds), canvases: input.canvases !== false
+  };
+  captureSession = state;
+  runCaptureSession(state).catch(error => {
+    if (captureSession === state) captureSession = null;
+    emit('capture-stop', { count: records.size, reason: error.message || String(error), cancelled: true });
+  });
+  return { started: true, intervalMs: state.intervalMs };
+}
+function stopCaptureSession() {
+  const state = captureSession;
+  if (!state) return { stopped: false, count: records.size };
+  state.cancelled = true; state.abort.abort();
+  return { stopped: true, count: records.size };
+}
+
 async function readLimited(response, signal) {
   const announced = Number(response.headers.get('content-length') || 0);
   if (announced > MAX_IMAGE) { await response.body?.cancel(); throw new Error('ภาพมีขนาดเกิน 32 MB'); }
@@ -296,13 +511,13 @@ function getImage(id, signal) {
   const item = records.get(id);
   if (!item || excludedIds.has(id)) return Promise.reject(new Error('ไม่พบภาพในผลสแกนล่าสุด'));
   const gen = generation;
-  const cacheKey = idFor(item.url), hit = cache.get(cacheKey);
-  if (item.source === 'canvas' && item.capturePath) {
+  const cacheKey = item.capturePath ? idFor(`snapshot:${item.id}`) : idFor(item.url), hit = cache.get(cacheKey);
+  if (item.capturePath) {
     if (hit) return Promise.resolve(hit);
     return fs.readFile(item.capturePath).then(buffer => {
-      const value = { buffer, ...imageType(buffer, 'image/png') };
+      const value = { buffer, ...imageType(buffer, item.ext ? `image/${item.ext}` : '') };
       if (gen === generation) cache.set(cacheKey, value); return value;
-    }).catch(() => { throw new Error('ไฟล์ Canvas ชั่วคราวไม่อยู่แล้ว กรุณาสแกนใหม่'); });
+    }).catch(() => { throw new Error('ไฟล์ภาพชั่วคราวไม่อยู่แล้ว กรุณาสแกนหรือจับหน้าใหม่'); });
   }
   if (hit) return Promise.resolve(hit);
   if (failedImages.has(cacheKey)) return Promise.reject(new Error(failedImages.get(cacheKey)));
@@ -337,7 +552,7 @@ async function chooseFolder() {
   return outputRoot;
 }
 async function saveSettings() {
-  await fs.writeFile(path.join(app.getPath('userData'), 'settings.json'), JSON.stringify({ outputRoot }), 'utf8');
+  await fs.writeFile(path.join(app.getPath('userData'), 'settings.json'), JSON.stringify({ outputRoot, networkMode }), 'utf8');
 }
 async function readRenameFolder() {
   if (!renameFolder) throw new Error('กรุณาเลือกโฟลเดอร์รูปก่อน');
@@ -453,9 +668,14 @@ async function main() {
   scrollScript = await fs.readFile(path.join(__dirname, 'scroll.js'), 'utf8');
   canvasCaptureScript = await fs.readFile(path.join(__dirname, 'canvas-capture.js'), 'utf8');
   await fs.mkdir(app.getPath('userData'), { recursive: true });
-  try { const value = JSON.parse(await fs.readFile(path.join(app.getPath('userData'), 'settings.json'), 'utf8')); if (typeof value.outputRoot === 'string') outputRoot = value.outputRoot; } catch {}
+  try {
+    const value = JSON.parse(await fs.readFile(path.join(app.getPath('userData'), 'settings.json'), 'utf8'));
+    if (typeof value.outputRoot === 'string') outputRoot = value.outputRoot;
+    networkMode = normalizeNetworkMode(value.networkMode);
+  } catch {}
   browsingSession = session.fromPartition('eiw-website'); // Memory-only login session.
   secureSession(browsingSession); secureSession(session.defaultSession);
+  await applyNetworkRuntime(networkMode);
   const types = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.css': 'text/css' };
   protocol.handle('eiw', async request => {
     const url = new URL(request.url);
@@ -485,10 +705,18 @@ async function main() {
   handle('open', openPage);
   handle('showBrowser', async () => { if (browserMode === 'chrome') return chromeBrowser.show(); if (!browser) throw new Error('กรุณาเปิดเว็บก่อน'); browser.show(); browser.focus(); return true; });
   handle('scan', scan);
+  handle('startCapture', startCaptureSession);
+  handle('stopCapture', stopCaptureSession);
+  handle('networkMode', changeNetworkMode);
+  handle('restartForNetwork', restartForNetwork);
   handle('removeItems', removeItems);
   handle('undoRemove', undoRemove);
   handle('clearResults', clearResults);
-  handle('cancel', () => { if (job) { job.cancelled = true; job.abort.abort(); } return true; });
+  handle('cancel', () => {
+    if (job) { job.cancelled = true; job.abort.abort(); }
+    if (captureSession) stopCaptureSession();
+    return true;
+  });
   handle('chooseFolder', chooseFolder);
   handle('chooseRenameFolder', chooseRenameFolder);
   handle('previewRename', previewRename);
@@ -496,13 +724,13 @@ async function main() {
   handle('download', download);
   handle('exportLinks', exportLinks);
   handle('openFolder', async () => { const folder = lastFolder || outputRoot; if (!folder) throw new Error('ยังไม่มีโฟลเดอร์'); const error = await shell.openPath(folder); if (error) throw new Error(error); return true; });
-  handle('settings', () => ({ outputRoot, version: app.getVersion(), browserMode }));
-  if (testMode) global.__eiwTest = { openPage, scan, download, getImage, renameImages: input => renameImages(input, true), setOutput: value => { outputRoot = value; }, setRenameFolder: value => { renameFolder = value; }, runPage, closeChrome: () => chromeBrowser.close(), chromeInfo: () => ({ profile: chromeBrowser.profile, url: chromeBrowser.url(), status: chromeBrowser.lastStatus, navigation: chromeBrowser.navigation }), getState: () => ({ browserMode, busy, count: records.size - excludedIds.size, excluded: excludedIds.size, canvasTempDir, browserId: browser?.webContents.id }),
-    cancel: () => { if (job) { job.cancelled = true; job.abort.abort(); } } };
+  handle('settings', () => ({ outputRoot, version: app.getVersion(), browserMode, networkMode, activeNetworkMode, compatibilityActive }));
+  if (testMode) global.__eiwTest = { openPage, scan, startCaptureSession, stopCaptureSession, download, getImage, changeNetworkMode, renameImages: input => renameImages(input, true), setOutput: value => { outputRoot = value; }, setRenameFolder: value => { renameFolder = value; }, runPage, closeChrome: () => chromeBrowser.close(), chromeInfo: () => ({ profile: chromeBrowser.profile, url: chromeBrowser.url(), status: chromeBrowser.lastStatus, navigation: chromeBrowser.navigation, networkMode: chromeBrowser.networkMode }), getState: () => ({ browserMode, networkMode, activeNetworkMode, autoFallbackHosts: Object.fromEntries(autoFallbackHosts), compatibilityActive, captureActive: Boolean(captureSession), busy, count: records.size - excludedIds.size, excluded: excludedIds.size, canvasTempDir, browserId: browser?.webContents.id }),
+    cancel: () => { if (job) { job.cancelled = true; job.abort.abort(); } if (captureSession) stopCaptureSession(); } };
   await mainWindow.loadURL('eiw://app/');
 }
 app.whenReady().then(main).catch(error => { dialog.showErrorBox('ImageHarvest', error.stack || error.message); app.exit(1); });
-app.on('before-quit', () => { quitting = true; if (job) job.abort.abort(); if (canvasTempDir) fs.rm(canvasTempDir, { recursive:true, force:true }).catch(()=>{}); });
+app.on('before-quit', () => { quitting = true; if (job) job.abort.abort(); if (captureSession) { captureSession.cancelled = true; captureSession.abort.abort(); } if (canvasTempDir) fs.rm(canvasTempDir, { recursive:true, force:true }).catch(()=>{}); });
 app.on('before-quit', event => { if (chromeBrowser.context) { event.preventDefault(); chromeBrowser.close().finally(() => app.quit()); } });
 app.on('window-all-closed', () => app.quit());
 app.on('web-contents-created', (_event, contents) => { contents.on('will-attach-webview', event => event.preventDefault()); });

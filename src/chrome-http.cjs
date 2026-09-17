@@ -1,10 +1,11 @@
 'use strict';
 const http = require('node:http');
 const https = require('node:https');
+const { createLookup } = require('./network.cjs');
 
 // Stream-bounded downloads using cookies ONLY from the app-created Chrome session.
 // Personal Chrome profiles, filesystem cookies and external authentication are never read.
-async function chromeFetchManual(url, options, context, userAgent, limit) {
+async function chromeFetchManual(url, options, context, userAgent, limit, networkMode = 'auto') {
   const target = new URL(url);
   if (!['http:', 'https:'].includes(target.protocol) || target.username || target.password) throw new Error('URL ภาพไม่ปลอดภัย');
   if (options.signal?.aborted) throw new Error('ยกเลิกการดาวน์โหลด');
@@ -19,7 +20,10 @@ async function chromeFetchManual(url, options, context, userAgent, limit) {
   return new Promise((resolve, reject) => {
     let settled = false, response;
     const signal = options.signal;
-    const request = (target.protocol === 'https:' ? https : http).request(target, { method: 'GET', headers });
+    const lookup = createLookup(networkMode);
+    const requestOptions = { method: 'GET', headers };
+    if (lookup) requestOptions.lookup = lookup;
+    const request = (target.protocol === 'https:' ? https : http).request(target, requestOptions);
     function done(error, value) {
       if (settled) return; settled = true;
       signal?.removeEventListener('abort', abort);

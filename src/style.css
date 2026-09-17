@@ -22,3 +22,6 @@
 @media(max-width:1160px) { .collection-tools>span { width:100%; margin-left:0; } }
 
 .browser-mode-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:17px;padding-bottom:14px;border-bottom:1px solid var(--line)}.browser-mode-row label{font-size:11px;display:flex;gap:10px;align-items:center}.browser-mode-row select{font-size:11px;max-width:260px}.browser-mode-row span{font-size:10px;color:var(--muted)}
+
+.network-mode-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-6px 0 16px;padding:0 0 14px;border-bottom:1px solid var(--line)}.network-mode-row label{font-size:11px;display:flex;gap:10px;align-items:center}.network-mode-row select{font-size:11px;max-width:285px}.network-mode-row span{font-size:10px;color:var(--muted);flex:1;min-width:220px}.network-mode-row button{padding:7px 10px;font-size:10px}
+#capturePages{border-color:#554b74}#capturePages:not(:disabled){color:#e1d8ff}

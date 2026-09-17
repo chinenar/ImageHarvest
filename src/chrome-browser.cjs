@@ -3,13 +3,14 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
 const { chromeFetchManual } = require('./chrome-http.cjs');
+const { chromeArgs, normalizeNetworkMode } = require('./network.cjs');
 
 // Google Chrome is a separate, visible browser. Never attach to a personal profile.
 class ChromeBrowser {
   constructor(notify = () => {}) {
     this.notify = notify; this.context = null; this.page = null; this.cdp = null;
     this.profile = ''; this.lastStatus = null; this.lastTitle = ''; this.userAgent = '';
-    this.navigation = []; this.closing = false;
+    this.navigation = []; this.closing = false; this.networkMode = 'auto';
   }
   alive() { return Boolean(this.context && this.page && !this.page.isClosed()); }
   url() { return this.alive() ? this.page.url() : ''; }
@@ -22,7 +23,7 @@ class ChromeBrowser {
       const { chromium } = await import('playwright-core');
       this.context = await chromium.launchPersistentContext(this.profile, {
         channel: 'chrome', headless: false, viewport: null, chromiumSandbox: true,
-        acceptDownloads: false, timeout: 45000
+        acceptDownloads: false, timeout: 45000, args: chromeArgs(this.networkMode)
       });
       this.page = this.context.pages()[0] || await this.context.newPage();
       // This mode owns one tab. Extra popups are closed, not silently scanned.
@@ -67,6 +68,13 @@ class ChromeBrowser {
     if (response.exceptionDetails) throw new Error(response.exceptionDetails.exception?.description || response.exceptionDetails.text || 'หน้าเว็บประมวลผลไม่ได้');
     return response.result.value;
   }
+  async setNetworkMode(mode) {
+    mode = normalizeNetworkMode(mode);
+    if (mode === this.networkMode) return false;
+    this.networkMode = mode;
+    if (this.context) await this.close();
+    return true;
+  }
   async show() {
     if (!this.alive()) throw new Error('กรุณาเปิดเว็บด้วย Chrome ก่อน');
     await this.page.bringToFront(); return true;
@@ -74,7 +82,7 @@ class ChromeBrowser {
   async title() { return this.alive() ? this.page.title() : this.lastTitle; }
   async fetchManual(url, options, limit) {
     if (!this.alive()) throw new Error('กรุณาเปิดหน้าต่าง Chrome ของแอปค้างไว้');
-    return chromeFetchManual(url, options, this.context, this.userAgent, limit);
+    return chromeFetchManual(url, options, this.context, this.userAgent, limit, this.networkMode);
   }
   async close() {
     this.closing = true;

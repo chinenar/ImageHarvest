@@ -56,6 +56,7 @@
     if (!isImg && !isCanvas && !options.backgrounds) return;
     const rect = el.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
+    if (options.visibleOnly && (rect.bottom <= 0 || rect.right <= 0 || rect.top >= innerHeight || rect.left >= innerWidth)) return;
     const style = getComputedStyle(el);
     if (style.visibility === 'hidden' || style.display === 'none') return;
     if (isCanvas && options.canvases && el.width > 1 && el.height > 1) {
