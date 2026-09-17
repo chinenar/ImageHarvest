@@ -7,11 +7,9 @@ const fs = require('node:fs/promises');
   const output = await packager({ dir: root, name: 'ImageHarvest', platform: 'win32', arch: 'x64',
     out: path.join(root, 'release'), overwrite: true, asar: true, prune: true,
     icon: path.join(root, 'assets', 'icon.ico'),
-    appVersion: '1.0.4', appCopyright: 'Personal image collection tool',
+    appVersion: JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8')).version, appCopyright: 'Personal image collection tool',
     win32metadata: { ProductName: 'ImageHarvest', FileDescription: 'Ordered website image collector' },
-    ignore: [/^\/release($|\/)/, /^\/installer-dist($|\/)/, /^\/test($|\/)/, /^\/scripts($|\/)/, /^\/\.git($|\/)/,
-      /^\/test-results($|\/)/, /\.b64$/, /^\/deploy\.py$/, /^\/node_modules($|\/)/, /^\/package-lock\.json$/,
-      /^\/.*\.log$/, /^\/.*\.zip$/] });
+    ignore: [/^\/(?!src(?:\/|$)|assets(?:\/|$)|node_modules(?:\/|$)|package\.json$)/] });
   console.log('PACKAGED:', output.join('\n'));
   await fs.writeFile(path.join(root, 'PACKAGE_PATH.txt'), path.join(output[0], 'ImageHarvest.exe'), 'utf8');
 })().catch(error => { console.error(error); process.exitCode = 1; });

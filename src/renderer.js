@@ -12,7 +12,7 @@ async function call(method, args) {
 }
 function setBusy(value) {
   busy = value;
-  for (const id of ['open', 'scan', 'chooseFolder', 'exportLinks', 'sort', 'dedupe', 'contentPreset', 'selectAll', 'deselectAll', 'reverseOrder', 'renameTool', 'hideChrome', 'mainOnly', 'sourceFilter', 'resetFilters', 'search', 'minWidth', 'minHeight', 'setName']) $(id).disabled = value;
+  for (const id of ['open', 'scan', 'chooseFolder', 'exportLinks', 'sort', 'dedupe', 'contentPreset', 'selectAll', 'deselectAll', 'reverseOrder', 'renameTool', 'hideChrome', 'mainOnly', 'sourceFilter', 'resetFilters', 'search', 'minWidth', 'minHeight', 'setName', 'browserMode']) $(id).disabled = value;
   $('url').disabled = value; $('cancel').hidden = !value;
   $('statusDot').classList.toggle('working', value); $('progress').hidden = !value;
   if (!value) $('progress').value = 0;
@@ -149,7 +149,7 @@ async function refreshRenamePreview() {
 async function action(fn) { try { await fn(); } catch (error) { status(error.message, true); } }
 $('open').addEventListener('click', () => action(async () => {
   setBusy(true);
-  try { const result = await call('open', { url: $('url').value, show: true }); currentURL = result.url; $('url').value = result.url; }
+  try { const result = await call('open', { url: $('url').value, show: true, backend: $('browserMode').value }); currentURL = result.url; $('url').value = result.url; }
   finally { setBusy(false); }
 }));
 $('scan').addEventListener('click', () => action(async () => {
@@ -158,7 +158,7 @@ $('scan').addEventListener('click', () => action(async () => {
     const input = $('url').value.trim();
     if (!input) throw new Error('กรุณาใส่ลิงก์เว็บไซต์ก่อนค่ะ');
     if (!currentURL || (input !== currentURL && `https://${input}` !== currentURL)) {
-      const opened = await call('open', { url: input, show: false }); currentURL = opened.url; $('url').value = opened.url;
+      const opened = await call('open', { url: input, show: false, backend: $('browserMode').value }); currentURL = opened.url; $('url').value = opened.url;
     }
     const result = await call('scan', { autoScroll: $('autoScroll').checked, backgrounds: $('backgrounds').checked, canvases: $('canvases').checked,
       selector: $('selector').value, waitMs: Number($('waitMs').value), maxSteps: Number($('maxSteps').value) });
@@ -169,6 +169,13 @@ $('scan').addEventListener('click', () => action(async () => {
     status(`${result.cancelled ? 'หยุดสแกนแล้ว เก็บผลที่พบไว้' : result.truncated ? 'สแกนได้บางส่วน' : 'สแกนเสร็จ'} — พบ ${all.length} ภาพ (${result.steps} รอบ)`);
   } finally { setBusy(false); render(); }
 }));
+$('browserMode').addEventListener('change', () => {
+  currentURL = '';
+  $('browserModeNote').textContent = $('browserMode').value === 'chrome'
+    ? 'ต้องติดตั้ง Chrome • เปิดหน้าต่างจริง • โปรไฟล์แยกชั่วคราว • ไม่เปิดแผง DevTools'
+    : 'ใช้เบราว์เซอร์ที่มากับแอป';
+  status('เลือกเบราว์เซอร์แล้ว — กดเปิดเว็บหรือสแกนเพื่อใช้โหมดนี้');
+});
 $('url').addEventListener('keydown', event => { if (event.key === 'Enter' && !busy) $('scan').click(); });
 $('showBrowser').addEventListener('click', () => action(() => call('showBrowser')));
 $('cancel').addEventListener('click', () => action(async () => { await call('cancel'); status('กำลังหยุดงาน เก็บไฟล์ที่บันทึกแล้วไว้…'); }));
@@ -281,7 +288,7 @@ $('closePreview').addEventListener('click', () => $('preview').close());
 $('preview').addEventListener('close', () => $('previewImage').removeAttribute('src'));
 window.eiw.on(event => {
   if (event.type === 'status' || event.type === 'rate-limit' || event.type === 'error') status(event.message, event.type !== 'status');
-  if (event.type === 'navigation') { currentURL = event.url; $('url').value = event.url; }
+  if (event.type === 'navigation') { currentURL = event.url; if (/^https?:\/\//i.test(event.url)) $('url').value = event.url; else status('หน้าเว็บนำทางออกไป ' + event.url + ' — กรุณาตรวจหน้าต่างเว็บ', true); }
   if (event.type === 'scan-start') { all = []; sequence = []; selected.clear(); states.clear(); removedSnapshot = null; mainScope = 'unknown'; render(); status('กำลังรวบรวมภาพและเลื่อนหน้า…'); }
   if (event.type === 'scan-progress') { status(`กำลังสแกน • พบ ${event.count} ภาพ • รอบ ${event.step}/${event.maxSteps}`); $('progress').value = Math.round(event.progress * 100); }
   if (event.type === 'download-progress') { status(`กำลังบันทึกภาพ ${event.index}/${event.total} • สำเร็จ ${event.saved} • ไม่สำเร็จ ${event.failed}`); $('progress').value = ((event.index - 1) / event.total) * 100; }

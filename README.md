@@ -1,11 +1,11 @@
-# ImageHarvest 1.0.4
+# ImageHarvest 1.0.5
 
 แอป Windows สำหรับรวบรวมไฟล์ภาพจากหน้าเว็บหนึ่งหน้า ดูตัวอย่าง กรอง จัดลำดับ และบันทึกไฟล์ต้นฉบับลงเครื่อง
 
 Repository: https://github.com/chinenar/ImageHarvest
 
 ## ติดตั้งและเปิดใช้งาน
-หลัง build แล้ว ตัวติดตั้งอยู่ที่ `installer-dist\ImageHarvest-Setup-1.0.4.exe`
+หลัง build แล้ว ตัวติดตั้งอยู่ที่ `installer-dist\ImageHarvest-Setup-1.0.5.exe`
 
 - Installer เป็นแบบหลายขั้นตอนและ **เลือกโฟลเดอร์ติดตั้งได้**
 - สร้าง Desktop shortcut และ Start Menu shortcut
@@ -59,6 +59,7 @@ npm.cmd start
 npm.cmd test
 npm.cmd run test:e2e
 npm.cmd run test:curation
+npm.cmd run test:chrome
 npm.cmd run package
 npm.cmd run dist
 ```
@@ -80,7 +81,7 @@ E2E เปิดเว็บทดสอบบน `127.0.0.1` เท่านั
 
 อ้างอิง API: https://www.electronjs.org/docs/latest/tutorial/security ; https://www.electronjs.org/docs/latest/api/session ; https://playwright.dev/docs/api/class-electron
 
-## คัดรูปและจัดการรายการ (1.0.4)
+## คัดรูปและจัดการรายการ (1.0.5)
 - **นำที่เลือกออก**: นำเฉพาะรายการที่เลือกและกำลังแสดงออกจากผลสแกน มีหน้าต่างยืนยันก่อนทำ
 - **คืนรายการล่าสุด**: ย้อนการนำออกครั้งล่าสุด รวมลำดับและสถานะการเลือก ใช้ได้ก่อนสแกนใหม่หรือล้างทั้งหมด
 - **ล้างทั้งหมด**: ล้างผลสแกนรวมภาพที่ซ่อน ประวัติคืนรายการ แคช และไฟล์ Canvas ชั่วคราว โดยคง URL/โฟลเดอร์ปลายทาง
@@ -97,3 +98,23 @@ E2E เปิดเว็บทดสอบบน `127.0.0.1` เท่านั
 นี่เป็นกฎประเมินจากข้อมูลและโครงสร้างหน้าเว็บ ไม่ใช่ AI อ่านเนื้อหาภาพ จึงอาจคัดผิดได้
 หน้าโฆษณาที่แทรกอยู่ในตัวอ่านเหมือนหน้าปกติอาจยังผ่าน ต้องตรวจและเลือกนำออกเอง
 การกรองโลโก้คือการซ่อนไฟล์ที่เป็นโลโก้ ไม่ใช่การลบลายน้ำที่ฝังอยู่ในภาพ
+
+## Google Chrome mode (1.0.5, experimental)
+Choose **Google Chrome จริง (ทดลอง)** above the URL, then open or scan the page.
+This mode runs the installed Google Chrome in a visible window through Playwright/CDP.
+The DevTools panel is not opened. The browser's security settings and site scripts are not disabled.
+
+- Chrome must already be installed. There is no silent browser download or fallback to another brand.
+- A fresh, temporary ImageHarvest profile is created. Personal Chrome profiles and their cookies are never imported.
+- Log in manually inside the app-created Chrome window when authorized. Closing ImageHarvest closes this Chrome instance and removes its temporary profile.
+- Image downloads use only cookies from this app-created session, keep the size limit, and stop at HTTP 403/429 rather than bypassing access checks.
+- Extra popup tabs are closed in this initial implementation; popup-based login may not work.
+- Canvas collection keeps the browser's origin-clean checks. Tainted Canvas is not exported.
+- A website may still reject automation or navigate away even when no DevTools panel is visible. Chrome mode does not guarantee access to every website.
+- The default embedded browser remains available. This release does not include a Chrome extension.
+
+`playwright-core` is now a production dependency for Chrome mode, in addition to its test usage.
+Run `npm.cmd run test:chrome` on a Windows machine with Google Chrome installed.
+The local fixture verifies lazy Canvas capture while a dimension-based inspect detector continues running.
+It is a synthetic test, not a clone of any third-party site's complete protection system.
+API references: https://playwright.dev/docs/api/class-browsertype ; https://playwright.dev/docs/api/class-cdpsession

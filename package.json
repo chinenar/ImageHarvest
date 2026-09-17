@@ -1,7 +1,7 @@
 {
   "name": "imageharvest",
   "productName": "ImageHarvest",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Ordered website image collector for Windows",
   "private": true,
   "main": "src/main.cjs",
@@ -12,13 +12,13 @@
     "test:e2e": "node test/e2e.cjs",
     "package": "node scripts/package.cjs",
     "dist": "electron-builder --win nsis --x64",
-    "test:curation": "node test/curation.e2e.cjs"
+    "test:curation": "node test/curation.e2e.cjs",
+    "test:chrome": "node test/chrome.e2e.cjs"
   },
   "devDependencies": {
     "electron": "44.4.1",
     "@electron/packager": "20.3.0",
-    "electron-builder": "26.15.3",
-    "playwright-core": "1.63.0"
+    "electron-builder": "26.15.3"
   },
   "engines": {
     "node": ">=22.12.0"
@@ -57,5 +57,8 @@
       "deleteAppDataOnUninstall": false,
       "runAfterFinish": true
     }
+  },
+  "dependencies": {
+    "playwright-core": "1.63.0"
   }
 }

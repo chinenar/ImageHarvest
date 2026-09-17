@@ -12,7 +12,7 @@
   <aside>
     <div class="brand"><span class="mark">▧</span><div>Image<span class="brand-accent">Harvest</span><small>EXPORT IMAGE FROM WEB</small></div></div>
     <div class="side-label">YOUR WORKSPACE</div>
-    <div class="side-active">▦ <span>เก็บภาพจากเว็บไซต์</span><span class="pill">1.0.4</span></div>
+    <div class="side-active">▦ <span>เก็บภาพจากเว็บไซต์</span><span class="pill">1.0.5</span></div>
     <div class="side-guide"><div class="step"><b>1</b><div>เปิดเว็บไซต์<small>วาง URL หน้าที่ต้องการเก็บรูป</small></div></div><div class="step"><b>2</b><div>สแกนและเลือกภาพ<small>กรองภาพเล็ก แล้วจัดลำดับ</small></div></div><div class="step"><b>3</b><div>บันทึกลงเครื่อง<small>ชื่อไฟล์เรียง 0001, 0002…</small></div></div></div>
     <div class="side-note"><span>LOCAL FIRST</span><p>รูปบันทึกลงเครื่องโดยตรง<br>ไม่มีการส่งผ่านเซิร์ฟเวอร์ของแอป</p><small>ใช้กับภาพที่พี่มีสิทธิ์ดาวน์โหลด<br>ไม่ข้าม paywall หรือข้อจำกัดของเว็บ</small></div>
     <footer>Made for your collection <span>✦</span></footer>
@@ -20,6 +20,7 @@
   <main>
     <header><div><div class="eyebrow">A LITTLE MORE ORGANIZED.</div><h1>เก็บภาพให้ครบ เรียงให้พร้อม</h1><p>วางลิงก์ เลือกภาพ แล้วเก็บเป็นชุดในลำดับที่ต้องการ</p></div><div class="header-actions"><button id="renameTool" class="quiet">✎ ตั้งเลขหน้ารูป</button><button id="openFolder" class="quiet">▣ เปิดโฟลเดอร์</button></div></header>
     <section class="panel source-panel">
+      <div class="browser-mode-row"><label for="browserMode">เปิดเว็บไซต์ด้วย <select id="browserMode"><option value="electron">เบราว์เซอร์ในแอป</option><option value="chrome">Google Chrome จริง (ทดลอง)</option></select></label><span id="browserModeNote">ใช้เบราว์เซอร์ที่มากับแอป</span></div>
       <label class="field-label" for="url">ลิงก์หน้าเว็บไซต์ <span>หนึ่ง URL ต่อการสแกน ไม่ไล่ทั้งเว็บไซต์</span></label>
       <div class="url-row"><span class="link-icon">↗</span><input id="url" type="url" placeholder="https://example.com/chapter/1" autocomplete="off" spellcheck="false"><button id="open" class="secondary">เปิดเว็บ</button><button id="scan" class="primary">✦ สแกนภาพ</button></div>
       <div class="source-bottom"><label class="check"><input id="autoScroll" type="checkbox" checked> เลื่อนหน้าอัตโนมัติ</label><label class="check"><input id="backgrounds" type="checkbox"> รวมภาพพื้นหลัง</label><label class="check" title="เก็บ Canvas ที่หน้าเว็บวาดเสร็จแล้วเป็น PNG โดยไม่ข้ามสิทธิ์ของ browser"><input id="canvases" type="checkbox" checked> รวม Canvas</label><button id="showBrowser" class="text-button">ดูหน้าต่างเว็บ / ล็อกอิน ↗</button><button id="advancedToggle" class="text-button">ตั้งค่าเพิ่มเติม ▾</button></div>

@@ -1,30 +1,29 @@
-# Verification - ImageHarvest 1.0.4
+# Verification - ImageHarvest 1.0.5
 
-Runtime: Electron 44.4.1. Installer: electron-builder 26.15.3, assisted NSIS x64.
+Electron: 44.4.1; Playwright Core: 1.63.0 (now also a production dependency).
+Installer: electron-builder 26.15.3 / NSIS, assisted installer with selectable directory.
 
-- Unit tests: 12/12 passed (`npm test`).
-- Existing Electron end-to-end checks: 20/20 passed (`npm run test:e2e`).
-- New collection/filter end-to-end checks: 18/18 passed (`npm run test:curation`).
-- The same 18 collection checks passed against the packaged EXE.
-- Packaged smoke test passed: version, IPC and all new controls verified.
-- Installer built with a selectable installation directory.
-- Installer SHA-256: `8EF9F5A18043216190499C573EADB423361318D26E1B98A6A6A432568ADEB968`.
+## Regression results
+- Unit: 12/12 passed.
+- Existing Electron E2E: 20/20 passed (`test-results/run-1789668000450`).
+- Curation E2E: 18/18 passed (`test-results/curation-1789668018891`).
+- Chrome E2E: 10/10 passed from source (`test-results/chrome-1789668505457`).
+- Chrome E2E: 10/10 passed using packaged EXE on SaKuRa-PC (`test-results/chrome-1789668721668`).
+- Chrome E2E: 10/10 passed using installed EXE on SaKuRa-Notebook (`test-results/chrome-1789668914034`).
+- Packaged application smoke test passed; version and browser selector verified.
 
-Local evidence (ignored from Git):
-- Existing E2E: `test-results/run-1789665143477/`
-- Final source curation: `test-results/curation-1789665323495/`
-- Final packaged curation: `test-results/curation-1789665367226/`
+The Chrome fixture checks a live dimension-based inspect detector, lazy Canvas capture,
+image bytes, app-owned session cookies, redirects, reverse-order export, HTTP 403/429,
+stream size limits, tainted-Canvas rejection, navigation to about:blank, access-gate errors,
+switching back to Electron, and temporary-profile cleanup.
+This is a synthetic detector, not a copy of any third-party site's full protection system.
 
-New checks cover opt-in metadata filters, reader prioritization, short pages,
-shared image URLs in different regions, Canvas/background inclusion, source filtering,
-selected-visible-only removal, cancellation, undo, clear including hidden results,
-invalid IDs, busy-state protection, minimum window width and export ordering.
-Hashes verified that exported files are unchanged by removal and clearing.
-Unknown layouts retain uncertain images and display a warning.
+## Installed build
+Installed and launched successfully on SaKuRa-PC and SaKuRa-Notebook.
+Both machines report 1.0.5; existing per-user installation paths were retained.
+Installer SHA-256: `C1A123DA1E83C2C3DA6DC42264C90E340EF6B586EC7050B0695F12880E9F1631`.
 
-Tests use controlled loopback pages, not a claim of accuracy on every public website.
-No third-party manga images, browsing data or live-site test reports are published here.
-
-Installed using the same checksum-verified installer on SaKuRa-PC and SaKuRa-Notebook.
-Both installed executables report 1.0.4 and opened an ImageHarvest window successfully.
-Existing installed-user paths were retained under `%LOCALAPPDATA%\Programs\ImageHarvest`.
+A separate, read-only live compatibility check did not obtain manga images from the
+third-party target: Chrome opened the pages but they navigated to about:blank.
+No site's protection scripts were disabled and no personal browser profile was used.
+Live evidence is kept locally under ignored `test-results/`, not published in this repo.

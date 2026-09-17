@@ -5,6 +5,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { randomUUID } = require('node:crypto');
 const { fetchManual } = require('./http.cjs');
+const { ChromeBrowser } = require('./chrome-browser.cjs');
 const { pageURL, imageURL, safeName, imageType, publicItem, orderItems, uniqueItems, isImageFilename, renamePlan, idFor, delay, ByteCache } = require('./core.cjs');
 
 const MAX_IMAGE = 32 * 1024 * 1024, MAX_IMAGES = 5000;
@@ -16,6 +17,7 @@ const testMode = process.argv.includes('--eiw-test');
 if (testMode) app.setPath('userData', path.join(app.getPath('temp'), `eiw-test-${process.pid}`));
 app.setName('ImageHarvest');
 let mainWindow, browser, browsingSession, quitting = false, busy = null, job = null;
+let browserMode = 'electron';
 let records = new Map(), cache = new ByteCache(), pending = new Map(), failedImages = new Map(), generation = 0;
 let pageInfo = { title: '', url: '' }, lastFolder = '', outputRoot = '', renameFolder = '', canvasTempDir = '', blockedHosts = new Map();
 let queue = Promise.resolve(), requestGate = 0;
@@ -24,6 +26,14 @@ let collector, scrollScript, canvasCaptureScript;
 const emit = (type, data = {}) => {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('eiw:event', { type, ...data });
 };
+const chromeBrowser = new ChromeBrowser((type, data) => {
+  if (browserMode !== 'chrome' || quitting) return;
+  if (type === 'navigation') { pageInfo.url = data.url; emit(type, data); }
+  if (type === 'browser-closed') {
+    if (job) { job.cancelled = true; job.abort.abort(); }
+    emit('error', { message: 'หน้าต่าง Chrome ปิดแล้ว กดเปิดเว็บเพื่อเริ่มเซสชันใหม่' });
+  }
+});
 function validateSender(event) {
   if (!mainWindow || event.sender !== mainWindow.webContents || event.senderFrame !== mainWindow.webContents.mainFrame ||
       !['eiw://app/', 'eiw://app/index.html'].includes(event.senderFrame.url)) throw new Error('Unauthorized request');
@@ -56,14 +66,18 @@ function createBrowser() {
   wc.on('will-navigate', (event, url) => { if (!allowedWeb(url)) event.preventDefault(); });
   wc.on('will-redirect', (event, url) => { if (!allowedWeb(url)) event.preventDefault(); });
   wc.on('will-frame-navigate', event => { if (!allowedWeb(event.url) && event.url !== 'about:blank') event.preventDefault(); });
-  wc.on('did-navigate', (_event, url) => { pageInfo.url = url; emit('navigation', { url }); });
-  wc.on('did-navigate-in-page', (_event, url, main) => { if (main) { pageInfo.url = url; emit('navigation', { url }); } });
-  wc.on('page-title-updated', (_event, title) => { pageInfo.title = title; });
+  wc.on('did-navigate', (_event, url) => { if (browserMode !== 'electron') return; pageInfo.url = url; emit('navigation', { url }); });
+  wc.on('did-navigate-in-page', (_event, url, main) => { if (main && browserMode === 'electron') { pageInfo.url = url; emit('navigation', { url }); } });
+  wc.on('page-title-updated', (_event, title) => { if (browserMode === 'electron') pageInfo.title = title; });
   wc.on('render-process-gone', () => { if (job) { job.cancelled = true; job.abort.abort(); } emit('error', { message: 'หน้าต่างเว็บหยุดทำงาน กรุณาเปิดเว็บใหม่' }); });
   browser.on('close', event => { if (!quitting) { event.preventDefault(); browser.hide(); } });
   return browser;
 }
-async function runPage(code) {
+function webAlive() { return browserMode === 'chrome' ? chromeBrowser.alive() : Boolean(browser && !browser.isDestroyed()); }
+function webURL() { return browserMode === 'chrome' ? chromeBrowser.url() : (browser && !browser.isDestroyed() ? browser.webContents.getURL() : ''); }
+async function webTitle() { return browserMode === 'chrome' ? chromeBrowser.title() : (browser && !browser.isDestroyed() ? browser.webContents.getTitle() : ''); }
+async function runPage(code, backend = browserMode) {
+  if (backend === 'chrome') return chromeBrowser.evaluate(code);
   if (!browser || browser.isDestroyed()) throw new Error('กรุณาเปิดเว็บก่อน');
   return browser.webContents.executeJavaScriptInIsolatedWorld(7341, [{ code }]);
 }
@@ -74,17 +88,25 @@ async function withTimeout(promise, ms, message) {
 }
 async function openPage(input) {
   ensureIdle();
-  const url = pageURL(input?.url);
-  busy = 'open'; emit('status', { message: 'กำลังเปิดเว็บไซต์…' });
-  const win = createBrowser();
-  if (input?.show !== false) win.show();
+  const url = pageURL(input?.url), mode = input?.backend || browserMode;
+  if (!['electron', 'chrome'].includes(mode)) throw new Error('ชนิดเบราว์เซอร์ไม่ถูกต้อง');
+  busy = 'open'; browserMode = mode;
+  emit('status', { message: mode === 'chrome' ? 'กำลังเปิด Google Chrome (โปรไฟล์แยก)…' : 'กำลังเปิดเว็บไซต์…' });
   try {
-    await withTimeout(win.loadURL(url), 45000, 'เปิดเว็บนานเกินกำหนด ลองเปิดหน้าต่างเว็บเพื่อตรวจสอบ');
-    pageInfo = { url: win.webContents.getURL(), title: win.webContents.getTitle() };
-    emit('status', { message: 'เปิดเว็บแล้ว กดสแกนเพื่อรวบรวมภาพ' });
-    return pageInfo;
+    if (mode === 'chrome') {
+      if (browser && !browser.isDestroyed()) browser.hide();
+      pageInfo = await chromeBrowser.open(url);
+    } else {
+      const win = createBrowser();
+      if (input?.show !== false) win.show();
+      await withTimeout(win.loadURL(url), 45000, 'เปิดเว็บนานเกินกำหนด ลองเปิดหน้าต่างเว็บเพื่อตรวจสอบ');
+      pageInfo = { url: win.webContents.getURL(), title: win.webContents.getTitle(), backend: mode };
+    }
+    const gated = /Open in Browser|403 Forbidden|Just a moment/i.test(pageInfo.title);
+    const message = gated ? 'เว็บไซต์ยังไม่เปิดหน้าอ่าน กรุณาตรวจหน้าต่างเว็บก่อนสแกน' : 'เปิดเว็บแล้ว กดสแกนเพื่อรวบรวมภาพ';
+    emit('status', { message }); return { ...pageInfo, gated };
   } catch (error) {
-    win.webContents.stop();
+    if (mode === 'electron' && browser && !browser.isDestroyed()) browser.webContents.stop();
     throw new Error(`เปิดเว็บไม่สำเร็จ: ${error.message}`);
   } finally { busy = null; }
 }
@@ -113,13 +135,14 @@ async function clearResults() {
   ensureIdle(); busy = 'clear';
   try {
     await clearCollection();
-    pageInfo = { title: '', url: browser && !browser.isDestroyed() ? browser.webContents.getURL() : '' };
+    pageInfo = { title: '', url: webURL() };
     return { cleared: true };
   } finally { busy = null; }
 }
 async function scan(input = {}) {
   ensureIdle();
-  if (!browser || browser.isDestroyed() || !allowedWeb(browser.webContents.getURL())) throw new Error('กรุณาเปิดเว็บไซต์ก่อนสแกน');
+  if (!webAlive() || !allowedWeb(webURL())) throw new Error('กรุณาเปิดเว็บไซต์ก่อนสแกน');
+  if (/Open in Browser|403 Forbidden|Just a moment/i.test(await webTitle())) throw new Error('เว็บไซต์ยังไม่เปิดหน้าอ่าน (หน้าแจ้งเปิดเบราว์เซอร์/ปฏิเสธการเข้าถึง) กรุณาตรวจหน้าต่างเว็บก่อนสแกน');
   const selector = String(input.selector || '').trim().slice(0, 500);
   const options = { selector, backgrounds: Boolean(input.backgrounds), canvases: Boolean(input.canvases) };
   const maxSteps = Math.max(5, Math.min(600, Number(input.maxSteps) || 150));
@@ -131,7 +154,7 @@ async function scan(input = {}) {
     canvasTempDir = path.join(app.getPath('temp'), 'ImageHarvest', `${process.pid}-${generation}-${Date.now()}`);
     await fs.mkdir(canvasTempDir, { recursive: true });
   }
-  const startURL = browser.webContents.getURL(), found = new Map(), canvasFailures = new Set();
+  const startURL = webURL(), found = new Map(), canvasFailures = new Set();
   let truncated = false, reason = '', steps = 0, previousHeight = -1, stable = 0, metadata = {}, canvasPositionRetries = 0;
   emit('scan-start');
   try {
@@ -139,7 +162,7 @@ async function scan(input = {}) {
     for (let step = 0; step < (auto ? maxSteps : 1); step++) {
       steps = step + 1;
       if (job.cancelled) break;
-      if (browser.webContents.getURL() !== startURL) { reason = 'หน้าเว็บเปลี่ยนระหว่างสแกน ผลลัพธ์อาจไม่ครบ'; truncated = true; break; }
+      if (webURL() !== startURL) { reason = 'หน้าเว็บเปลี่ยนระหว่างสแกน ผลลัพธ์อาจไม่ครบ'; truncated = true; break; }
       const snap = await withTimeout(runPage(`(${collector})(${JSON.stringify(options)})`), 15000, 'หน้าเว็บไม่ตอบสนองต่อการสแกน');
       metadata = snap;
       for (const item of snap.items) {
@@ -186,14 +209,14 @@ async function scan(input = {}) {
       await delay(waitMs);
     }
     const all = orderItems([...found.values()], 'visual');
-    for (const item of all) records.set(item.id, { ...item, referrer: startURL });
-    pageInfo = { title: metadata.title || browser.webContents.getTitle(), url: startURL };
+    for (const item of all) records.set(item.id, { ...item, referrer: startURL, backend: browserMode });
+    pageInfo = { title: metadata.title || await webTitle(), url: startURL };
     const cancelled = job.cancelled;
     return { items: all.map(publicItem), ...pageInfo, cancelled, truncated, reason, steps,
       notice: [metadata.frames ? `พบ iframe ${metadata.frames} ส่วน: ยังไม่สแกนภายใน iframe` : '',
         metadata.canvases ? (options.canvases ? `พบ canvas ${metadata.canvases} ส่วน: จับเฉพาะ canvas ที่วาดเสร็จและ browser อนุญาตให้อ่าน` : `พบ canvas ${metadata.canvases} ส่วน: เปิด “รวม Canvas” หากต้องการเก็บภาพที่วาดแล้ว`) : ''].filter(Boolean).join(' • ') };
   } finally {
-    if (auto && browser && !browser.isDestroyed()) await runPage(`(${scrollScript})('restore')`).catch(() => {});
+    if (auto && webAlive() && webURL() === startURL) await runPage(`(${scrollScript})('restore')`).catch(() => {});
     job = null; busy = null;
   }
 }
@@ -221,13 +244,14 @@ async function acquireImage(item, signal) {
     buffer = /;base64/i.test(meta) ? Buffer.from(item.url.slice(comma + 1), 'base64') : Buffer.from(decodeURIComponent(item.url.slice(comma + 1)));
     contentType = meta.slice(5).split(';')[0];
   } else if (item.url.startsWith('blob:')) {
-    if (!browser || browser.isDestroyed() || new URL(browser.webContents.getURL()).origin !== new URL(item.referrer).origin)
+    const originURL = item.backend === 'chrome' ? chromeBrowser.url() : (browser && !browser.isDestroyed() ? browser.webContents.getURL() : '');
+    if (!originURL || new URL(originURL).origin !== new URL(item.referrer).origin)
       throw new Error('ภาพ blob ต้องเปิดหน้าเว็บต้นทางค้างไว้');
     const payload = await withTimeout(runPage(`(async () => {
       const r = await fetch(${JSON.stringify(item.url)}); const b = await r.blob();
       if (b.size > ${MAX_IMAGE}) throw new Error('ภาพมีขนาดเกิน 32 MB');
       return await new Promise((resolve,reject) => { const f = new FileReader(); f.onload = () => resolve(f.result); f.onerror = reject; f.readAsDataURL(b); });
-    })()`), 20000, 'อ่านภาพ blob ไม่สำเร็จ');
+    })()`, item.backend), 20000, 'อ่านภาพ blob ไม่สำเร็จ');
     if (typeof payload !== 'string' || payload.length > MAX_IMAGE * 1.5) throw new Error('ข้อมูล blob ไม่ถูกต้อง');
     buffer = Buffer.from(payload.slice(payload.indexOf(',') + 1), 'base64'); contentType = payload.slice(5, payload.indexOf(';'));
   } else {
@@ -244,8 +268,8 @@ async function acquireImage(item, signal) {
       for (let hop = 0; hop <= 5; hop++) {
         const targetHost = new URL(target).host;
         if (blockedHosts.has(targetHost)) throw new Error(blockedHosts.get(targetHost));
-        r = await fetchManual(target, { credentials: 'include', redirect: 'manual',
-          referrer: item.referrer, referrerPolicy: 'strict-origin-when-cross-origin', signal: controller.signal }, browsingSession, MAX_IMAGE);
+        const requestOptions = { credentials: 'include', redirect: 'manual', referrer: item.referrer, referrerPolicy: 'strict-origin-when-cross-origin', signal: controller.signal };
+        r = item.backend === 'chrome' ? await chromeBrowser.fetchManual(target, requestOptions, MAX_IMAGE) : await fetchManual(target, requestOptions, browsingSession, MAX_IMAGE);
         if (![301, 302, 303, 307, 308].includes(r.status)) break;
         const location = r.headers.get('location'); await r.body?.cancel();
         if (!location || hop === 5) throw new Error('เว็บ redirect มากเกินไปหรือไม่ได้ส่งปลายทาง');
@@ -459,7 +483,7 @@ async function main() {
   mainWindow.webContents.on('will-navigate', event => event.preventDefault());
   mainWindow.once('ready-to-show', () => { if (!testMode) mainWindow.show(); });
   handle('open', openPage);
-  handle('showBrowser', async () => { if (!browser) throw new Error('กรุณาเปิดเว็บก่อน'); browser.show(); browser.focus(); return true; });
+  handle('showBrowser', async () => { if (browserMode === 'chrome') return chromeBrowser.show(); if (!browser) throw new Error('กรุณาเปิดเว็บก่อน'); browser.show(); browser.focus(); return true; });
   handle('scan', scan);
   handle('removeItems', removeItems);
   handle('undoRemove', undoRemove);
@@ -472,12 +496,13 @@ async function main() {
   handle('download', download);
   handle('exportLinks', exportLinks);
   handle('openFolder', async () => { const folder = lastFolder || outputRoot; if (!folder) throw new Error('ยังไม่มีโฟลเดอร์'); const error = await shell.openPath(folder); if (error) throw new Error(error); return true; });
-  handle('settings', () => ({ outputRoot, version: app.getVersion() }));
-  if (testMode) global.__eiwTest = { openPage, scan, download, getImage, renameImages: input => renameImages(input, true), setOutput: value => { outputRoot = value; }, setRenameFolder: value => { renameFolder = value; }, getState: () => ({ busy, count: records.size - excludedIds.size, excluded: excludedIds.size, canvasTempDir, browserId: browser?.webContents.id }),
+  handle('settings', () => ({ outputRoot, version: app.getVersion(), browserMode }));
+  if (testMode) global.__eiwTest = { openPage, scan, download, getImage, renameImages: input => renameImages(input, true), setOutput: value => { outputRoot = value; }, setRenameFolder: value => { renameFolder = value; }, runPage, closeChrome: () => chromeBrowser.close(), chromeInfo: () => ({ profile: chromeBrowser.profile, url: chromeBrowser.url(), status: chromeBrowser.lastStatus, navigation: chromeBrowser.navigation }), getState: () => ({ browserMode, busy, count: records.size - excludedIds.size, excluded: excludedIds.size, canvasTempDir, browserId: browser?.webContents.id }),
     cancel: () => { if (job) { job.cancelled = true; job.abort.abort(); } } };
   await mainWindow.loadURL('eiw://app/');
 }
 app.whenReady().then(main).catch(error => { dialog.showErrorBox('ImageHarvest', error.stack || error.message); app.exit(1); });
 app.on('before-quit', () => { quitting = true; if (job) job.abort.abort(); if (canvasTempDir) fs.rm(canvasTempDir, { recursive:true, force:true }).catch(()=>{}); });
+app.on('before-quit', event => { if (chromeBrowser.context) { event.preventDefault(); chromeBrowser.close().finally(() => app.quit()); } });
 app.on('window-all-closed', () => app.quit());
 app.on('web-contents-created', (_event, contents) => { contents.on('will-attach-webview', event => event.preventDefault()); });
