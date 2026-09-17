@@ -38,6 +38,7 @@ let app, server;
   const launch = process.argv[2] ? { executablePath: path.resolve(process.argv[2]), args: ['--eiw-test'], env, timeout: 45000 } : { args: [root, '--eiw-test'], env, timeout: 45000 };
   app = await electron.launch(launch);
   const ui = await app.firstWindow(); await ui.waitForFunction(() => !!window.eiw);
+  await ui.selectOption('#browserMode','electron');
   await app.evaluate((_, url) => global.__eiwTest.openPage({ url, show: false, backend: 'electron' }), `${base}/pager`);
   const started = await app.evaluate(() => global.__eiwTest.startCaptureSession({ canvases: true, intervalMs: 500 }));
   assert.equal(started.started, true);

@@ -1,14 +1,14 @@
 {
   "name": "imageharvest",
   "productName": "ImageHarvest",
-  "version": "1.0.10",
+  "version": "1.1.0",
   "description": "Ordered website image collector for Windows",
   "private": true,
   "main": "src/main.cjs",
   "author": "chinenar",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/unit.test.cjs test/network-lookup.test.mjs test/site-rules.test.cjs",
+    "test": "node --test test/unit.test.cjs test/network-lookup.test.mjs test/protection-rules.test.cjs",
     "test:e2e": "node test/e2e.cjs",
     "test:capture": "node test/capture.e2e.cjs",
     "package": "node scripts/package.cjs",
@@ -16,7 +16,8 @@
     "test:curation": "node test/curation.e2e.cjs",
     "test:chrome": "node test/chrome.e2e.cjs",
     "test:blob": "node test/blob-scan.e2e.mjs",
-    "test:sites": "node test/site-compatibility.e2e.cjs"
+    "test:sites": "node test/site-compatibility.e2e.cjs",
+    "test:protection": "node test/protection.e2e.cjs"
   },
   "devDependencies": {
     "electron": "44.4.1",

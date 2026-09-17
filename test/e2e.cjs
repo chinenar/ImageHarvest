@@ -53,6 +53,7 @@ function pass(name) { tests.push(name); console.log('PASS:', name); }
   const env = {...process.env}; delete env.ELECTRON_RUN_AS_NODE;
   app = await electron.launch({args:[root,'--eiw-test'],env,timeout:45000});
   const page = await app.firstWindow(); await page.waitForFunction(() => !!window.eiw);
+  await page.selectOption('#browserMode','electron');
   const setting = await page.evaluate(() => window.eiw.settings()); assert.equal(setting.ok,true); pass('trusted UI IPC bridge works');
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].show());
   await page.screenshot({path:path.join(testRoot,'01-home.png')});

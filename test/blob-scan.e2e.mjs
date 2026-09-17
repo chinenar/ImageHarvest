@@ -22,6 +22,7 @@ let app;
 try{
   app=await _electron.launch(process.argv[2]?{executablePath:path.resolve(process.argv[2]),args:['--eiw-test'],env}:{args:[root,'--eiw-test'],env});
   const page=await app.firstWindow();await page.waitForFunction(()=>!!window.eiw);
+  await page.selectOption('#browserMode','electron');
   await app.evaluate((_,url)=>global.__eiwTest.openPage({url,show:false}),base);
   const scan=await app.evaluate(()=>global.__eiwTest.scan({autoScroll:true,canvases:false,waitMs:350,maxSteps:20}));
   assert.equal(scan.truncated,false);assert.equal(scan.items.length,2);assert.ok(scan.steps<20);

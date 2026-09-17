@@ -30,6 +30,7 @@ const pass = name => { passed.push(name); console.log('PASS:', name); };
   const executablePath = process.argv[2];
   instance = await electron.launch({ ...(executablePath ? { executablePath, args: ['--eiw-test'] } : { args: [root, '--eiw-test'] }), env });
   page = await instance.firstWindow(); await page.waitForFunction(() => !!window.eiw);
+  await page.selectOption('#browserMode','electron');
   const uiErrors = []; page.on('pageerror', error => uiErrors.push(error.message));
   await instance.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].show());
   await page.fill('#url', `${base}/curation`); await page.check('#backgrounds');

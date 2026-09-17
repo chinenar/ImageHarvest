@@ -12,16 +12,17 @@
   <aside>
     <div class="brand"><span class="mark">▧</span><div>Image<span class="brand-accent">Harvest</span><small>EXPORT IMAGE FROM WEB</small></div></div>
     <div class="side-label">YOUR WORKSPACE</div>
-    <div class="side-active">▦ <span>เก็บภาพจากเว็บไซต์</span><span class="pill">1.0.10</span></div>
+    <div class="side-active">▦ <span>เก็บภาพจากเว็บไซต์</span><span class="pill">1.1.0</span></div>
     <div class="side-guide"><div class="step"><b>1</b><div>เปิดเว็บไซต์<small>วาง URL หน้าที่ต้องการเก็บรูป</small></div></div><div class="step"><b>2</b><div>สแกนและเลือกภาพ<small>กรองภาพเล็ก แล้วจัดลำดับ</small></div></div><div class="step"><b>3</b><div>บันทึกลงเครื่อง<small>ชื่อไฟล์เรียง 0001, 0002…</small></div></div></div>
-    <div class="side-note"><span>LOCAL FIRST</span><p>รูปบันทึกลงเครื่องโดยตรง<br>ไม่มีการส่งผ่านเซิร์ฟเวอร์ของแอป</p><small>ใช้กับภาพที่พี่มีสิทธิ์ดาวน์โหลด<br>ไม่ข้าม paywall หรือข้อจำกัดของเว็บ</small></div>
+    <div class="side-note"><span>LOCAL FIRST</span><p>รูปบันทึกลงเครื่องโดยตรง<br>ไม่มีการส่งผ่านเซิร์ฟเวอร์ของแอป</p><small>ใช้กับภาพที่พี่มีสิทธิ์ดาวน์โหลด<br>ไม่ข้ามล็อกอินหรือสิทธิ์ซื้อตอน</small></div>
     <footer>Made for your collection <span>✦</span></footer>
   </aside>
   <main>
     <header><div><div class="eyebrow">A LITTLE MORE ORGANIZED.</div><h1>เก็บภาพให้ครบ เรียงให้พร้อม</h1><p>วางลิงก์ เลือกภาพ แล้วเก็บเป็นชุดในลำดับที่ต้องการ</p></div><div class="header-actions"><button id="renameTool" class="quiet">✎ ตั้งเลขหน้ารูป</button><button id="openFolder" class="quiet">▣ เปิดโฟลเดอร์</button></div></header>
     <section class="panel source-panel">
-      <div class="browser-mode-row"><label for="browserMode">เปิดเว็บไซต์ด้วย <select id="browserMode"><option value="electron">เบราว์เซอร์ในแอป</option><option value="chrome">Google Chrome จริง (ทดลอง)</option></select></label><span id="browserModeNote">ใช้เบราว์เซอร์ที่มากับแอป</span></div>
-      <div class="site-mode-row"><label class="check"><input id="siteCompatibility" type="checkbox"> โหมดเฉพาะ NTRNaja / Pengi (ทดลอง)</label><span id="siteCompatibilityNote">ปิดอยู่ • ใช้ Chrome จริง • ปรับเฉพาะสคริปต์ที่ตรวจแล้ว ไม่เปลี่ยนสิทธิ์อ่าน</span></div>
+      <div class="browser-mode-row"><label for="browserMode">เปิดเว็บไซต์ด้วย <select id="browserMode"><option value="electron">เบราว์เซอร์ในแอป</option><option value="chrome" selected>Google Chrome</option></select></label><span id="browserModeNote">ใช้เบราว์เซอร์ที่มากับแอป</span></div>
+      <div class="site-mode-row"><label class="check"><input id="protectionCompatibility" type="checkbox" checked> รองรับระบบป้องกันที่รู้จักอัตโนมัติ</label><span id="protectionCompatibilityNote">Chrome • ตรวจจากเนื้อหา ไม่ผูกชื่อเว็บ • โค้ดไม่ตรงกฎจะไม่แก้</span></div>
+      <details class="compatibility-details"><summary>รายละเอียดการตรวจสคริปต์</summary><pre id="compatibilityLog">ยังไม่ได้เปิดหน้าเว็บ</pre></details>
       <div class="network-mode-row"><label for="networkMode">เครือข่าย <select id="networkMode"><option value="auto">อัตโนมัติ — Secure DNS + สำรองอัตโนมัติ</option><option value="cloudflare">Cloudflare DNS</option><option value="google">Google DNS</option><option value="adguard">AdGuard DNS — บล็อกโฆษณา/ติดตาม</option><option value="compat">Compatibility — ปิด HTTP/2 + QUIC</option></select></label><button id="applyNetwork" class="quiet small">ใช้โหมด</button><button id="restartNetwork" class="secondary small" hidden>รีสตาร์ตเพื่อใช้โหมด</button><span id="networkModeNote">ใช้ Secure DNS ของ Cloudflare/Google อัตโนมัติ และสลับสำรองเมื่อเชื่อมต่อไม่ได้</span></div>
       <label class="field-label" for="url">ลิงก์หน้าเว็บไซต์ <span>หนึ่ง URL ต่อการสแกน ไม่ไล่ทั้งเว็บไซต์</span></label>
       <div class="url-row"><span class="link-icon">↗</span><input id="url" type="url" placeholder="https://example.com/chapter/1" autocomplete="off" spellcheck="false"><button id="open" class="secondary">เปิดเว็บ</button><button id="scan" class="primary">✦ สแกนภาพ</button></div>

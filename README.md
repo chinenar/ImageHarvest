@@ -1,11 +1,11 @@
-# ImageHarvest 1.0.10
+# ImageHarvest 1.1.0
 
 แอป Windows สำหรับรวบรวมไฟล์ภาพจากหน้าเว็บ ดูตัวอย่าง กรอง จัดลำดับ และบันทึกไฟล์ต้นฉบับลงเครื่อง รวมโหมดจับเว็บที่เปลี่ยนทีละหน้าโดยให้ผู้ใช้กดเปลี่ยนหน้าเอง
 
 Repository: https://github.com/chinenar/ImageHarvest
 
 ## ติดตั้งและเปิดใช้งาน
-หลัง build แล้ว ตัวติดตั้งอยู่ที่ `installer-dist\ImageHarvest-Setup-1.0.10.exe`
+หลัง build แล้ว ตัวติดตั้งอยู่ที่ `installer-dist\ImageHarvest-Setup-1.1.0.exe`
 
 - Installer เป็นแบบหลายขั้นตอนและ **เลือกโฟลเดอร์ติดตั้งได้**
 - สร้าง Desktop shortcut และ Start Menu shortcut
@@ -13,6 +13,8 @@ Repository: https://github.com/chinenar/ImageHarvest
 - หากรันจากซอร์สโดยตรง ให้ใช้ `Start.cmd` หรือ `npm.cmd start`
 
 ## วิธีใช้งาน
+ค่าเริ่มต้นคือ **Google Chrome** พร้อม **รองรับระบบป้องกันที่รู้จักอัตโนมัติ**; ต้องติดตั้ง Chrome ในเครื่องก่อน ไม่มีการดาวน์โหลดเบราว์เซอร์เงียบ ๆ หากต้องการใช้ตัวเดิม เลือกเบราว์เซอร์ในแอปได้
+
 1. วาง URL แล้วกด **สแกนภาพ** หรือกด **เปิดเว็บ** เพื่อดู/ล็อกอินก่อน
 2. เลือกภาพ กรองขนาดขั้นต่ำ และเรียงตามตำแหน่งบนหน้า / DOM / ชื่อไฟล์ / ลากเอง
 3. เว็บที่ต้องกด Next/ลูกศรเองสามารถใช้ **จับทีละหน้า** แล้วเปลี่ยนหน้าในหน้าต่างเว็บ ระบบจะสะสมภาพใหม่ให้
@@ -43,13 +45,13 @@ Repository: https://github.com/chinenar/ImageHarvest
 - `srcset` ใช้ภาพที่ Chromium เลือกจริง ไม่เดาว่ารูปใดเป็นต้นฉบับใหญ่ที่สุด
 - จำกัด 5,000 occurrences ต่อสแกน, 32 MB ต่อภาพ และแคชไฟล์ภาพในหน่วยความจำไม่เกิน 128 MB
 - เลื่อนอัตโนมัติสูงสุด 600 รอบ ไม่ข้าม paywall, CAPTCHA หรือการจำกัดการเข้าถึง
-- Cookie/login ใช้เฉพาะเบราว์เซอร์แยกของแอป อยู่ในหน่วยความจำและไม่ยืม cookie ของ Chrome/Edge
+- Cookie/login ใช้เฉพาะเบราว์เซอร์แยกของแอป; Chrome ใช้โปรไฟล์ชั่วคราวบนดิสก์และล้างเมื่อปิดตามปกติ ไม่ยืม cookie ของ Chrome/Edge ส่วนตัว
 - เว็บที่ต้องใช้ popup เพื่อเข้าสู่ระบบอาจใช้ไม่ได้ใน V1 เพราะแอปบล็อก popup
 - URL ใน report/links อาจมี token ที่เว็บไซต์ใส่มา ไม่ควรเผยแพร่ไฟล์เหล่านี้โดยไม่ตรวจสอบ
 
 ## จำนวนคำขอ
 คิวโหลดตัวอย่างกับดาวน์โหลดใช้ข้อมูลร่วมกัน โหลดตามคิวเดียวและเว้นอย่างน้อย 400 ms ระหว่างการเริ่มคำขอภาพโดยแอป
-เมื่อได้รับ HTTP 429 จะหยุดคำขอภาพจากโฮสต์นั้นในผลสแกนชุดปัจจุบัน ไม่หมุน IP หรือพยายามหลบข้อจำกัด
+เมื่อได้รับ HTTP 429 จะหยุดคำขอภาพใหม่จากโฮสต์นั้นในผลสแกนชุดปัจจุบัน ไม่หมุน IP หรือพยายามหลบข้อจำกัด; ไฟล์ที่เก็บสำเร็จไว้แล้วอ่านและส่งออกแบบออฟไลน์ต่อได้
 
 ## พัฒนา ทดสอบ และสร้าง Installer
 ต้องมี Node.js 22.12+ และ npm
@@ -138,7 +140,7 @@ E2E เปิดเว็บทดสอบบน `127.0.0.1` เท่านั
 - สแกนปกติยังเก็บเฉพาะหน้าปัจจุบัน; เว็บที่แสดงทีละหน้าให้กด **จับทีละหน้า** แล้วใช้ปุ่ม Next/ลูกศรของเว็บ
 - Live test Hitomi `reader/19324.html#2`: ตั้ง polling fallback 3,000 ms แต่ตัวแพ็ก 1.0.9 จับหน้าหลังคลิก Next ได้ประมาณ 210 ms จึงยืนยันว่าตื่นจาก page/image change จริง
 
-## Google Chrome mode (1.0.5, experimental)
+## ประวัติ Google Chrome mode 1.0.5
 Choose **Google Chrome จริง (ทดลอง)** above the URL, then open or scan the page.
 This mode runs the installed Google Chrome in a visible window through Playwright/CDP.
 The DevTools panel is not opened. Browser security settings remain enabled.
@@ -159,7 +161,7 @@ The local fixture verifies lazy Canvas capture while a dimension-based inspect d
 It is a synthetic test, not a clone of any third-party site's complete protection system.
 API references: https://playwright.dev/docs/api/class-browsertype ; https://playwright.dev/docs/api/class-cdpsession
 
-## 1.0.10 — โหมดเฉพาะ NTRNaja / Pengi (ทดลอง)
+## ประวัติ 1.0.10 — โหมดเฉพาะเว็บ (ถูกแทนที่ใน 1.1.0)
 
 ติ๊ก **โหมดเฉพาะ NTRNaja / Pengi** ก่อนเปิด URL; แอปจะเลือก Google Chrome จริงให้โดยอัตโนมัติ
 โหมดนี้ปิดเป็นค่าเริ่มต้น บันทึกตัวเลือกไว้ในเครื่อง และมีผลเฉพาะโดเมนที่ระบุตรงตัวเท่านั้น
@@ -178,3 +180,25 @@ API references: https://playwright.dev/docs/api/class-browsertype ; https://play
 
 ทดสอบกฎและการเก็บ response ด้วย `npm test` และ `npm run test:sites`
 การทดสอบเว็บจริงแยกอยู่ใน `test-results/` ซึ่งไม่ส่งขึ้น Git และไม่เป็นส่วนหนึ่งของ regression อัตโนมัติ
+
+
+## 1.1.0 — Generic Protection Compatibility
+
+- ไม่ตรวจ hostname หรือชื่อไฟล์เพื่อเลือกกฎอีกต่อไป ตรวจเนื้อหาสคริปต์ HTTP(S) ที่ Chrome ได้รับ ก่อนรัน
+- รู้จัก 3 ลายเซ็น SHA-256 ที่ตรวจแล้ว: disable-devtool 0.3.9 UMD, devtools-detect fork 2.1 ESM และ integrated reader build ที่ตรวจเมื่อ 18 ก.ย. 2026
+- รองรับการย้ายไฟล์เดิมไปโดเมน/เส้นทางใหม่โดยไม่เพิ่มรายชื่อเว็บ แต่ไม่ใช่รองรับทุกเวอร์ชันในตระกูลนั้น
+- ถ้าเนื้อหาเปลี่ยนแม้ชื่อ library เหมือนเดิม: ไม่ patch อัตโนมัติ รายงาน unknown แล้วปล่อยโค้ดเดิมตามปกติ
+- ข้อยกเว้นด้านความปลอดภัย: ถ้าพบร่องรอยชุดจัดสรรหน่วยความจำอันตรายที่ยังไม่ตรงกฎ จะระงับสคริปต์และหยุดสแกนให้ตรวจใหม่ ไม่เดาแก้ และไม่ใช่เครื่องมือตรวจ malware ครบทุกชนิด
+- กฎ standalone คง API/default export ที่ตัวเรียกต้องใช้ แทนการบล็อกไฟล์จน dependency หาย
+- รายละเอียดการตรวจมี family, rule ID และ hash; URL diagnostic ตัด query/fragment/credentials ออก ไม่บันทึก cookie หรือ body สคริปต์
+- ปุ่มเปิดอัตโนมัติยังปิดได้ และจำค่าที่ผู้ใช้เลือก; ตัวเลือกเฉพาะสองเว็บเดิมเลิกใช้แล้ว
+- Chrome เก็บ successful image response ทุกเว็บ ไม่ขึ้นกับว่าพบ protection หรือเปิด engine ไว้หรือไม่ รองรับ URL redirect alias และ snapshot ยังอยู่หลังปิด Chrome
+- ใช้ไฟล์ snapshot ที่ hash เหมือนกันร่วมกัน ลดการเก็บภาพซ้ำ; แคช response จำกัด 32 MiB/ภาพ และ 512 MiB/เซสชัน
+- การวิเคราะห์สคริปต์มีเพดาน 2 MiB/ไฟล์, 300 ไฟล์ และประมาณ 32 MiB/เอกสาร; ไม่ใช่การตรวจทุกไบต์ของทุกเว็บ
+- เมื่อเปิดการรองรับอัตโนมัติ จะไม่ให้ Service Worker เริ่มในโปรไฟล์ชั่วคราวของแอป เพื่อไม่ให้ข้ามการตรวจคำขอ; เว็บไซต์ที่พึ่ง PWA/Service Worker อาจต้องปิดตัวเลือกนี้และเปิดหน้าใหม่
+- ไม่แก้ inline script, worker/OOPIF ทุกบริบท หรือไฟล์ที่เกินขอบเขตการตรวจ ไม่ปิด CSP/CORS/SRI ไม่รับประกันเว็บที่ใช้ integrity หรือ reader พึ่ง detector แตกต่างจากที่ทดสอบ
+- ไม่แก้ CAPTCHA, login, entitlement หรือเปลี่ยน HTTP error เป็น success; unknown server challenges คงเดิม
+
+Tests: `npm test`, `npm run test:protection`, `npm run test:sites` และ regression suites เดิม
+ชุด test:protection ต้องมีสำเนา OSS สองไฟล์จากผลตรวจที่ hash ตรงใน test-results; ไม่ส่ง reader bundle ของเว็บอื่นขึ้น Git
+Unit tests ที่ต้องใช้สำเนาผลตรวจจะระบุ skip เมื่อไม่มีไฟล์ จึงไม่ควรตีความว่า skip คือผ่านการตรวจตัวไฟล์จริง

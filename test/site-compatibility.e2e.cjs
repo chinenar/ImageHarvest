@@ -27,7 +27,7 @@ let browser, server;
     res.writeHead(404);res.end('Not found');
   });
   await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${server.address().port}`;
-  browser=new ChromeBrowser();browser.site='ntrnaja';await browser.start();
+  browser=new ChromeBrowser();await browser.start();
   await browser.page.goto(base+'/reader');
   const profile=browser.profile, originalStyle=await browser.page.getAttribute('html','style');
   const timeOrigin=await browser.page.evaluate(()=>performance.timeOrigin);

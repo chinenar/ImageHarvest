@@ -27,3 +27,5 @@
 #capturePages{border-color:#554b74}#capturePages:not(:disabled){color:#e1d8ff}
 
 .site-mode-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 12px}.site-mode-row span{font-size:10px;color:var(--muted);line-height:1.6;flex:1;min-width:230px}.site-mode-row .check{white-space:normal}
+
+.compatibility-details{margin:0 0 12px;font-size:11px}.compatibility-details pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto;line-height:1.6}.compatibility-details summary{cursor:pointer;color:var(--muted)}

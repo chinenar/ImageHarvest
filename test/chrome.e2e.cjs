@@ -27,7 +27,7 @@ let app, server, page, profile;
       const io=new IntersectionObserver(es=>es.forEach(e=>{const c=e.target;if(!e.isIntersecting){c.width=c.height=1;return;}setTimeout(()=>{c.width=420;c.height=560;const x=c.getContext('2d');x.fillStyle=['#243247','#29442b','#533440'][+c.dataset.page-1];x.fillRect(0,0,420,560);},150);}),{rootMargin:'600px'});document.querySelectorAll('canvas').forEach(c=>io.observe(c));
       </script>`); return;
     }
-    if (u.pathname === '/errors') { res.setHeader('Content-Type','text/html');res.end('<title>HTTP failures</title><img width="420" height="560" src="/denied.png"><img width="420" height="560" src="/large.png"><img width="420" height="560" src="/rate.png"><img width="420" height="560" src="/later.png">');return; }
+    if (u.pathname === '/errors') { res.setHeader('Content-Type','text/html');res.end('<title>HTTP failures</title><img width="420" height="560" src="/denied.png"><img width="420" height="560" src="/large.png"><img width="420" height="560" src="/rate.png"><img width="420" height="560" src="/later.png"><img width="420" height="560" data-src="/never-requested.png">');return; }
     if (u.pathname === '/taint') { res.setHeader('Content-Type','text/html');res.end(`<title>Tainted Canvas fixture</title><canvas id="c" width="420" height="560"></canvas><script>const i=new Image();i.onload=()=>{document.getElementById('c').getContext('2d').drawImage(i,0,0);document.documentElement.dataset.ready='yes'};i.src='http://localhost:${server.address().port}/public.png';</script>`);return; }
     if (u.pathname === '/blank') { res.setHeader('Content-Type','text/html');res.end('<title>Leaving</title><script>setTimeout(()=>location.replace("about:blank"),100)</script>');return; }
     if (u.pathname === '/gate') { res.end('<title>Open in Browser</title>Open Chrome');return; }
@@ -67,8 +67,9 @@ let app, server, page, profile;
   const bad=await app.evaluate(()=>global.__eiwTest.scan({autoScroll:false}));
   const failure=async suffix=>app.evaluate(async(_,id)=>{try{await global.__eiwTest.getImage(id);return '';}catch(e){return e.message;}},bad.items.find(x=>x.url.endsWith(suffix)).id);
   assert.match(await failure('/denied.png'),/403/);assert.match(await failure('/large.png'),/32 MB/);assert.match(await failure('/rate.png'),/429/);
-  const before=requests.get('/later.png')||0;assert.match(await failure('/later.png'),/429/);assert.equal(requests.get('/later.png')||0,before);
-  pass('Chrome downloads enforce 403, bounded streaming and host-wide 429 stop');
+  const before=requests.get('/later.png')||0;assert.equal(await failure('/later.png'),'');assert.equal(requests.get('/later.png')||0,before);
+  assert.match(await failure('/never-requested.png'),/429/);assert.equal(requests.get('/never-requested.png')||0,0);
+  pass('Chrome enforces 403/size/429 for new requests; previously captured originals remain readable without replay');
   await app.evaluate((_,url)=>global.__eiwTest.openPage({url,backend:'chrome'}),`${base}/taint`);
   let ready=false;for(let n=0;n<30;n++){ready=await app.evaluate(()=>global.__eiwTest.runPage("document.documentElement.dataset.ready==='yes'"));if(ready)break;await new Promise(r=>setTimeout(r,100));}
   assert.equal(ready,true);

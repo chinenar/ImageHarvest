@@ -6,7 +6,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { randomUUID, createHash } = require('node:crypto');
 const { fetchManual } = require('./http.cjs');
-const { siteForURL } = require('./site-rules.cjs');
+const { compatibilitySettings } = require('./compatibility-settings.cjs');
 const { ChromeBrowser } = require('./chrome-browser.cjs');
 const { normalizeNetworkMode, electronResolverOptions, isCompatibility, isRetryableNetworkError, autoFallbackModes } = require('./network.cjs');
 const { pageURL, imageURL, safeName, imageType, publicItem, orderItems, uniqueItems, isImageFilename, renamePlan, idFor, delay, ByteCache } = require('./core.cjs');
@@ -18,11 +18,12 @@ protocol.registerSchemesAsPrivileged([
 ]);
 const testMode = process.argv.includes('--eiw-test');
 if (testMode) app.setPath('userData', path.join(app.getPath('temp'), `eiw-test-${process.pid}`));
-let startupNetworkMode = 'auto', siteCompatibilityEnabled = false;
+let startupNetworkMode = 'auto', protectionCompatibilityEnabled = true, startupBrowserMode = 'chrome';
 try {
   const startupSettings = JSON.parse(fsSync.readFileSync(path.join(app.getPath('userData'), 'settings.json'), 'utf8'));
   startupNetworkMode = normalizeNetworkMode(startupSettings.networkMode);
-  siteCompatibilityEnabled = startupSettings.siteCompatibility === true;
+  const migrated = compatibilitySettings(startupSettings);
+  protectionCompatibilityEnabled = migrated.protectionCompatibility; startupBrowserMode = migrated.browserMode;
 } catch {}
 if (isCompatibility(startupNetworkMode)) {
   app.commandLine.appendSwitch('disable-http2');
@@ -30,7 +31,7 @@ if (isCompatibility(startupNetworkMode)) {
 }
 app.setName('ImageHarvest');
 let mainWindow, browser, browsingSession, quitting = false, busy = null, job = null;
-let browserMode = 'electron', networkMode = startupNetworkMode, activeNetworkMode = startupNetworkMode;
+let browserMode = startupBrowserMode, networkMode = startupNetworkMode, activeNetworkMode = startupNetworkMode;
 const autoFallbackHosts = new Map();
 const compatibilityActive = isCompatibility(startupNetworkMode);
 let captureSession = null;
@@ -44,7 +45,7 @@ const emit = (type, data = {}) => {
 };
 const chromeBrowser = new ChromeBrowser((type, data) => {
   if (browserMode !== 'chrome' || quitting) return;
-  if (type === 'site-compatibility') emit(type, data);
+  if (type === 'protection-compatibility') emit(type, data);
   if (type === 'navigation') { pageInfo.url = data.url; emit(type, data); }
   if (type === 'browser-closed') {
     if (job) { job.cancelled = true; job.abort.abort(); }
@@ -135,7 +136,7 @@ function restartForNetwork() {
 async function openPageAttempt(url, mode, show = true) {
   if (mode === 'chrome') {
     if (browser && !browser.isDestroyed()) browser.hide();
-    return chromeBrowser.open(url, siteCompatibilityEnabled);
+    return chromeBrowser.open(url, protectionCompatibilityEnabled);
   }
   const win = createBrowser();
   if (show !== false) win.show();
@@ -153,8 +154,7 @@ async function openPage(input) {
   ensureIdle();
   const url = pageURL(input?.url), mode = input?.backend || browserMode;
   if (!['electron', 'chrome'].includes(mode)) throw new Error('ชนิดเบราว์เซอร์ไม่ถูกต้อง');
-  if (input?.siteCompatibility !== undefined) siteCompatibilityEnabled = input.siteCompatibility === true;
-  if (siteCompatibilityEnabled && siteForURL(url) && mode !== 'chrome') throw new Error('โหมดเฉพาะเว็บต้องเลือก Google Chrome จริงก่อน');
+  if (input?.protectionCompatibility !== undefined) protectionCompatibilityEnabled = input.protectionCompatibility === true;
   busy = 'open'; browserMode = mode;
   const hostname = new URL(url).hostname.toLowerCase();
   const cachedFallback = networkMode === 'auto' ? autoFallbackHosts.get(hostname) || '' : '';
@@ -255,9 +255,9 @@ async function scan(input = {}) {
         else if (found.size < MAX_IMAGES) found.set(key, { ...item, url, id: idFor(`${generation}:${key}`), order: found.size });
         else { truncated = true; reason = 'ถึงขีดจำกัด 5,000 ภาพแล้ว'; break; }
         const record = found.get(key);
-        if (browserMode === 'chrome' && chromeBrowser.site && record) {
-          record.nativeOnly = true;
-          await preserveChromeImage(record);
+        if (browserMode === 'chrome' && record) {
+          record.nativeOnly = chromeBrowser.compatibilityInfo().applied > 0;
+          await preserveChromeImage(record).catch(error => { record.responseCaptureError = error.message; });
         }
         // Blob URLs can be revoked by lazy readers before a full scan finishes.
         // Preserve original bytes now; a failed attempt must remain retryable.
@@ -313,16 +313,16 @@ async function scan(input = {}) {
       }
       await delay(waitMs);
     }
-    if (browserMode === 'chrome' && chromeBrowser.site) {
+    if (browserMode === 'chrome') {
       await withTimeout(chromeBrowser.settleImages(), 10000, 'รอข้อมูลภาพจาก Chrome นานเกินไป');
-      for (const item of found.values()) { if (job.cancelled) break; await preserveChromeImage(item); }
+      for (const item of found.values()) { if (job.cancelled) break; await preserveChromeImage(item).catch(error => { item.responseCaptureError = error.message; }); }
     }
     const all = orderItems([...found.values()], 'visual');
     for (const item of all) records.set(item.id, { ...item, referrer: startURL, backend: browserMode });
     pageInfo = { title: metadata.title || await webTitle(), url: startURL, compatibility: browserMode === 'chrome' ? chromeBrowser.compatibilityInfo() : null };
     const cancelled = job.cancelled;
     return { items: all.map(publicItem), ...pageInfo, cancelled, truncated, reason, steps,
-      notice: [pageInfo.compatibility?.site ? `โหมด ${pageInfo.compatibility.site}: ปรับสคริปต์ ${pageInfo.compatibility.events.length} รายการ • เก็บต้นฉบับจาก Chrome ${all.filter(x => x.capturedVia === 'chrome-response').length} ภาพ` : '', blobFailures.size ? `เก็บภาพชั่วคราวไม่สำเร็จ ${blobFailures.size} รายการ: อาจต้องสแกนใหม่` : '', metadata.frames ? `พบ iframe ${metadata.frames} ส่วน: ยังไม่สแกนภายใน iframe` : '',
+      notice: [pageInfo.compatibility ? `Chrome: เก็บต้นฉบับ ${all.filter(x => x.capturedVia === 'chrome-response').length} ภาพ • ใช้กฎ ${pageInfo.compatibility.applied || 0} รายการ${pageInfo.compatibility.unknown ? ' • พบระบบที่ยังไม่รู้จัก ' + pageInfo.compatibility.unknown + ' รายการ' : ''}` : '', blobFailures.size ? `เก็บภาพชั่วคราวไม่สำเร็จ ${blobFailures.size} รายการ: อาจต้องสแกนใหม่` : '', metadata.frames ? `พบ iframe ${metadata.frames} ส่วน: ยังไม่สแกนภายใน iframe` : '',
         metadata.canvases ? (options.canvases ? `พบ canvas ${metadata.canvases} ส่วน: จับเฉพาะ canvas ที่วาดเสร็จและ browser อนุญาตให้อ่าน` : `พบ canvas ${metadata.canvases} ส่วน: เปิด “รวม Canvas” หากต้องการเก็บภาพที่วาดแล้ว`) : ''].filter(Boolean).join(' • ') };
   } finally {
     if (auto && webAlive() && webURL() === startURL) await runPage(`(${scrollScript})('restore')`).catch(() => {});
@@ -333,9 +333,10 @@ async function preserveChromeImage(item) {
   if (item.capturePath || !/^https?:/.test(item.url)) return;
   const data = await withTimeout(chromeBrowser.loadedImage(item.url), 5000, 'รอภาพจาก Chrome นานเกินไป');
   if (!data) return;
-  const dir = await ensureCaptureTempDir(), capturePath = path.join(dir, `${item.id}.${data.ext}`);
-  await fs.writeFile(capturePath, data.buffer);
-  Object.assign(item, { capturePath, ext: data.ext, contentHash: snapshotHash(data.buffer), capturedVia: 'chrome-response' });
+  const contentHash = snapshotHash(data.buffer), dir = await ensureCaptureTempDir();
+  const capturePath = path.join(dir, `chrome-${contentHash}.${data.ext}`);
+  try { await fs.writeFile(capturePath, data.buffer, { flag: 'wx' }); } catch (error) { if (error.code !== 'EEXIST') throw error; }
+  Object.assign(item, { capturePath, ext: data.ext, contentHash, capturedVia: 'chrome-response' });
 }
 async function ensureCaptureTempDir() {
   if (!canvasTempDir) {
@@ -530,7 +531,7 @@ async function acquireImage(item, signal) {
     const data = await withTimeout(chromeBrowser.loadedImage(item.url), 5000, 'รอข้อมูลภาพจาก Chrome นานเกินไป');
     if (signal?.aborted) throw new Error('ยกเลิกการดาวน์โหลด');
     if (data) return data;
-    if (item.nativeOnly || (chromeBrowser.site && siteForURL(item.referrer) === chromeBrowser.site))
+    if (item.nativeOnly || chromeBrowser.compatibilityInfo().applied > 0)
       throw new Error('ยังไม่มีภาพนี้ที่ Chrome โหลดสำเร็จ — เปิดหน้าอ่านให้โหลดครบแล้วสแกนใหม่ (ไม่ยิงคำขอซ้ำ)');
   }
   let buffer, contentType = '';
@@ -633,7 +634,7 @@ async function chooseFolder() {
   return outputRoot;
 }
 async function saveSettings() {
-  await fs.writeFile(path.join(app.getPath('userData'), 'settings.json'), JSON.stringify({ outputRoot, networkMode, siteCompatibility: siteCompatibilityEnabled }), 'utf8');
+  await fs.writeFile(path.join(app.getPath('userData'), 'settings.json'), JSON.stringify({ outputRoot, networkMode, browserMode, protectionCompatibility: protectionCompatibilityEnabled, compatibilitySchema: 2 }), 'utf8');
 }
 async function readRenameFolder() {
   if (!renameFolder) throw new Error('กรุณาเลือกโฟลเดอร์รูปก่อน');
@@ -805,7 +806,7 @@ async function main() {
   handle('download', download);
   handle('exportLinks', exportLinks);
   handle('openFolder', async () => { const folder = lastFolder || outputRoot; if (!folder) throw new Error('ยังไม่มีโฟลเดอร์'); const error = await shell.openPath(folder); if (error) throw new Error(error); return true; });
-  handle('settings', () => ({ outputRoot, version: app.getVersion(), browserMode, networkMode, activeNetworkMode, compatibilityActive, siteCompatibility: siteCompatibilityEnabled }));
+  handle('settings', () => ({ outputRoot, version: app.getVersion(), browserMode, networkMode, activeNetworkMode, compatibilityActive, protectionCompatibility: protectionCompatibilityEnabled }));
   if (testMode) global.__eiwTest = { openPage, scan, startCaptureSession, stopCaptureSession, download, getImage, changeNetworkMode, renameImages: input => renameImages(input, true), setOutput: value => { outputRoot = value; }, setRenameFolder: value => { renameFolder = value; }, runPage, closeChrome: () => chromeBrowser.close(), chromeInfo: () => ({ profile: chromeBrowser.profile, url: chromeBrowser.url(), status: chromeBrowser.lastStatus, navigation: chromeBrowser.navigation, networkMode: chromeBrowser.networkMode, compatibility: chromeBrowser.compatibilityInfo() }), getState: () => ({ browserMode, networkMode, activeNetworkMode, autoFallbackHosts: Object.fromEntries(autoFallbackHosts), compatibilityActive, captureActive: Boolean(captureSession), busy, count: records.size - excludedIds.size, excluded: excludedIds.size, canvasTempDir, browserId: browser?.webContents.id }),
     cancel: () => { if (job) { job.cancelled = true; job.abort.abort(); } if (captureSession) stopCaptureSession(); } };
   await mainWindow.loadURL('eiw://app/');
