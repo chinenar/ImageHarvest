@@ -15,6 +15,24 @@
   }
   roots.forEach(walk);
   const result = [], canvasItems = [];
+  const readerSelector = '.reading-strip,.reader-content,.reading-content,#readerarea,.chapter-content,.chapter-images,.manga-pages,.manga-reader,[data-reader-content]';
+  const mainSelector = 'main,article,[role="main"]';
+  const uiSelector = 'nav,aside,footer,[role="navigation"],[role="complementary"],.comments,#comments,.comment-list,#disqus_thread,.sidebar,.recommendations,.related-posts,.related-manga,.related-items,.ads,.advertisement,.ad-container,[data-ad-slot],.toolbar,.reader-controls,.site-header,.site-footer,.site-logo,.site-brand,.avatar,.social-share';
+  const contexts = new WeakMap();
+  function hints(el, raw) {
+    let meta = contexts.get(el);
+    if (!meta) {
+      const ancestors = [];
+      for (let node = el; node && ancestors.length < 32; node = node.parentElement || node.getRootNode()?.host) ancestors.push(node);
+      const mainKind = ancestors.some(x => x.matches(readerSelector)) ? 'reader' : ancestors.some(x => x.matches(mainSelector)) ? 'main' : 'unknown';
+      meta = { mainKind,
+        uiRegion: ancestors.some(x => x.matches(uiSelector)) || (mainKind === 'unknown' && ancestors.some(x => x.tagName === 'HEADER')),
+        identity: [el.id, el.getAttribute('class'), el.getAttribute('role')].filter(Boolean).join(' ').slice(0, 500),
+        alt: (el.getAttribute('alt') || el.getAttribute('aria-label') || el.getAttribute('title') || '').slice(0, 200) };
+      contexts.set(el, meta);
+    }
+    return globalThis.ImageHarvestFilters.classify({ ...meta, url: raw });
+  }
   function add(el, raw, kind, width, height, rect, index, layer = 0) {
     if (!raw || !rect.width || !rect.height) return;
     let url;
@@ -28,7 +46,7 @@
     for (let parent = el.parentElement; parent && parent !== document.body && parent !== document.documentElement; parent = parent.parentElement) {
       innerY += parent.scrollTop; innerX += parent.scrollLeft;
     }
-    result.push({ key: `${state.ids.get(el)}:${layer}`, url: url.href, source: kind,
+    result.push({ key: `${state.ids.get(el)}:${layer}`, url: url.href, source: kind, filterHints: hints(el, url.href),
       width: Math.round(width || rect.width), height: Math.round(height || rect.height),
       top: Math.round(rect.top + scrollY + innerY), left: Math.round(rect.left + scrollX + innerX),
       dom: index, alt: (el.getAttribute('alt') || '').slice(0, 160) });
@@ -44,7 +62,7 @@
       if (!state.ids.has(el)) state.ids.set(el, state.next++);
       let innerY = 0, innerX = 0;
       for (let parent = el.parentElement; parent && parent !== document.body && parent !== document.documentElement; parent = parent.parentElement) { innerY += parent.scrollTop; innerX += parent.scrollLeft; }
-      canvasItems.push({ captureId: state.ids.get(el), width: el.width, height: el.height,
+      canvasItems.push({ filterHints: hints(el, ''), captureId: state.ids.get(el), width: el.width, height: el.height,
         top: Math.round(rect.top + scrollY + innerY), left: Math.round(rect.left + scrollX + innerX), dom: index,
         alt: (el.getAttribute('aria-label') || el.getAttribute('title') || el.parentElement?.dataset?.page || '').slice(0,160) });
     }

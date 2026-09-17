@@ -2,6 +2,7 @@
 const $ = id => document.getElementById(id);
 let all = [], sequence = [], selected = new Set(), busy = false, currentURL = '', states = new Map();
 let dragged = null, renderTimer = null;
+let mainScope = 'unknown', removedSnapshot = null;
 const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; };
 function status(message, error = false) { $('status').textContent = message; $('statusDot').classList.toggle('error', error); }
 async function call(method, args) {
@@ -11,7 +12,7 @@ async function call(method, args) {
 }
 function setBusy(value) {
   busy = value;
-  for (const id of ['open', 'scan', 'chooseFolder', 'exportLinks', 'sort', 'dedupe', 'contentPreset', 'selectAll', 'deselectAll', 'reverseOrder', 'renameTool']) $(id).disabled = value;
+  for (const id of ['open', 'scan', 'chooseFolder', 'exportLinks', 'sort', 'dedupe', 'contentPreset', 'selectAll', 'deselectAll', 'reverseOrder', 'renameTool', 'hideChrome', 'mainOnly', 'sourceFilter', 'resetFilters', 'search', 'minWidth', 'minHeight', 'setName']) $(id).disabled = value;
   $('url').disabled = value; $('cancel').hidden = !value;
   $('statusDot').classList.toggle('working', value); $('progress').hidden = !value;
   if (!value) $('progress').value = 0;
@@ -19,16 +20,22 @@ function setBusy(value) {
 }
 function sortedItems() {
   const byId = new Map(all.map(item => [item.id, item]));
-  const list = sequence.map(id => byId.get(id)).filter(Boolean);
-  if (!$('dedupe').checked) return list;
-  const seen = new Set();
-  return list.filter(item => { const key = item.fingerprint || item.url; if (seen.has(key)) return false; seen.add(key); return true; });
+  return sequence.map(id => byId.get(id)).filter(Boolean);
+}
+function filterOptions() {
+  return { search: $('search').value, minWidth: Math.max(0, Number($('minWidth').value) || 0),
+    minHeight: Math.max(0, Number($('minHeight').value) || 0), source: $('sourceFilter').value,
+    hideChrome: $('hideChrome').checked, mainOnly: $('mainOnly').checked, mainScope };
 }
 function visibleItems() {
-  const text = $('search').value.toLocaleLowerCase().trim();
-  const width = Math.max(0, Number($('minWidth').value) || 0), height = Math.max(0, Number($('minHeight').value) || 0);
-  return sortedItems().filter(item => item.width >= width && item.height >= height &&
-    (!text || `${item.label} ${item.url} ${item.alt}`.toLocaleLowerCase().includes(text)));
+  const options = filterOptions(), seen = new Set();
+  // Filter before deduplication: a header occurrence must not hide a main-content occurrence.
+  return sortedItems().filter(item => ImageHarvestFilters.matches(item, options)).filter(item => {
+    if (!$('dedupe').checked) return true;
+    const key = item.fingerprint || item.url;
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
 }
 function exportItems() { return visibleItems().filter(item => selected.has(item.id)); }
 function counts() {
@@ -39,6 +46,13 @@ function counts() {
   $('download').disabled = busy || !count;
   $('exportLinks').disabled = busy || !count;
   $('reverseOrder').disabled = busy || sequence.length < 2;
+  $('removeSelected').disabled = busy || !count;
+  $('removeCount').textContent = count;
+  $('clearResults').disabled = busy || (!all.length && !removedSnapshot);
+  $('undoRemove').disabled = busy || !removedSnapshot;
+  const hidden = all.length - visibleItems().length;
+  const scopeNote = $('mainOnly').checked ? (mainScope === 'unknown' ? ' • ระบุเขตหลักไม่ชัด: คงภาพที่ไม่แน่ใจไว้' : mainScope === 'reader' ? ' • ใช้บริเวณตัวอ่าน' : ' • ใช้บริเวณ main/article') : '';
+  $('filterSummary').textContent = `แสดง ${all.length - hidden} / ${all.length} ภาพ • ซ่อนด้วยตัวกรอง/ภาพซ้ำ ${hidden} ภาพ${scopeNote} • คัดจากชื่อและโครงสร้างเว็บ อาจผิดได้`;
 }
 function applySort() {
   const mode = $('sort').value;
@@ -58,6 +72,7 @@ function moveItem(id, target) {
   $('sort').value = 'manual'; render();
 }
 function updateState(id, text, failed = false) {
+  if (!all.some(item => item.id === id)) return;
   states.set(id, { text, failed });
   const element = document.querySelector(`[data-state="${id}"]`);
   if (element) { element.textContent = text; element.title = text; element.classList.toggle('failed', failed); }
@@ -79,6 +94,7 @@ function render() {
           const dimensions = card.querySelector('.dimensions');
           if (dimensions) dimensions.textContent = `${item.width} × ${item.height}`;
           counts();
+          if (!busy && !ImageHarvestFilters.matches(item, filterOptions())) { clearTimeout(renderTimer); renderTimer = setTimeout(render, 100); }
         }
       });
       image.addEventListener('error', () => { image.hidden = true; if (!thumb.querySelector('.image-error')) thumb.append(el('span', 'image-error', 'แสดงภาพไม่ได้\nดูสถานะด้านล่าง')); });
@@ -93,6 +109,10 @@ function render() {
       top.append(badge, checkbox);
       const meta = el('div', 'card-meta'), name = el('div', 'card-name', item.label); name.title = item.url;
       const info = el('div', 'card-info'); info.append(el('span', 'dimensions', `${item.width} × ${item.height}`), el('span', 'source-tag', item.source)); meta.append(name, info);
+      if (item.filterHints) {
+        const hint = el('div', `card-hint${item.filterHints.chrome ? ' chrome' : ''}`, item.filterHints.chrome ? 'รูปประกอบเว็บ (คาดว่า)' : item.filterHints.mainKind === 'reader' ? 'บริเวณตัวอ่าน' : item.filterHints.mainKind === 'main' ? 'เนื้อหาหลัก' : 'ไม่ระบุบริเวณ');
+        hint.title = item.filterHints.reason; meta.append(hint);
+      }
       const tools = el('div', 'card-tools'), state = el('span', 'card-state'), buttons = el('span'); state.dataset.state = item.id;
       const up = el('button', '', '←'), down = el('button', '', '→'); up.title = 'เลื่อนก่อนหน้า'; down.title = 'เลื่อนถัดไป';
       up.addEventListener('click', () => { const v = visibleItems(), index = v.findIndex(x => x.id === item.id); if (index > 0) moveItem(item.id, v[index - 1].id); });
@@ -142,7 +162,7 @@ $('scan').addEventListener('click', () => action(async () => {
     }
     const result = await call('scan', { autoScroll: $('autoScroll').checked, backgrounds: $('backgrounds').checked, canvases: $('canvases').checked,
       selector: $('selector').value, waitMs: Number($('waitMs').value), maxSteps: Number($('maxSteps').value) });
-    all = result.items; sequence = all.map(item => item.id); selected = new Set(sequence); states.clear(); applySort(); render();
+    all = result.items; mainScope = ImageHarvestFilters.mainScope(all); removedSnapshot = null; sequence = all.map(item => item.id); selected = new Set(sequence); states.clear(); applySort(); render();
     $('pageTitle').textContent = result.title || result.url;
     const notices = [result.reason, result.notice].filter(Boolean);
     $('notice').textContent = notices.join(' • '); $('notice').hidden = !notices.length;
@@ -157,6 +177,74 @@ $('sort').addEventListener('change', () => { applySort(); render(); });
 $('reverseOrder').addEventListener('click', () => { if (busy || sequence.length < 2) return; sequence.reverse(); $('sort').value='manual'; render(); status('กลับลำดับภาพแล้ว — ภาพท้ายสุดถูกย้ายมาเป็นหน้าแรก'); });
 for (const id of ['minWidth', 'minHeight', 'search']) $(id).addEventListener('input', () => { clearTimeout(renderTimer); renderTimer = setTimeout(render, 180); });
 $('dedupe').addEventListener('change', render);
+for (const id of ['hideChrome', 'mainOnly', 'sourceFilter']) $(id).addEventListener('change', render);
+$('resetFilters').addEventListener('click', () => {
+  if (busy) return;
+  $('hideChrome').checked = false; $('mainOnly').checked = false; $('sourceFilter').value = 'all';
+  $('search').value = ''; $('minWidth').value = '0'; $('minHeight').value = '0'; $('dedupe').checked = true;
+  render(); status('รีเซ็ตตัวกรองแล้ว — รายการที่นำออกยังไม่ถูกคืน');
+});
+let collectionConfirmation = null;
+function finishCollectionConfirmation(accepted) {
+  const resolve = collectionConfirmation;
+  if (!resolve) return;
+  collectionConfirmation = null;
+  $('collectionConfirm').close();
+  resolve(accepted);
+}
+$('collectionCancel').addEventListener('click', event => { event.preventDefault(); finishCollectionConfirmation(false); });
+$('collectionAccept').addEventListener('click', event => { event.preventDefault(); finishCollectionConfirmation(true); });
+$('collectionConfirm').addEventListener('cancel', event => { event.preventDefault(); finishCollectionConfirmation(false); });
+$('collectionConfirm').querySelector('form').addEventListener('submit', event => event.preventDefault());
+function confirmCollection(title, message) {
+  const modal = $('collectionConfirm');
+  if (modal.open || collectionConfirmation) return Promise.resolve(false);
+  $('collectionConfirmTitle').textContent = title; $('collectionConfirmText').textContent = message;
+  return new Promise(resolve => {
+    collectionConfirmation = resolve;
+    modal.showModal(); $('collectionCancel').focus();
+  });
+}
+$('removeSelected').addEventListener('click', () => action(async () => {
+  if (busy) return;
+  const items = exportItems(); if (!items.length) return;
+  if (!await confirmCollection('นำรูปที่เลือกออกจากรายการ', `นำ ${items.length} ภาพที่เลือกและกำลังแสดงออก? ภาพที่ซ่อนอยู่ไม่ถูกนำออก และคืนรายการล่าสุดได้ก่อนสแกนใหม่`)) return;
+  if (busy) return;
+  const snapshot = { all: all.slice(), sequence: sequence.slice(), selected: new Set(selected), sort: $('sort').value, states: new Map(states) };
+  setBusy(true);
+  try {
+    await call('removeItems', { ids: items.map(x => x.id) });
+    const ids = new Set(items.map(x => x.id));
+    all = all.filter(x => !ids.has(x.id)); sequence = sequence.filter(id => !ids.has(id));
+    ids.forEach(id => { selected.delete(id); states.delete(id); }); removedSnapshot = snapshot;
+    status(`นำออกจากรายการ ${items.length} ภาพแล้ว — ไม่ลบไฟล์ในเครื่อง`);
+  } finally { setBusy(false); render(); }
+}));
+$('undoRemove').addEventListener('click', () => action(async () => {
+  if (busy || !removedSnapshot) return;
+  setBusy(true);
+  try {
+    const result = await call('undoRemove');
+    if (!result.ids.length) throw new Error('คืนรายการไม่ได้ กรุณาสแกนใหม่');
+    all = removedSnapshot.all; sequence = removedSnapshot.sequence; selected = removedSnapshot.selected;
+    states = removedSnapshot.states; $('sort').value = removedSnapshot.sort; removedSnapshot = null;
+    status(`คืนรายการ ${result.ids.length} ภาพแล้ว — ตัวกรองปัจจุบันยังทำงานอยู่`);
+  } finally { setBusy(false); render(); }
+}));
+$('clearResults').addEventListener('click', () => action(async () => {
+  if (busy || (!all.length && !removedSnapshot)) return;
+  if (!await confirmCollection('ล้างผลสแกนทั้งหมด', 'ล้างทุกรายการ รวมภาพที่ซ่อนและประวัติคืนรายการ? ต้องสแกนใหม่เพื่อเรียกภาพกลับ โดยลิงก์และโฟลเดอร์ปลายทางยังอยู่')) return;
+  if (busy) return;
+  setBusy(true);
+  try {
+    await call('clearResults'); clearTimeout(renderTimer);
+    all = []; sequence = []; selected.clear(); states.clear(); removedSnapshot = null; mainScope = 'unknown';
+    $('pageTitle').textContent = 'ล้างผลสแกนแล้ว — กดสแกนภาพเพื่อเริ่มใหม่';
+    $('notice').textContent = ''; $('notice').hidden = true;
+    if ($('preview').open) $('preview').close();
+    status('ล้างทั้งหมดแล้ว — ไฟล์ที่บันทึกไว้ยังอยู่ครบ');
+  } finally { setBusy(false); render(); }
+}));
 $('contentPreset').addEventListener('click', () => { $('minWidth').value = '300'; $('minHeight').value = '300'; render(); });
 $('selectAll').addEventListener('click', () => { visibleItems().forEach(item => selected.add(item.id)); render(); });
 $('deselectAll').addEventListener('click', () => { selected.clear(); render(); });
@@ -194,7 +282,7 @@ $('preview').addEventListener('close', () => $('previewImage').removeAttribute('
 window.eiw.on(event => {
   if (event.type === 'status' || event.type === 'rate-limit' || event.type === 'error') status(event.message, event.type !== 'status');
   if (event.type === 'navigation') { currentURL = event.url; $('url').value = event.url; }
-  if (event.type === 'scan-start') { all = []; sequence = []; selected.clear(); render(); status('กำลังรวบรวมภาพและเลื่อนหน้า…'); }
+  if (event.type === 'scan-start') { all = []; sequence = []; selected.clear(); states.clear(); removedSnapshot = null; mainScope = 'unknown'; render(); status('กำลังรวบรวมภาพและเลื่อนหน้า…'); }
   if (event.type === 'scan-progress') { status(`กำลังสแกน • พบ ${event.count} ภาพ • รอบ ${event.step}/${event.maxSteps}`); $('progress').value = Math.round(event.progress * 100); }
   if (event.type === 'download-progress') { status(`กำลังบันทึกภาพ ${event.index}/${event.total} • สำเร็จ ${event.saved} • ไม่สำเร็จ ${event.failed}`); $('progress').value = ((event.index - 1) / event.total) * 100; }
   if (event.type === 'image-saved') updateState(event.id, `✓ ${event.filename}`);

@@ -12,7 +12,7 @@
   <aside>
     <div class="brand"><span class="mark">▧</span><div>Image<span class="brand-accent">Harvest</span><small>EXPORT IMAGE FROM WEB</small></div></div>
     <div class="side-label">YOUR WORKSPACE</div>
-    <div class="side-active">▦ <span>เก็บภาพจากเว็บไซต์</span><span class="pill">1.0.3</span></div>
+    <div class="side-active">▦ <span>เก็บภาพจากเว็บไซต์</span><span class="pill">1.0.4</span></div>
     <div class="side-guide"><div class="step"><b>1</b><div>เปิดเว็บไซต์<small>วาง URL หน้าที่ต้องการเก็บรูป</small></div></div><div class="step"><b>2</b><div>สแกนและเลือกภาพ<small>กรองภาพเล็ก แล้วจัดลำดับ</small></div></div><div class="step"><b>3</b><div>บันทึกลงเครื่อง<small>ชื่อไฟล์เรียง 0001, 0002…</small></div></div></div>
     <div class="side-note"><span>LOCAL FIRST</span><p>รูปบันทึกลงเครื่องโดยตรง<br>ไม่มีการส่งผ่านเซิร์ฟเวอร์ของแอป</p><small>ใช้กับภาพที่พี่มีสิทธิ์ดาวน์โหลด<br>ไม่ข้าม paywall หรือข้อจำกัดของเว็บ</small></div>
     <footer>Made for your collection <span>✦</span></footer>
@@ -33,24 +33,44 @@
     <section class="status-line"><span id="statusDot" class="status-dot"></span><span id="status" role="status">พร้อมใช้งาน — เริ่มด้วยลิงก์เว็บไซต์</span><button id="cancel" class="danger" hidden>หยุดงาน</button></section>
     <progress id="progress" value="0" max="100" hidden></progress>
     <section class="collection-heading"><div><h2>ภาพที่รวบรวม <span id="totalCount" class="count">0</span></h2><p id="pageTitle">คอลเลกชันใหม่ของพี่จะอยู่ตรงนี้</p></div><div class="view-actions"><span id="selectionCount">เลือก 0 ภาพ</span><button id="selectAll" class="quiet small">เลือกทั้งหมดที่แสดง</button><button id="deselectAll" class="text-button">ล้างการเลือก</button></div></section>
+    <section class="collection-tools" aria-label="จัดการรายการภาพ">
+      <button id="removeSelected" class="quiet small remove-action" disabled>นำที่เลือกออก <span id="removeCount">0</span></button>
+      <button id="clearResults" class="quiet small remove-action" disabled>ล้างทั้งหมด</button>
+      <button id="undoRemove" class="quiet small" disabled>↶ คืนรายการล่าสุด</button>
+      <span>นำออกจากรายการเท่านั้น ไม่ลบไฟล์ที่บันทึกแล้ว</span>
+    </section>
     <section class="filters">
       <div class="search"><span>⌕</span><input id="search" placeholder="ค้นหาชื่อหรือ URL ภาพ…"></div>
       <label class="dimension">กว้าง ≥ <input id="minWidth" type="number" min="0" value="0"> px</label>
       <label class="dimension">สูง ≥ <input id="minHeight" type="number" min="0" value="0"> px</label>
-      <button id="contentPreset" class="quiet small" title="ตั้งกว้างและสูงอย่างน้อย 300 px ไม่ใช่ AI แยกประเภทภาพ">ภาพเนื้อหา</button>
+      <button id="contentPreset" class="quiet small" title="ตั้งกว้างและสูงอย่างน้อย 300 px ไม่ใช่ AI แยกประเภทภาพ">ภาพ ≥ 300 px</button>
       <select id="sort" aria-label="การเรียงภาพ"><option value="visual">ตามตำแหน่งบนหน้า</option><option value="right">บนลงล่าง / ขวาไปซ้าย</option><option value="dom">ตามลำดับที่ตรวจพบใน DOM</option><option value="name">ตามชื่อไฟล์ (1, 2, 10)</option><option value="manual">จัดลำดับเอง</option></select><button id="reverseOrder" class="quiet small" title="กลับลำดับภาพทั้งหมดที่สแกนได้">↕ กลับลำดับ</button>
       <label class="check dedupe"><input id="dedupe" type="checkbox" checked> ซ่อน URL ซ้ำ</label>
+    </section>
+    <section class="smart-filters" aria-label="กรองชนิดภาพและเนื้อหา">
+      <label class="check" title="ประเมินจากชื่อไฟล์และบริเวณของหน้าเว็บ ไม่แก้ไขพิกเซลหรือลบลายน้ำ"><input id="hideChrome" type="checkbox">ซ่อนโลโก้ / รูปประกอบเว็บ</label>
+      <label class="check" title="เลือกบริเวณตัวอ่านก่อน main/article; ถ้าระบุไม่ได้ จะไม่ซ่อนภาพที่ไม่แน่ใจ"><input id="mainOnly" type="checkbox">เฉพาะเนื้อหาหลัก</label>
+      <select id="sourceFilter" aria-label="ชนิดภาพ"><option value="all">ทุกชนิดภาพ</option><option value="img">ภาพ IMG</option><option value="canvas">เฉพาะ Canvas</option><option value="background">ภาพพื้นหลัง</option></select>
+      <button id="resetFilters" class="text-button">รีเซ็ตตัวกรอง</button>
+      <p id="filterSummary" role="status">ตัวกรองประเมินจากโครงสร้างเว็บ อาจคัดผิดได้ — ปิดตัวกรองเพื่อดูภาพทั้งหมด</p>
     </section>
     <div id="notice" class="notice" hidden></div>
     <div id="empty" class="empty"><div class="empty-art"><span class="photo-back">▧</span><span class="photo-front">▧</span><span class="sparkle">✦</span></div><h3>จากหน้าเว็บ สู่โฟลเดอร์ของพี่</h3><p>รองรับภาพปกติ ภาพที่โหลดเมื่อเลื่อน ภาพพื้นหลัง และ Canvas ที่อ่านได้<br>ดูตัวอย่างก่อนบันทึก แล้วจัดลำดับได้ด้วยการลากหรือปุ่มลูกศร</p><div class="format-tags"><span>JPG</span><span>PNG</span><span>WEBP</span><span>AVIF</span><span>GIF + more</span></div></div>
     <div id="grid" class="grid" aria-label="รายการภาพ"></div>
     <div id="noMatches" class="no-matches" hidden>ไม่มีภาพตรงตัวกรอง ลองลดขนาดขั้นต่ำหรือเปลี่ยนคำค้นค่ะ</div>
-    <section class="export-bar"><div class="destination"><span class="field-label">โฟลเดอร์ปลายทาง</span><button id="chooseFolder" title="เลือกโฟลเดอร์ปลายทาง"><span id="folderLabel">เลือกโฟลเดอร์บันทึก…</span><span>▾</span></button></div><label class="set-name">ชื่อชุดภาพ<input id="setName" placeholder="ใช้ชื่อหน้าเว็บอัตโนมัติ" maxlength="70"></label><button id="exportLinks" class="secondary">บันทึกลิงก์</button><button id="download" class="primary export-button" disabled>↓ บันทึกภาพที่เลือก <span id="downloadCount">0</span></button></section>
-    <div class="bottom-note">เก็บไฟล์ต้นฉบับ ไม่แปลงหรือบีบอัดซ้ำ • สร้างโฟลเดอร์ใหม่ทุกครั้ง • จำกัด 32 MB ต่อภาพ</div>
+    <section class="export-bar"><div class="destination"><span class="field-label">โฟลเดอร์ปลายทาง</span><button id="chooseFolder" title="เลือกโฟลเดอร์ปลายทาง"><span id="folderLabel">เลือกโฟลเดอร์บันทึก…</span><span>▾</span></button></div><label class="set-name">ชื่อโฟลเดอร์ชุดภาพ<input id="setName" placeholder="ว่าง = ชื่อเว็บ + เวลา" maxlength="70"></label><button id="exportLinks" class="secondary">บันทึกลิงก์</button><button id="download" class="primary export-button" disabled>↓ บันทึกภาพที่เลือก <span id="downloadCount">0</span></button></section>
+    <div class="bottom-note">ไฟล์ภาพเก็บต้นฉบับ • Canvas เก็บเป็น PNG • สร้างโฟลเดอร์ใหม่ทุกครั้ง • จำกัด 32 MB ต่อภาพ</div>
   </main>
 </div>
 <dialog id="preview"><div class="preview-head"><span id="previewTitle"></span><button id="closePreview" class="quiet">ปิด ✕</button></div><div class="preview-body"><img id="previewImage" alt="ภาพขยาย"></div><p id="previewUrl"></p></dialog>
 <dialog id="renameDialog" class="rename-dialog"><div class="preview-head"><strong>ตั้งชื่อรูปเป็นเลขหน้า</strong><button id="closeRename" class="quiet">ปิด ✕</button></div><div class="rename-body"><p class="rename-help">ใช้กับรูปที่มีอยู่แล้วในโฟลเดอร์ ระบบเรียงตามชื่อเดิมแบบตัวเลข (1, 2, 10) แล้วเปลี่ยนเป็น 0001, 0002…</p><button id="chooseRenameSource" class="secondary">เลือกโฟลเดอร์รูป…</button><div id="renameFolderLabel" class="rename-folder">ยังไม่ได้เลือกโฟลเดอร์</div><div class="rename-options"><label>ลำดับ<select id="renameDirection"><option value="normal">ปกติ — ชื่อน้อยไปมาก</option><option value="reverse">ย้อนกลับ — ชื่อมากไปน้อย</option></select></label><label>เลขหน้าเริ่มต้น<input id="renameStart" type="number" min="0" max="99999999" value="1"></label><label>จำนวนหลัก<input id="renamePadding" type="number" min="1" max="8" value="4"></label></div><div id="renameSummary" class="rename-summary">เลือกโฟลเดอร์เพื่อดูตัวอย่าง</div><div id="renamePreview" class="rename-preview"></div><div class="rename-actions"><button id="applyRename" class="primary" disabled>เปลี่ยนชื่อเป็นเลขหน้า</button></div></div></dialog>
+<dialog id="collectionConfirm" class="collection-confirm" aria-labelledby="collectionConfirmTitle">
+  <form method="dialog"><h2 id="collectionConfirmTitle">ยืนยันการนำรูปออก</h2>
+    <p id="collectionConfirmText"></p><p class="confirmation-note">ไม่ลบหรือเปลี่ยนชื่อไฟล์ที่พี่บันทึกลงเครื่องแล้ว</p>
+    <div class="confirm-actions"><button id="collectionCancel" class="quiet" value="cancel" autofocus>ยกเลิก</button><button id="collectionAccept" class="primary" value="accept">ยืนยัน</button></div>
+  </form>
+</dialog>
+<script src="content-filter.js"></script>
 <script src="renderer.js"></script>
 </body>
 </html>

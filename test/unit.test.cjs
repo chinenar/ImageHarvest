@@ -52,3 +52,28 @@ test('page rename plan uses natural order and can reverse it', () => {
   assert.deepEqual(renamePlan(files).map(x=>[x.from,x.to]), [['1.webp','0001.webp'],['2.png','0002.png'],['10.jpg','0003.jpg']]);
   assert.deepEqual(renamePlan(files,{reverse:true,start:5,padding:3}).map(x=>[x.from,x.to]), [['10.jpg','005.jpg'],['2.png','006.png'],['1.webp','007.webp']]);
 });
+
+const filters = require('../src/content-filter.js');
+test('metadata filter recognizes explicit logo names without inspecting host or signed query', () => {
+  assert.equal(filters.classify({ url: 'https://cdn.test/site-logo@2x.png' }).chrome, true);
+  assert.equal(filters.classify({ url: 'https://logo.example/logo-story/page-02.png?avatar=yes' }).chrome, false);
+  assert.equal(filters.classify({ url: 'https://example.com/dialogo.png' }).chrome, false);
+  assert.equal(filters.classify({ identity: 'siteLogo' }).chrome, true);
+  assert.equal(filters.classify({ alt: 'โลโก้เว็บไซต์' }).chrome, true);
+});
+test('main-content scope prefers reader regions but unknown layouts retain uncertain images', () => {
+  const items = ['unknown', 'main', 'reader'].map(mainKind => ({ filterHints: filters.classify({ mainKind }) }));
+  assert.equal(filters.mainScope(items), 'reader');
+  assert.equal(filters.mainScope(items.slice(0, 2)), 'main');
+  assert.equal(filters.mainScope(items.slice(0, 1)), 'unknown');
+  assert.equal(filters.matches(items[0], { mainOnly: true, mainScope: 'unknown' }), true);
+  assert.equal(filters.matches(items[1], { mainOnly: true, mainScope: 'reader' }), false);
+});
+test('metadata filtering is opt-in and does not reject short or wide reader pages', () => {
+  const logo = { source: 'img', filterHints: filters.classify({ alt: 'Logo', mainKind: 'reader' }) };
+  assert.equal(filters.matches(logo), true); assert.equal(filters.matches(logo, { hideChrome: true }), false);
+  const short = { width: 1400, height: 100, source: 'canvas', filterHints: filters.classify({ mainKind: 'reader' }) };
+  assert.equal(filters.matches(short, { mainOnly: true, mainScope: 'reader' }), true);
+  assert.equal(filters.matches(short, { source: 'img' }), false);
+  assert.equal(filters.matches(short, { source: 'canvas', minHeight: 300 }), false);
+});

@@ -1,30 +1,30 @@
-# Verification — 2026-09-17
+# Verification - ImageHarvest 1.0.4
 
-App version: 1.0.3
-Electron: 44.4.1
-Installer: electron-builder 26.15.3 + NSIS
+Runtime: Electron 44.4.1. Installer: electron-builder 26.15.3, assisted NSIS x64.
 
-- Unit tests: 9/9 passed (`npm test`).
-- Electron end-to-end checks: 20/20 passed (`npm run test:e2e`).
-- Packaged Windows executable smoke check passed, including the Canvas control.
-- Assisted NSIS installer built successfully with selectable installation directory.
-- Installer SHA-256: `0139A699A334B9DA8D2BE8EA81BC6B8B56B697C0F151F31E2EC3FAC655570DE8`.
-- Installed successfully on SaKuRa-PC and SaKuRa-Notebook; both report ImageHarvest 1.0.3.
+- Unit tests: 12/12 passed (`npm test`).
+- Existing Electron end-to-end checks: 20/20 passed (`npm run test:e2e`).
+- New collection/filter end-to-end checks: 18/18 passed (`npm run test:curation`).
+- The same 18 collection checks passed against the packaged EXE.
+- Packaged smoke test passed: version, IPC and all new controls verified.
+- Installer built with a selectable installation directory.
+- Installer SHA-256: `8EF9F5A18043216190499C573EADB423361318D26E1B98A6A6A432568ADEB968`.
 
-Latest E2E evidence: `test-results/run-1789663079195/` (ignored from Git).
+Local evidence (ignored from Git):
+- Existing E2E: `test-results/run-1789665143477/`
+- Final source curation: `test-results/curation-1789665323495/`
+- Final packaged curation: `test-results/curation-1789665367226/`
 
-Canvas test coverage includes waiting for a non-blank rendered 2D canvas, PNG capture,
-and retaining existing security behavior for remote pages and downloads.
+New checks cover opt-in metadata filters, reader prioritization, short pages,
+shared image URLs in different regions, Canvas/background inclusion, source filtering,
+selected-visible-only removal, cancellation, undo, clear including hidden results,
+invalid IDs, busy-state protection, minimum window width and export ordering.
+Hashes verified that exported files are unchanged by removal and clearing.
+Unknown layouts retain uncertain images and display a warning.
 
-## Live CCharem reader check
+Tests use controlled loopback pages, not a claim of accuracy on every public website.
+No third-party manga images, browsing data or live-site test reports are published here.
 
-Tested against the public free chapter 1.1 on `ccharem.cileclo.com` using a fresh in-memory app session.
-ImageHarvest did not call or decrypt the reader media API itself; it opened the reader normally and captured only canvases after the site rendered them.
-
-- Reader exposed 19 canvas pages.
-- Captured 19/19 rendered pages; scan completed in 31 steps without truncation.
-- Pages 1–18 captured at 1400×2011; page 19 at 1400×794.
-- Every captured item validated as a PNG file.
-- No live manga images or decrypted source files are stored in the repository; temporary canvas captures are removed when the app exits or a new scan starts.
-
-See README.md for supported cases and limitations.
+Installed using the same checksum-verified installer on SaKuRa-PC and SaKuRa-Notebook.
+Both installed executables report 1.0.4 and opened an ImageHarvest window successfully.
+Existing installed-user paths were retained under `%LOCALAPPDATA%\Programs\ImageHarvest`.

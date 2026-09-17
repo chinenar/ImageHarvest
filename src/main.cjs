@@ -19,6 +19,7 @@ let mainWindow, browser, browsingSession, quitting = false, busy = null, job = n
 let records = new Map(), cache = new ByteCache(), pending = new Map(), failedImages = new Map(), generation = 0;
 let pageInfo = { title: '', url: '' }, lastFolder = '', outputRoot = '', renameFolder = '', canvasTempDir = '', blockedHosts = new Map();
 let queue = Promise.resolve(), requestGate = 0;
+let excludedIds = new Set(), lastRemoval = [];
 let collector, scrollScript, canvasCaptureScript;
 const emit = (type, data = {}) => {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('eiw:event', { type, ...data });
@@ -88,11 +89,34 @@ async function openPage(input) {
   } finally { busy = null; }
 }
 async function clearCollection() {
+  excludedIds.clear(); lastRemoval = [];
   const oldCanvasDir = canvasTempDir; canvasTempDir = '';
   generation++; records = new Map(); cache.clear(); failedImages.clear(); pending.clear(); blockedHosts.clear();
   if (oldCanvasDir) await fs.rm(oldCanvasDir, { recursive: true, force: true }).catch(() => {});
 }
 
+function removeItems(input) {
+  ensureIdle();
+  const items = selectedItems(input);
+  if (!items.length) throw new Error('ยังไม่ได้เลือกภาพ');
+  lastRemoval = items.map(x => x.id);
+  lastRemoval.forEach(id => excludedIds.add(id));
+  return { removed: lastRemoval.length, count: records.size - excludedIds.size };
+}
+function undoRemove() {
+  ensureIdle();
+  const ids = lastRemoval.filter(id => records.has(id) && excludedIds.has(id));
+  ids.forEach(id => excludedIds.delete(id)); lastRemoval = [];
+  return { ids };
+}
+async function clearResults() {
+  ensureIdle(); busy = 'clear';
+  try {
+    await clearCollection();
+    pageInfo = { title: '', url: browser && !browser.isDestroyed() ? browser.webContents.getURL() : '' };
+    return { cleared: true };
+  } finally { busy = null; }
+}
 async function scan(input = {}) {
   ensureIdle();
   if (!browser || browser.isDestroyed() || !allowedWeb(browser.webContents.getURL())) throw new Error('กรุณาเปิดเว็บไซต์ก่อนสแกน');
@@ -246,19 +270,19 @@ async function acquireImage(item, signal) {
 }
 function getImage(id, signal) {
   const item = records.get(id);
-  if (!item) return Promise.reject(new Error('ไม่พบภาพในผลสแกนล่าสุด'));
+  if (!item || excludedIds.has(id)) return Promise.reject(new Error('ไม่พบภาพในผลสแกนล่าสุด'));
+  const gen = generation;
   const cacheKey = idFor(item.url), hit = cache.get(cacheKey);
   if (item.source === 'canvas' && item.capturePath) {
     if (hit) return Promise.resolve(hit);
     return fs.readFile(item.capturePath).then(buffer => {
       const value = { buffer, ...imageType(buffer, 'image/png') };
-      cache.set(cacheKey, value); return value;
+      if (gen === generation) cache.set(cacheKey, value); return value;
     }).catch(() => { throw new Error('ไฟล์ Canvas ชั่วคราวไม่อยู่แล้ว กรุณาสแกนใหม่'); });
   }
   if (hit) return Promise.resolve(hit);
   if (failedImages.has(cacheKey)) return Promise.reject(new Error(failedImages.get(cacheKey)));
   if (pending.has(cacheKey)) return pending.get(cacheKey);
-  const gen = generation;
   // A single queue prevents preview + export from multiplying website requests.
   const task = queue.then(async () => {
     if (gen !== generation || signal?.aborted) throw new Error('ยกเลิกคำขอเดิม');
@@ -279,7 +303,7 @@ function selectedItems(input) {
   if (!Array.isArray(input?.ids) || input.ids.length > MAX_IMAGES) throw new Error('รายการภาพไม่ถูกต้อง');
   const seen = new Set();
   return input.ids.map(id => {
-    if (typeof id !== 'string' || !records.has(id) || seen.has(id)) throw new Error('รายการภาพเปลี่ยนไป กรุณาสแกนใหม่');
+    if (typeof id !== 'string' || !records.has(id) || excludedIds.has(id) || seen.has(id)) throw new Error('รายการภาพเปลี่ยนไป กรุณาสแกนใหม่');
     seen.add(id); return records.get(id);
   });
 }
@@ -400,6 +424,8 @@ async function exportLinks(input) {
 }
 async function main() {
   collector = await fs.readFile(path.join(__dirname, 'collector.js'), 'utf8');
+  const filterSource = await fs.readFile(path.join(__dirname, 'content-filter.js'), 'utf8');
+  collector = `(options => { ${filterSource}\nreturn (${collector})(options); })`;
   scrollScript = await fs.readFile(path.join(__dirname, 'scroll.js'), 'utf8');
   canvasCaptureScript = await fs.readFile(path.join(__dirname, 'canvas-capture.js'), 'utf8');
   await fs.mkdir(app.getPath('userData'), { recursive: true });
@@ -410,7 +436,7 @@ async function main() {
   protocol.handle('eiw', async request => {
     const url = new URL(request.url);
     const name = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
-    if (url.host !== 'app' || !['index.html', 'renderer.js', 'style.css'].includes(name)) return new Response('Not found', { status: 404 });
+    if (url.host !== 'app' || !['index.html', 'renderer.js', 'content-filter.js', 'style.css'].includes(name)) return new Response('Not found', { status: 404 });
     return new Response(await fs.readFile(path.join(__dirname, name)), { headers: { 'Content-Type': types[path.extname(name)] || 'text/plain' } });
   });
   protocol.handle('eiw-image', async request => {
@@ -435,6 +461,9 @@ async function main() {
   handle('open', openPage);
   handle('showBrowser', async () => { if (!browser) throw new Error('กรุณาเปิดเว็บก่อน'); browser.show(); browser.focus(); return true; });
   handle('scan', scan);
+  handle('removeItems', removeItems);
+  handle('undoRemove', undoRemove);
+  handle('clearResults', clearResults);
   handle('cancel', () => { if (job) { job.cancelled = true; job.abort.abort(); } return true; });
   handle('chooseFolder', chooseFolder);
   handle('chooseRenameFolder', chooseRenameFolder);
@@ -444,7 +473,7 @@ async function main() {
   handle('exportLinks', exportLinks);
   handle('openFolder', async () => { const folder = lastFolder || outputRoot; if (!folder) throw new Error('ยังไม่มีโฟลเดอร์'); const error = await shell.openPath(folder); if (error) throw new Error(error); return true; });
   handle('settings', () => ({ outputRoot, version: app.getVersion() }));
-  if (testMode) global.__eiwTest = { openPage, scan, download, getImage, renameImages: input => renameImages(input, true), setOutput: value => { outputRoot = value; }, setRenameFolder: value => { renameFolder = value; }, getState: () => ({ busy, count: records.size, browserId: browser?.webContents.id }),
+  if (testMode) global.__eiwTest = { openPage, scan, download, getImage, renameImages: input => renameImages(input, true), setOutput: value => { outputRoot = value; }, setRenameFolder: value => { renameFolder = value; }, getState: () => ({ busy, count: records.size - excludedIds.size, excluded: excludedIds.size, canvasTempDir, browserId: browser?.webContents.id }),
     cancel: () => { if (job) { job.cancelled = true; job.abort.abort(); } } };
   await mainWindow.loadURL('eiw://app/');
 }
