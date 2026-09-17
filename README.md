@@ -1,11 +1,11 @@
-# ImageHarvest 1.0.8
+# ImageHarvest 1.0.9
 
 แอป Windows สำหรับรวบรวมไฟล์ภาพจากหน้าเว็บ ดูตัวอย่าง กรอง จัดลำดับ และบันทึกไฟล์ต้นฉบับลงเครื่อง รวมโหมดจับเว็บที่เปลี่ยนทีละหน้าโดยให้ผู้ใช้กดเปลี่ยนหน้าเอง
 
 Repository: https://github.com/chinenar/ImageHarvest
 
 ## ติดตั้งและเปิดใช้งาน
-หลัง build แล้ว ตัวติดตั้งอยู่ที่ `installer-dist\ImageHarvest-Setup-1.0.8.exe`
+หลัง build แล้ว ตัวติดตั้งอยู่ที่ `installer-dist\ImageHarvest-Setup-1.0.9.exe`
 
 - Installer เป็นแบบหลายขั้นตอนและ **เลือกโฟลเดอร์ติดตั้งได้**
 - สร้าง Desktop shortcut และ Start Menu shortcut
@@ -60,6 +60,7 @@ npm.cmd start
 npm.cmd test
 npm.cmd run test:e2e
 npm.cmd run test:capture
+npm.cmd run test:blob
 npm.cmd run test:curation
 npm.cmd run test:chrome
 npm.cmd run package
@@ -110,14 +111,14 @@ E2E เปิดเว็บทดสอบบน `127.0.0.1` เท่านั
 
 ## จับทีละหน้า (1.0.6)
 - กด **จับทีละหน้า** แล้วเปิดหน้าต่างเว็บค้างไว้ จากนั้นกด Next / ลูกศร / ปุ่มเปลี่ยนหน้าของเว็บไซต์เอง
-- แอปตรวจเฉพาะภาพที่มองเห็นเป็นระยะและสะสมผลต่อเนื่อง โดยไม่ล้างหน้าที่เก็บก่อนหน้า
+- ตั้งแต่ 1.0.9 แอปตื่นจับทันทีเมื่อ hash/history, IMG src/srcset, การซ่อน/แสดง element หรือ image load เปลี่ยน และยังมี polling สำรองสำหรับ Canvas ที่วาดทับโดย DOM ไม่เปลี่ยน
 - หลังจับไฟล์สำเร็จจะคำนวณ SHA-256 จากข้อมูลภาพจริง; เนื้อหาเดิมจึงไม่ถูกเพิ่มซ้ำแม้เว็บไซต์จะใช้ Canvas หรือ URL เดิม
 - รอบที่อ่านภาพหรือ Canvas ไม่สำเร็จจะ **ไม่** ถูกทำเครื่องหมายว่าเคยเก็บแล้ว และลองใหม่ในรอบถัดไปได้
 - Snapshot ที่สำเร็จถูกเก็บเป็นไฟล์ชั่วคราวทันที เพื่อให้หน้าก่อนหน้ายังคงเดิมแม้ Canvas ต้นทางถูกวาดทับ
 - หยุด Capture Session ก่อนจัดลำดับ ลบรายการ หรือบันทึกไฟล์ เพื่อไม่ให้รายการเปลี่ยนระหว่างทำงาน
 
 ## DNS / Network compatibility (1.0.6)
-เลือกโหมดเครือข่ายได้จากหน้าแอป: **อัตโนมัติ**, **Cloudflare DNS**, **Google DNS** และ **Compatibility**
+เลือกโหมดเครือข่ายได้จากหน้าแอป: **อัตโนมัติ**, **Cloudflare DNS**, **Google DNS**, **AdGuard DNS** และ **Compatibility**
 
 - Cloudflare/Google ใช้ DNS-over-HTTPS ใน Electron และใช้ resolver ที่เลือกกับการดาวน์โหลดภาพของ Chrome mode ด้วย
 - Compatibility ใช้ Cloudflare DNS และปิด HTTP/2 + QUIC; ต้องรีสตาร์ตแอปเพราะ Chromium ต้องรับ flags ก่อนเริ่มทำงาน
@@ -129,6 +130,13 @@ E2E เปิดเว็บทดสอบบน `127.0.0.1` เท่านั
 - ระบบสลับสำรองเฉพาะ timeout / name-resolution / network-unreachable; ไม่ retry เพื่อข้าม HTTP 403, CAPTCHA หรือ access challenge
 - จำ DNS ที่ใช้ได้ต่อโดเมนใน session ปัจจุบัน เพื่อลดการลองซ้ำ และยังเลือก Cloudflare / Google / Compatibility เองได้
 - ทดสอบตัวแพ็กกับ URL ที่ผู้ใช้รายงาน: Hitomi เปิดได้ทั้งหน้าเรื่องและ reader; nhentai gallery เปิดได้ ส่วนหน้าที่เว็บตอบ `Just a moment...` ยังคงรายงานเป็น access gate
+
+### AdGuard DNS + reader แบบทีละหน้า (1.0.9)
+- เพิ่ม **AdGuard DNS** เป็นตัวเลือกแยกแบบ opt-in ใช้ AdGuard Public DNS โหมด Default สำหรับบล็อกโฆษณาและตัวติดตาม ไม่ใช่ Family mode
+- หากเว็บพึ่งพาโดเมนที่ถูก AdGuard กรองจนโหลดไม่ครบ ให้กลับ **Smart Auto**; แอปไม่บังคับเปิด AdGuard ให้เอง
+- โหมด **จับทีละหน้า** เป็น event-driven สำหรับ reader ที่เปลี่ยนหน้าด้วย URL hash/history หรือสลับ IMG source และยังมี polling สำรองสำหรับ Canvas
+- สแกนปกติยังเก็บเฉพาะหน้าปัจจุบัน; เว็บที่แสดงทีละหน้าให้กด **จับทีละหน้า** แล้วใช้ปุ่ม Next/ลูกศรของเว็บ
+- Live test Hitomi `reader/19324.html#2`: ตั้ง polling fallback 3,000 ms แต่ตัวแพ็ก 1.0.9 จับหน้าหลังคลิก Next ได้ประมาณ 210 ms จึงยืนยันว่าตื่นจาก page/image change จริง
 
 ## Google Chrome mode (1.0.5, experimental)
 Choose **Google Chrome จริง (ทดลอง)** above the URL, then open or scan the page.

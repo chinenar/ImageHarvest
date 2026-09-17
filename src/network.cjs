@@ -2,7 +2,7 @@
 const dns = require('node:dns');
 const { isIP } = require('node:net');
 
-const MODES = new Set(['auto', 'cloudflare', 'google', 'compat']);
+const MODES = new Set(['auto', 'cloudflare', 'google', 'adguard', 'compat']);
 function normalizeNetworkMode(value) {
   const mode = String(value || '').toLowerCase();
   return MODES.has(mode) ? mode : 'auto';
@@ -11,12 +11,14 @@ function dnsServers(mode) {
   mode = normalizeNetworkMode(mode);
   if (mode === 'cloudflare' || mode === 'compat') return ['1.1.1.1', '1.0.0.1'];
   if (mode === 'google') return ['8.8.8.8', '8.8.4.4'];
+  if (mode === 'adguard') return ['94.140.14.14', '94.140.15.15'];
   return [];
 }
 function dohTemplate(mode) {
   mode = normalizeNetworkMode(mode);
   if (mode === 'cloudflare' || mode === 'compat') return 'https://cloudflare-dns.com/dns-query';
   if (mode === 'google') return 'https://dns.google/dns-query';
+  if (mode === 'adguard') return 'https://dns.adguard-dns.com/dns-query';
   return '';
 }
 function electronResolverOptions(mode) {

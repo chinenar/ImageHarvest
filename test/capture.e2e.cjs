@@ -10,6 +10,15 @@ const hash = hex => crypto.createHash('sha256').update(Buffer.from(hex, 'hex')).
 let app, server;
 (async () => {
   server = http.createServer((req, res) => {
+    const pageMatch = req.url.match(/^\/page([1-3])\.svg$/);
+    if (pageMatch) {
+      const n = pageMatch[1]; res.setHeader('Content-Type','image/svg+xml');
+      res.end(`<svg xmlns="http://www.w3.org/2000/svg" width="420" height="560"><rect width="420" height="560" fill="#${n}${n}${n}"/><text x="30" y="60">page ${n}</text></svg>`); return;
+    }
+    if (req.url === '/imgpager') {
+      res.setHeader('Content-Type','text/html; charset=utf-8');
+      res.end(`<!doctype html><title>Hash IMG pager</title><main><img id="pageimg" width="420" height="560" src="/page1.svg"></main><button id="nextimg">Next</button><script>let p=1;nextimg.onclick=()=>{p=Math.min(3,p+1);location.hash='#'+p;pageimg.src='/page'+p+'.svg';}</script>`); return;
+    }
     if (req.url !== '/pager') { res.writeHead(404); res.end(); return; }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.end(`<!doctype html><title>Same canvas pager</title>
@@ -69,9 +78,27 @@ let app, server;
     await sleep(100);
   }
   assert.equal((await app.evaluate(() => global.__eiwTest.getState())).captureActive, false);
+  await app.evaluate((_, url) => global.__eiwTest.openPage({ url, show: false, backend: 'electron' }), `${base}/imgpager`);
+  await app.evaluate(() => global.__eiwTest.startCaptureSession({ canvases: false, intervalMs: 3000 }));
+  for (let i = 0; i < 20; i++) { if ((await app.evaluate(() => global.__eiwTest.getState())).count >= 1) break; await sleep(100); }
+  assert.equal((await app.evaluate(() => global.__eiwTest.getState())).count, 1);
+  const t2 = Date.now();
+  await app.evaluate(() => global.__eiwTest.runPage("document.getElementById('nextimg').click(); true"));
+  for (let i = 0; i < 18; i++) { if ((await app.evaluate(() => global.__eiwTest.getState())).count >= 2) break; await sleep(100); }
+  assert.equal((await app.evaluate(() => global.__eiwTest.getState())).count, 2, 'hash/src change should wake capture before polling timeout');
+  assert.ok(Date.now() - t2 < 2500, 'event-driven capture must beat the 3s fallback poll');
+  await app.evaluate(() => global.__eiwTest.runPage("document.getElementById('nextimg').click(); true"));
+  for (let i = 0; i < 18; i++) { if ((await app.evaluate(() => global.__eiwTest.getState())).count >= 3) break; await sleep(100); }
+  assert.equal((await app.evaluate(() => global.__eiwTest.getState())).count, 3);
+  await app.evaluate(() => global.__eiwTest.stopCaptureSession());
+  for (let i = 0; i < 20; i++) { if (!(await app.evaluate(() => global.__eiwTest.getState())).captureActive) break; await sleep(100); }
+  assert.equal((await app.evaluate(() => global.__eiwTest.getState())).captureActive, false);
   const cf = await app.evaluate(() => global.__eiwTest.changeNetworkMode({ mode: 'cloudflare' }));
   assert.equal(cf.mode, 'cloudflare'); assert.equal(cf.restartRequired, false);
   assert.equal((await app.evaluate(() => global.__eiwTest.getState())).networkMode, 'cloudflare');
+  const adguard = await app.evaluate(() => global.__eiwTest.changeNetworkMode({ mode: 'adguard' }));
+  assert.equal(adguard.mode, 'adguard'); assert.equal(adguard.restartRequired, false);
+  assert.equal((await app.evaluate(() => global.__eiwTest.getState())).networkMode, 'adguard');
   const compat = await app.evaluate(() => global.__eiwTest.changeNetworkMode({ mode: 'compat' }));
   assert.equal(compat.mode, 'compat'); assert.equal(compat.restartRequired, true);
   const auto = await app.evaluate(() => global.__eiwTest.changeNetworkMode({ mode: 'auto' }));

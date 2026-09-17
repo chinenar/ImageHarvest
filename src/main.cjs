@@ -387,6 +387,52 @@ async function captureVisiblePass(state) {
   pageInfo = { title: snap.title || await webTitle(), url: sourceURL };
   return { items: added, duplicates, failed, title: pageInfo.title, url: sourceURL };
 }
+async function waitForReaderChange(state) {
+  const timeout = Math.max(250, state.intervalMs);
+  const code = `(async () => {
+    const visible = el => {
+      const r = el.getBoundingClientRect();
+      if (r.width <= 1 || r.height <= 1) return false;
+      const s = getComputedStyle(el);
+      return s.display !== 'none' && s.visibility !== 'hidden' && Number(s.opacity || 1) > 0;
+    };
+    const signature = () => {
+      const imgs = [...document.images].filter(visible).map(x => x.currentSrc || x.src || '').join('\\n');
+      const canvases = [...document.querySelectorAll('canvas')].filter(visible)
+        .map((x,i) => i + ':' + x.width + 'x' + x.height).join('\\n');
+      return location.href + '\\n' + imgs + '\\n' + canvases;
+    };
+    const baseline = signature();
+    return await new Promise(resolve => {
+      let done = false, observer;
+      const cleanup = () => {
+        observer?.disconnect();
+        removeEventListener('hashchange', onHash, true);
+        removeEventListener('popstate', onPop, true);
+        document.removeEventListener('load', onLoad, true);
+      };
+      const finish = (changed, reason) => { if (done) return; done = true; cleanup(); resolve({ changed, reason }); };
+      const check = reason => { if (signature() !== baseline) finish(true, reason); };
+      const onHash = () => check('hash');
+      const onPop = () => check('history');
+      const onLoad = event => { if (event.target instanceof HTMLImageElement) check('image-load'); };
+      observer = new MutationObserver(() => check('mutation'));
+      observer.observe(document.documentElement, { subtree:true, childList:true, attributes:true,
+        attributeFilter:['src','srcset','style','class','hidden'] });
+      addEventListener('hashchange', onHash, true); addEventListener('popstate', onPop, true);
+      document.addEventListener('load', onLoad, true);
+      setTimeout(() => finish(false, 'timeout'), ${timeout});
+    });
+  })()`;
+  return new Promise((resolve, reject) => {
+    const onAbort = () => { cleanup(); resolve({ changed:false, reason:'abort' }); };
+    const cleanup = () => state.abort.signal.removeEventListener('abort', onAbort);
+    if (state.abort.signal.aborted) return resolve({ changed:false, reason:'abort' });
+    state.abort.signal.addEventListener('abort', onAbort, { once:true });
+    withTimeout(runPage(code), timeout + 5000, 'รอการเปลี่ยนหน้าไม่ตอบสนอง')
+      .then(value => { cleanup(); resolve(value); }, error => { cleanup(); reject(error); });
+  });
+}
 async function runCaptureSession(state) {
   emit('capture-start', { title: await webTitle().catch(() => ''), url: webURL() });
   let reason = '';
@@ -403,7 +449,12 @@ async function runCaptureSession(state) {
         emit('capture-progress', { items: [], duplicates: 0, failed: 1, count: records.size, lastError: state.lastError });
       }
       if (records.size >= MAX_IMAGES) { reason = 'ถึงขีดจำกัด 5,000 ภาพแล้ว'; break; }
-      await delay(state.intervalMs);
+      try { await waitForReaderChange(state); }
+      catch (error) {
+        if (state.cancelled || state.abort.signal.aborted) break;
+        // A full navigation destroys the old execution context; immediately inspect the new page.
+        await delay(60);
+      }
     }
   } finally {
     if (captureSession === state) captureSession = null;
@@ -417,7 +468,7 @@ async function startCaptureSession(input = {}) {
   await ensureCaptureTempDir();
   const state = {
     cancelled: false, abort: new AbortController(), hashes: new Set(), lastError: '',
-    intervalMs: Math.max(500, Math.min(5000, Number(input.intervalMs) || 900)),
+    intervalMs: Math.max(250, Math.min(5000, Number(input.intervalMs) || 900)),
     selector: String(input.selector || '').trim().slice(0, 500),
     backgrounds: Boolean(input.backgrounds), canvases: input.canvases !== false
   };

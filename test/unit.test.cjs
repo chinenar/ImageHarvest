@@ -84,6 +84,8 @@ test('network modes normalize and expose deterministic DNS settings', () => {
   assert.equal(network.normalizeNetworkMode('unknown'), 'auto');
   assert.deepEqual(network.electronResolverOptions('cloudflare').secureDnsServers, ['https://cloudflare-dns.com/dns-query']);
   assert.deepEqual(network.electronResolverOptions('google').secureDnsServers, ['https://dns.google/dns-query']);
+  assert.deepEqual(network.electronResolverOptions('adguard').secureDnsServers, ['https://dns.adguard-dns.com/dns-query']);
+  assert.ok(network.chromeArgs('adguard').some(x => x.includes('dns.adguard-dns.com')));
   assert.equal(network.electronResolverOptions('auto').secureDnsMode, 'automatic');
   assert.deepEqual(network.electronResolverOptions('auto').secureDnsServers, ['https://cloudflare-dns.com/dns-query', 'https://dns.google/dns-query']);
 });

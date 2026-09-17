@@ -15,6 +15,7 @@ async function call(method, args) {
 function networkDescription(mode) {
   if (mode === 'cloudflare') return 'ใช้ Cloudflare DNS-over-HTTPS; ดาวน์โหลดในโหมด Chrome ใช้ 1.1.1.1';
   if (mode === 'google') return 'ใช้ Google DNS-over-HTTPS; ดาวน์โหลดในโหมด Chrome ใช้ 8.8.8.8';
+  if (mode === 'adguard') return 'ใช้ AdGuard DNS-over-HTTPS เพื่อบล็อกโฆษณาและตัวติดตาม; ถ้าเว็บโหลดไม่ครบให้กลับ Smart Auto';
   if (mode === 'compat') return 'Compatibility ใช้ Cloudflare DNS และปิด HTTP/2 + QUIC หลังรีสตาร์ต';
   return 'Smart Auto: ใช้ Secure DNS ของ Cloudflare/Google อัตโนมัติ และสลับสำรองเมื่อเกิด timeout หรือหาโดเมนไม่เจอ';
 }
