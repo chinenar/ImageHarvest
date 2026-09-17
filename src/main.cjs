@@ -17,9 +17,9 @@ if (testMode) app.setPath('userData', path.join(app.getPath('temp'), `eiw-test-$
 app.setName('ImageHarvest');
 let mainWindow, browser, browsingSession, quitting = false, busy = null, job = null;
 let records = new Map(), cache = new ByteCache(), pending = new Map(), failedImages = new Map(), generation = 0;
-let pageInfo = { title: '', url: '' }, lastFolder = '', outputRoot = '', renameFolder = '', blockedHosts = new Map();
+let pageInfo = { title: '', url: '' }, lastFolder = '', outputRoot = '', renameFolder = '', canvasTempDir = '', blockedHosts = new Map();
 let queue = Promise.resolve(), requestGate = 0;
-let collector, scrollScript;
+let collector, scrollScript, canvasCaptureScript;
 const emit = (type, data = {}) => {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('eiw:event', { type, ...data });
 };
@@ -88,20 +88,27 @@ async function openPage(input) {
   } finally { busy = null; }
 }
 async function clearCollection() {
+  const oldCanvasDir = canvasTempDir; canvasTempDir = '';
   generation++; records = new Map(); cache.clear(); failedImages.clear(); pending.clear(); blockedHosts.clear();
+  if (oldCanvasDir) await fs.rm(oldCanvasDir, { recursive: true, force: true }).catch(() => {});
 }
+
 async function scan(input = {}) {
   ensureIdle();
   if (!browser || browser.isDestroyed() || !allowedWeb(browser.webContents.getURL())) throw new Error('กรุณาเปิดเว็บไซต์ก่อนสแกน');
   const selector = String(input.selector || '').trim().slice(0, 500);
-  const options = { selector, backgrounds: Boolean(input.backgrounds) };
+  const options = { selector, backgrounds: Boolean(input.backgrounds), canvases: Boolean(input.canvases) };
   const maxSteps = Math.max(5, Math.min(600, Number(input.maxSteps) || 150));
   const waitMs = Math.max(350, Math.min(5000, Number(input.waitMs) || 800));
   const auto = input.autoScroll !== false;
   busy = 'scan'; job = { cancelled: false, abort: new AbortController() };
   await clearCollection();
-  const startURL = browser.webContents.getURL(), found = new Map();
-  let truncated = false, reason = '', steps = 0, previousHeight = -1, stable = 0, metadata = {};
+  if (options.canvases) {
+    canvasTempDir = path.join(app.getPath('temp'), 'ImageHarvest', `${process.pid}-${generation}-${Date.now()}`);
+    await fs.mkdir(canvasTempDir, { recursive: true });
+  }
+  const startURL = browser.webContents.getURL(), found = new Map(), canvasFailures = new Set();
+  let truncated = false, reason = '', steps = 0, previousHeight = -1, stable = 0, metadata = {}, canvasPositionRetries = 0;
   emit('scan-start');
   try {
     if (auto) { await runPage(`(${scrollScript})('init')`); await delay(waitMs); }
@@ -119,6 +126,30 @@ async function scan(input = {}) {
         else if (found.size < MAX_IMAGES) found.set(key, { ...item, url, id: idFor(`${generation}:${key}`), order: found.size });
         else { truncated = true; reason = 'ถึงขีดจำกัด 5,000 ภาพแล้ว'; break; }
       }
+      let retryCanvasPosition = false;
+      if (options.canvases && !truncated) {
+        for (const canvas of snap.canvasItems || []) {
+          const key = `canvas:${canvas.captureId}`;
+          if (found.has(key) || canvasFailures.has(key) || found.size >= MAX_IMAGES) continue;
+          const captured = await withTimeout(runPage(`(${canvasCaptureScript})(${JSON.stringify(canvas.captureId)})`), 15000, 'Canvas ใช้เวลาส่งออกนานเกินไป');
+          if (!captured || captured.error) { if (captured?.retry) retryCanvasPosition = true; else canvasFailures.add(key); continue; }
+          const comma = captured.data.indexOf(','), buffer = Buffer.from(captured.data.slice(comma + 1), 'base64');
+          if (!buffer.length || buffer.length > MAX_IMAGE) { canvasFailures.add(key); continue; }
+          const typed = imageType(buffer, 'image/png'), url = `canvas-capture://${generation}/${canvas.captureId}`;
+          const id = idFor(`${generation}:${key}`), capturePath = path.join(canvasTempDir, `${id}.png`);
+          await fs.writeFile(capturePath, buffer, { flag: 'wx' });
+          found.set(key, { ...canvas, key, url, id, order: found.size, source: 'canvas',
+            label: canvas.alt ? `Canvas — ${canvas.alt}` : `Canvas ${String(canvas.captureId).padStart(3,'0')}`,
+            width: captured.width, height: captured.height, capturePath, ext: typed.ext });
+        }
+      }
+      if (options.canvases && retryCanvasPosition && canvasPositionRetries < 2) {
+        canvasPositionRetries++;
+        emit('scan-progress', { count: found.size, step: steps, maxSteps, progress: 0 });
+        await delay(waitMs);
+        continue;
+      }
+      canvasPositionRetries = 0;
       const pos = auto ? await runPage(`(${scrollScript})('status')`) : { bottom: true, progress: 1, height: 0 };
       emit('scan-progress', { count: found.size, step: steps, maxSteps, progress: pos.progress });
       if (!auto || truncated) break;
@@ -135,8 +166,8 @@ async function scan(input = {}) {
     pageInfo = { title: metadata.title || browser.webContents.getTitle(), url: startURL };
     const cancelled = job.cancelled;
     return { items: all.map(publicItem), ...pageInfo, cancelled, truncated, reason, steps,
-      notice: [metadata.frames ? `พบ iframe ${metadata.frames} ส่วน: V1 ไม่สแกนภายใน iframe` : '',
-        metadata.canvases ? `พบ canvas ${metadata.canvases} ส่วน: V1 ดึงไฟล์ภาพ ไม่จับภาพ canvas` : ''].filter(Boolean).join(' • ') };
+      notice: [metadata.frames ? `พบ iframe ${metadata.frames} ส่วน: ยังไม่สแกนภายใน iframe` : '',
+        metadata.canvases ? (options.canvases ? `พบ canvas ${metadata.canvases} ส่วน: จับเฉพาะ canvas ที่วาดเสร็จและ browser อนุญาตให้อ่าน` : `พบ canvas ${metadata.canvases} ส่วน: เปิด “รวม Canvas” หากต้องการเก็บภาพที่วาดแล้ว`) : ''].filter(Boolean).join(' • ') };
   } finally {
     if (auto && browser && !browser.isDestroyed()) await runPage(`(${scrollScript})('restore')`).catch(() => {});
     job = null; busy = null;
@@ -217,6 +248,13 @@ function getImage(id, signal) {
   const item = records.get(id);
   if (!item) return Promise.reject(new Error('ไม่พบภาพในผลสแกนล่าสุด'));
   const cacheKey = idFor(item.url), hit = cache.get(cacheKey);
+  if (item.source === 'canvas' && item.capturePath) {
+    if (hit) return Promise.resolve(hit);
+    return fs.readFile(item.capturePath).then(buffer => {
+      const value = { buffer, ...imageType(buffer, 'image/png') };
+      cache.set(cacheKey, value); return value;
+    }).catch(() => { throw new Error('ไฟล์ Canvas ชั่วคราวไม่อยู่แล้ว กรุณาสแกนใหม่'); });
+  }
   if (hit) return Promise.resolve(hit);
   if (failedImages.has(cacheKey)) return Promise.reject(new Error(failedImages.get(cacheKey)));
   if (pending.has(cacheKey)) return pending.get(cacheKey);
@@ -363,6 +401,7 @@ async function exportLinks(input) {
 async function main() {
   collector = await fs.readFile(path.join(__dirname, 'collector.js'), 'utf8');
   scrollScript = await fs.readFile(path.join(__dirname, 'scroll.js'), 'utf8');
+  canvasCaptureScript = await fs.readFile(path.join(__dirname, 'canvas-capture.js'), 'utf8');
   await fs.mkdir(app.getPath('userData'), { recursive: true });
   try { const value = JSON.parse(await fs.readFile(path.join(app.getPath('userData'), 'settings.json'), 'utf8')); if (typeof value.outputRoot === 'string') outputRoot = value.outputRoot; } catch {}
   browsingSession = session.fromPartition('eiw-website'); // Memory-only login session.
@@ -410,6 +449,6 @@ async function main() {
   await mainWindow.loadURL('eiw://app/');
 }
 app.whenReady().then(main).catch(error => { dialog.showErrorBox('ImageHarvest', error.stack || error.message); app.exit(1); });
-app.on('before-quit', () => { quitting = true; if (job) job.abort.abort(); });
+app.on('before-quit', () => { quitting = true; if (job) job.abort.abort(); if (canvasTempDir) fs.rm(canvasTempDir, { recursive:true, force:true }).catch(()=>{}); });
 app.on('window-all-closed', () => app.quit());
 app.on('web-contents-created', (_event, contents) => { contents.on('will-attach-webview', event => event.preventDefault()); });

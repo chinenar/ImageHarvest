@@ -1,7 +1,7 @@
 {
   "name": "imageharvest",
   "productName": "ImageHarvest",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Ordered website image collector for Windows",
   "private": true,
   "main": "src/main.cjs",

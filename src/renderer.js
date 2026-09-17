@@ -140,7 +140,7 @@ $('scan').addEventListener('click', () => action(async () => {
     if (!currentURL || (input !== currentURL && `https://${input}` !== currentURL)) {
       const opened = await call('open', { url: input, show: false }); currentURL = opened.url; $('url').value = opened.url;
     }
-    const result = await call('scan', { autoScroll: $('autoScroll').checked, backgrounds: $('backgrounds').checked,
+    const result = await call('scan', { autoScroll: $('autoScroll').checked, backgrounds: $('backgrounds').checked, canvases: $('canvases').checked,
       selector: $('selector').value, waitMs: Number($('waitMs').value), maxSteps: Number($('maxSteps').value) });
     all = result.items; sequence = all.map(item => item.id); selected = new Set(sequence); states.clear(); applySort(); render();
     $('pageTitle').textContent = result.title || result.url;

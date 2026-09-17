@@ -14,7 +14,7 @@
     }
   }
   roots.forEach(walk);
-  const result = [];
+  const result = [], canvasItems = [];
   function add(el, raw, kind, width, height, rect, index, layer = 0) {
     if (!raw || !rect.width || !rect.height) return;
     let url;
@@ -34,12 +34,20 @@
       dom: index, alt: (el.getAttribute('alt') || '').slice(0, 160) });
   }
   elements.forEach((el, index) => {
-    const isImg = el.tagName === 'IMG';
-    if (!isImg && !options.backgrounds) return;
+    const isImg = el.tagName === 'IMG', isCanvas = el.tagName === 'CANVAS';
+    if (!isImg && !isCanvas && !options.backgrounds) return;
     const rect = el.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const style = getComputedStyle(el);
     if (style.visibility === 'hidden' || style.display === 'none') return;
+    if (isCanvas && options.canvases && el.width > 1 && el.height > 1) {
+      if (!state.ids.has(el)) state.ids.set(el, state.next++);
+      let innerY = 0, innerX = 0;
+      for (let parent = el.parentElement; parent && parent !== document.body && parent !== document.documentElement; parent = parent.parentElement) { innerY += parent.scrollTop; innerX += parent.scrollLeft; }
+      canvasItems.push({ captureId: state.ids.get(el), width: el.width, height: el.height,
+        top: Math.round(rect.top + scrollY + innerY), left: Math.round(rect.left + scrollX + innerX), dom: index,
+        alt: (el.getAttribute('aria-label') || el.getAttribute('title') || el.parentElement?.dataset?.page || '').slice(0,160) });
+    }
     if (isImg) {
       const lazy = ['data-src', 'data-original', 'data-lazy-src', 'data-url'].map(k => el.getAttribute(k)).find(Boolean);
       const loaded = el.complete && el.naturalWidth > 32;
@@ -54,7 +62,7 @@
       }
     }
   });
-  return { items: result, title: document.title, url: location.href,
+  return { items: result, canvasItems, title: document.title, url: location.href,
     frames: document.querySelectorAll('iframe').length,
     canvases: document.querySelectorAll('canvas').length };
 })

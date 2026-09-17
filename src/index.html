@@ -12,7 +12,7 @@
   <aside>
     <div class="brand"><span class="mark">▧</span><div>Image<span class="brand-accent">Harvest</span><small>EXPORT IMAGE FROM WEB</small></div></div>
     <div class="side-label">YOUR WORKSPACE</div>
-    <div class="side-active">▦ <span>เก็บภาพจากเว็บไซต์</span><span class="pill">1.0.2</span></div>
+    <div class="side-active">▦ <span>เก็บภาพจากเว็บไซต์</span><span class="pill">1.0.3</span></div>
     <div class="side-guide"><div class="step"><b>1</b><div>เปิดเว็บไซต์<small>วาง URL หน้าที่ต้องการเก็บรูป</small></div></div><div class="step"><b>2</b><div>สแกนและเลือกภาพ<small>กรองภาพเล็ก แล้วจัดลำดับ</small></div></div><div class="step"><b>3</b><div>บันทึกลงเครื่อง<small>ชื่อไฟล์เรียง 0001, 0002…</small></div></div></div>
     <div class="side-note"><span>LOCAL FIRST</span><p>รูปบันทึกลงเครื่องโดยตรง<br>ไม่มีการส่งผ่านเซิร์ฟเวอร์ของแอป</p><small>ใช้กับภาพที่พี่มีสิทธิ์ดาวน์โหลด<br>ไม่ข้าม paywall หรือข้อจำกัดของเว็บ</small></div>
     <footer>Made for your collection <span>✦</span></footer>
@@ -22,7 +22,7 @@
     <section class="panel source-panel">
       <label class="field-label" for="url">ลิงก์หน้าเว็บไซต์ <span>หนึ่ง URL ต่อการสแกน ไม่ไล่ทั้งเว็บไซต์</span></label>
       <div class="url-row"><span class="link-icon">↗</span><input id="url" type="url" placeholder="https://example.com/chapter/1" autocomplete="off" spellcheck="false"><button id="open" class="secondary">เปิดเว็บ</button><button id="scan" class="primary">✦ สแกนภาพ</button></div>
-      <div class="source-bottom"><label class="check"><input id="autoScroll" type="checkbox" checked> เลื่อนหน้าอัตโนมัติ</label><label class="check"><input id="backgrounds" type="checkbox"> รวมภาพพื้นหลัง</label><button id="showBrowser" class="text-button">ดูหน้าต่างเว็บ / ล็อกอิน ↗</button><button id="advancedToggle" class="text-button">ตั้งค่าเพิ่มเติม ▾</button></div>
+      <div class="source-bottom"><label class="check"><input id="autoScroll" type="checkbox" checked> เลื่อนหน้าอัตโนมัติ</label><label class="check"><input id="backgrounds" type="checkbox"> รวมภาพพื้นหลัง</label><label class="check" title="เก็บ Canvas ที่หน้าเว็บวาดเสร็จแล้วเป็น PNG โดยไม่ข้ามสิทธิ์ของ browser"><input id="canvases" type="checkbox" checked> รวม Canvas</label><button id="showBrowser" class="text-button">ดูหน้าต่างเว็บ / ล็อกอิน ↗</button><button id="advancedToggle" class="text-button">ตั้งค่าเพิ่มเติม ▾</button></div>
       <div id="advanced" class="advanced" hidden>
         <label>CSS selector เฉพาะบริเวณ <input id="selector" placeholder="เช่น .reader-content (ไม่จำเป็น)"></label>
         <label>รอแต่ละรอบ (ms) <input id="waitMs" type="number" value="800" min="350" max="5000"></label>
@@ -42,7 +42,7 @@
       <label class="check dedupe"><input id="dedupe" type="checkbox" checked> ซ่อน URL ซ้ำ</label>
     </section>
     <div id="notice" class="notice" hidden></div>
-    <div id="empty" class="empty"><div class="empty-art"><span class="photo-back">▧</span><span class="photo-front">▧</span><span class="sparkle">✦</span></div><h3>จากหน้าเว็บ สู่โฟลเดอร์ของพี่</h3><p>รองรับภาพปกติ ภาพที่โหลดเมื่อเลื่อน และภาพพื้นหลัง<br>ดูตัวอย่างก่อนบันทึก แล้วจัดลำดับได้ด้วยการลากหรือปุ่มลูกศร</p><div class="format-tags"><span>JPG</span><span>PNG</span><span>WEBP</span><span>AVIF</span><span>GIF + more</span></div></div>
+    <div id="empty" class="empty"><div class="empty-art"><span class="photo-back">▧</span><span class="photo-front">▧</span><span class="sparkle">✦</span></div><h3>จากหน้าเว็บ สู่โฟลเดอร์ของพี่</h3><p>รองรับภาพปกติ ภาพที่โหลดเมื่อเลื่อน ภาพพื้นหลัง และ Canvas ที่อ่านได้<br>ดูตัวอย่างก่อนบันทึก แล้วจัดลำดับได้ด้วยการลากหรือปุ่มลูกศร</p><div class="format-tags"><span>JPG</span><span>PNG</span><span>WEBP</span><span>AVIF</span><span>GIF + more</span></div></div>
     <div id="grid" class="grid" aria-label="รายการภาพ"></div>
     <div id="noMatches" class="no-matches" hidden>ไม่มีภาพตรงตัวกรอง ลองลดขนาดขั้นต่ำหรือเปลี่ยนคำค้นค่ะ</div>
     <section class="export-bar"><div class="destination"><span class="field-label">โฟลเดอร์ปลายทาง</span><button id="chooseFolder" title="เลือกโฟลเดอร์ปลายทาง"><span id="folderLabel">เลือกโฟลเดอร์บันทึก…</span><span>▾</span></button></div><label class="set-name">ชื่อชุดภาพ<input id="setName" placeholder="ใช้ชื่อหน้าเว็บอัตโนมัติ" maxlength="70"></label><button id="exportLinks" class="secondary">บันทึกลิงก์</button><button id="download" class="primary export-button" disabled>↓ บันทึกภาพที่เลือก <span id="downloadCount">0</span></button></section>

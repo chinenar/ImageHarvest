@@ -30,6 +30,9 @@ function pass(name) { tests.push(name); console.log('PASS:', name); }
     } else if (u.pathname === '/nested') {
       res.setHeader('Content-Type','text/html');
       res.end(`<title>Nested reader</title><div style="height:400px;width:500px;overflow:auto"><img src="/img/first.png"><img loading="lazy" src="/img/third.png"></div>`);
+    } else if (u.pathname === '/canvas') {
+      res.setHeader('Content-Type','text/html');
+      res.end(`<title>Canvas reader</title><canvas id="page" aria-label="มังงะหน้า 1" width="420" height="560"></canvas><script>const c=document.getElementById('page'),x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.fillStyle='#222';x.fillRect(30,30,360,500);</script>`);
     } else if (u.pathname === '/errors') {
       res.setHeader('Content-Type','text/html');
       res.end('<title>Errors</title><img width="300" height="400" src="/bad.png"><img width="300" height="400" src="/large.png"><img width="300" height="400" src="/rate.png"><img width="300" height="400" src="/later.png">');
@@ -104,6 +107,11 @@ function pass(name) { tests.push(name); console.log('PASS:', name); }
   await app.evaluate((_,url)=>global.__eiwTest.openPage({url,show:false}),`${base}/nested`);
   const nested=await app.evaluate(()=>global.__eiwTest.scan({autoScroll:true,waitMs:350,maxSteps:15}));
   assert.equal(nested.items.length,2);assert.ok(nested.items[1].top>nested.items[0].top);pass('nested scroll-reader collection and order');
+  await app.evaluate((_,url)=>global.__eiwTest.openPage({url,show:false}),`${base}/canvas`);
+  const canvasScan=await app.evaluate(()=>global.__eiwTest.scan({autoScroll:false,canvases:true}));
+  const canvasItem=canvasScan.items.find(x=>x.source==='canvas'); assert.ok(canvasItem); assert.equal(canvasItem.width,420); assert.equal(canvasItem.height,560);
+  const canvasBytes=await app.evaluate(async(_,{id})=>(await global.__eiwTest.getImage(id)).buffer.subarray(0,8).toString('hex'),{id:canvasItem.id});
+  assert.equal(canvasBytes,'89504e470d0a1a0a'); pass('origin-clean rendered canvas is captured as PNG');
   const invalid=await app.evaluate(async()=>{try{await global.__eiwTest.scan({selector:'[[['});return false;}catch{return true;}});assert.equal(invalid,true);pass('invalid CSS selector reports an error and releases the job');
   const cancelled=await app.evaluate(async()=>{const task=global.__eiwTest.scan({autoScroll:true,waitMs:500,maxSteps:30});setTimeout(()=>global.__eiwTest.cancel(),650);return task;});assert.equal(cancelled.cancelled,true);pass('scan cancellation returns partial results');
   await app.evaluate((_,url)=>global.__eiwTest.openPage({url,show:false}),`${base}/errors`);

@@ -44,7 +44,7 @@ function publicItem(item) {
     id: item.id, fingerprint: idFor(item.url), url: item.url.startsWith('data:') ? '[embedded image]' : item.url,
     source: item.source, width: item.width, height: item.height,
     top: item.top, left: item.left, order: item.order, alt: item.alt,
-    label: item.url.startsWith('data:') ? 'Embedded image' : decodeName(item.url)
+    label: item.label || (item.url.startsWith('data:') ? 'Embedded image' : decodeName(item.url))
   };
 }
 function decodeName(url) {
