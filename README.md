@@ -141,7 +141,8 @@ E2E เปิดเว็บทดสอบบน `127.0.0.1` เท่านั
 ## Google Chrome mode (1.0.5, experimental)
 Choose **Google Chrome จริง (ทดลอง)** above the URL, then open or scan the page.
 This mode runs the installed Google Chrome in a visible window through Playwright/CDP.
-The DevTools panel is not opened. The browser's security settings and site scripts are not disabled.
+The DevTools panel is not opened. Browser security settings remain enabled.
+Site scripts are left unchanged unless the opt-in site-compatibility option below is enabled.
 
 - Chrome must already be installed. There is no silent browser download or fallback to another brand.
 - A fresh, temporary ImageHarvest profile is created. Personal Chrome profiles and their cookies are never imported.
