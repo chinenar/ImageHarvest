@@ -3,6 +3,7 @@ const { app, BrowserWindow, BrowserView, ipcMain, session, protocol, net, dialog
 const fs = require('node:fs/promises');
 const fsSync = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 const { pathToFileURL } = require('node:url');
 const { randomUUID, createHash } = require('node:crypto');
 const { fetchManual } = require('./http.cjs');
@@ -33,6 +34,7 @@ async function prepareOverlayStyles(tab,payload){
 }
 const { TextPlacementPlanner } = require('./text-placement.cjs');
 const { runPageTaskGroups } = require('./page-task-pool.cjs');
+const { translationMachineKey,translationProfileKey,summarizeProviderMetrics,recordTranslationWave,recommendTranslationParallel,TranslationPerformanceStore } = require('./translation-performance.cjs');
 const { readerDocumentKey, sameReaderDocument } = require('./reader-document.cjs');
 const { createReaderInteractionLock } = require('./reader-interaction-lock.cjs');
 const { createOcrLab } = require('./ocr-lab-main.cjs');
@@ -151,6 +153,23 @@ const ocrTranslationService = new OcrTranslationService({google:harvestGoogleTra
 const harvestTranslationJobs = new Map();
 const harvestTranslationTempRoot = path.join(app.getPath('temp'), 'ImageHarvest', testMode ? 'harvestts-translate-test-'+process.pid : 'harvestts-translate');
 let harvestTranslationProbeCache = null;
+const harvestTranslationPerformance = new TranslationPerformanceStore(path.join(harvestTsDataDir,'translation-performance.json'));
+let harvestTranslationMachineKeyPromise=null;
+async function harvestTranslationMachineFingerprint(){
+  if(harvestTranslationMachineKeyPromise)return harvestTranslationMachineKeyPromise;
+  harvestTranslationMachineKeyPromise=(async()=>{
+    const gpuInfo=await app.getGPUInfo('basic').catch(()=>({gpuDevice:[]}));
+    return translationMachineKey({platform:process.platform,arch:process.arch,cpu:os.cpus()?.[0]?.model||'',memoryBytes:os.totalmem(),gpu:gpuInfo?.gpuDevice||[]});
+  })();
+  return harvestTranslationMachineKeyPromise;
+}
+async function harvestTranslationProfileMeta(model,nativeInfo){
+  const contextLength=Number(nativeInfo?.loaded_instances?.[0]?.config?.context_length)||0;
+  const quantization=String(nativeInfo?.quantization?.name||nativeInfo?.quantization||'');
+  const machineKey=await harvestTranslationMachineFingerprint();
+  const key=translationProfileKey({machineKey,model,quantization,contextLength});
+  return {key,machineKey,model,quantization,contextLength};
+}
 const HARVEST_TRANSLATE_DEFAULTS = {
   engine:'ai',
   sourceLanguage:'auto',
@@ -1155,11 +1174,18 @@ async function probeHarvestTranslationApi(tab, job) {
   assertHarvestTranslationRunning(job);
   const nativeInfo=ready.native?await harvestTranslationClient.nativeModelInfo(discovered.model,job.abort.signal,{fresh:true}).catch(()=>null):null;
   const modelSizeBytes=Math.max(0,Number(nativeInfo?.size_bytes)||0),serverParallel=Math.max(1,Number(ready.parallel)||1);
-  const safeParallel=ready.native?Math.min(serverParallel,modelSizeBytes>=14*1024**3?1:modelSizeBytes>=8*1024**3?2:4):1;
-  harvestTranslationProbeCache={...discovered,...ready,serverParallel,parallel:Math.max(1,safeParallel),modelSizeBytes,contextLength:Number(nativeInfo?.loaded_instances?.[0]?.config?.context_length)||0,checkedAt:Date.now()};
-  const parallelNote=harvestTranslationProbeCache.parallel>1?' • parallel '+harvestTranslationProbeCache.parallel:'';
-  const limitedNote=serverParallel>harvestTranslationProbeCache.parallel?' (จำกัดจาก server '+serverParallel+' เพื่อไม่ให้โมเดลใหญ่ค้าง)':'';
-  sendHarvestTranslation(tab,{type:'model',ok:true,...harvestTranslationProbeCache,message:'โมเดลพร้อมจริง • '+discovered.model+parallelNote+limitedNote});
+  const initialBatchPages=modelSizeBytes>=14*1024**3?2:modelSizeBytes>=8*1024**3?3:4;
+  let performanceMeta=null,performanceProfile=null,adaptiveParallel=1,adaptiveBatchPages=initialBatchPages;
+  if(ready.native&&nativeInfo){
+    performanceMeta=await harvestTranslationProfileMeta(discovered.model,nativeInfo);
+    performanceProfile=await harvestTranslationPerformance.get(performanceMeta.key,{batchPages:initialBatchPages});
+    adaptiveParallel=Math.min(serverParallel,Math.max(1,Number(performanceProfile.recommendedParallel)||1));
+    adaptiveBatchPages=Math.max(1,Math.min(4,Number(performanceProfile.batchPages)||initialBatchPages));
+  }
+  harvestTranslationProbeCache={...discovered,...ready,serverParallel,parallel:adaptiveParallel,batchPages:adaptiveBatchPages,modelSizeBytes,contextLength:Number(nativeInfo?.loaded_instances?.[0]?.config?.context_length)||0,quantization:String(nativeInfo?.quantization?.name||nativeInfo?.quantization||''),performanceKey:performanceMeta?.key||'',performanceProfile,checkedAt:Date.now()};
+  const learned=Boolean(performanceProfile?.updatedAt);
+  const autoNote=ready.native?` • Auto ${adaptiveParallel} task • ${adaptiveBatchPages} หน้า/ชุด${learned?' • ใช้โปรไฟล์เครื่องนี้':' • กำลังเรียนรู้เครื่องนี้'}`:'';
+  sendHarvestTranslation(tab,{type:'model',ok:true,...harvestTranslationProbeCache,message:'โมเดลพร้อมจริง • '+discovered.model+autoNote});
   return harvestTranslationProbeCache;
 }
 function sameHarvestTranslationPage(a, b) { return sameReaderDocument(a, b); }
@@ -1558,8 +1584,8 @@ async function runHarvestTranslateStage(tab, job, manifestPages, settings, model
   let finishedPages=0;
   const processPage=async(page,taskId)=>{
     assertHarvestTranslationRunning(job);
-    const regions=(page?.ocr?.regions||[]).filter(r=>r.text?.trim());
-    if(!regions.length)return;
+    const pageStarted=Date.now(),regions=(page?.ocr?.regions||[]).filter(r=>r.text?.trim());
+    if(!regions.length){finishedPages++;return {regions:0,translated:0,failed:0,transportFailures:0,providerMetrics:[],wallMs:Date.now()-pageStarted};}
     for(let i=0;i<regions.length;i++)if(!regions[i].id)regions[i].id=page.id+'-r'+(i+1);
     try {
       const retryOptions={provider:settings.engine,sourceLanguage:settings.sourceLanguage,targetLanguage:settings.targetLanguage,imageDigest:page.imageDigest||''};
@@ -1583,32 +1609,37 @@ async function runHarvestTranslateStage(tab, job, manifestPages, settings, model
       } catch(error) {assertHarvestTranslationRunning(job);page.overlay={error:error.message};}
       const failReason=result.translated===0&&result.failed?result.items.find(r=>r.status==='failed')?.error:'';
       sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:1,error:Boolean(page.overlay.error||result.failed),status:'Task '+taskId+' • แปลแล้ว '+result.translated+'/'+result.total+' จุด'+(result.failed?' • ไม่สำเร็จ '+result.failed+' จุด':'')+((result.skipped||[]).some(r=>r.role==='uncertain')?' • รอตรวจ '+result.skipped.filter(r=>r.role==='uncertain').length+' จุด':'')+' • '+(failReason?String(failReason).slice(0,120):page.overlay.error?'วางไม่ได้: '+page.overlay.error:page.overlay.pending?'คำแปลพร้อม • รอภาพนี้แสดงบนเว็บ':page.overlay.pageDrawn>0?'วางแล้ว '+page.overlay.pageDrawn+' จุด':'พร้อม')});
+      return {regions:result.total,translated:result.translated,failed:result.failed,transportFailures:Number(result.transportFailures)||0,providerMetrics:result.providerMetrics||[],wallMs:Date.now()-pageStarted};
     }catch(error){
       assertHarvestTranslationRunning(job);
       summary.regions+=regions.length;summary.failed+=regions.length;if(error.providerTransportFailure)summary.transportFailures+=regions.length;page.translation={provider:settings.engine,error:error.message,providerTransportFailure:Boolean(error.providerTransportFailure)};
       sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:0.9,error:true,status:'Task '+taskId+' • แปลไม่สำเร็จ: '+error.message});
+      return {regions:regions.length,translated:0,failed:regions.length,transportFailures:error.providerTransportFailure?regions.length:0,providerMetrics:[],wallMs:Date.now()-pageStarted};
     }finally{
       finishedPages++;
-      sendHarvestTranslation(tab,{type:'stage',stage:'translate-parallel',progress:0.73+0.22*(finishedPages/Math.max(1,pages.length)),message:`${settings.engine==='ai'?'AI':'Google'} ทำงาน ${taskCount} task • เสร็จ ${finishedPages}/${pages.length} หน้า`});
+      sendHarvestTranslation(tab,{type:'stage',stage:'translate-parallel',progress:0.73+0.22*(finishedPages/Math.max(1,pages.length)),message:`${settings.engine==='ai'?'AI':'Google'} • เสร็จ ${finishedPages}/${pages.length} หน้า`});
     }
   };
 
   if(settings.engine==='ai'&&!retryOnly){
-    const largeLocalModel=Number(harvestTranslationProbeCache?.modelSizeBytes)>=14*(1024**3);
-    const batchPages=largeLocalModel?2:4,groups=[];for(let i=0;i<pages.length;i+=batchPages)groups.push(pages.slice(i,i+batchPages));
-    const parallel=Math.min(4,groups.length,Math.max(1,Number(harvestTranslationProbeCache?.parallel)||4));
-    summary.tasks=groups.length;summary.taskSize=batchPages;
-    sendHarvestTranslation(tab,{type:'stage',stage:'translate-parallel',progress:0.73,message:`AI แปลแบบ batch • ${groups.length} ชุด • พร้อมกัน ${parallel} task • สูงสุด ${batchPages} หน้า/ชุด`});
+    const batchPages=Math.max(1,Math.min(4,Number(harvestTranslationProbeCache?.batchPages)||2)),groups=[];
+    for(let i=0;i<pages.length;i+=batchPages)groups.push(pages.slice(i,i+batchPages));
+    const serverParallel=Math.max(1,Math.min(4,Number(harvestTranslationProbeCache?.serverParallel)||1)),performanceKey=String(harvestTranslationProbeCache?.performanceKey||'');
+    let performanceProfile=harvestTranslationProbeCache?.performanceProfile||null;
+    if(performanceKey&&!performanceProfile)performanceProfile=await harvestTranslationPerformance.get(performanceKey,{batchPages});
+    let parallel=Math.min(serverParallel,groups.length,Math.max(1,Number(harvestTranslationProbeCache?.parallel)||1));
+    summary.tasks=groups.length;summary.taskSize=batchPages;summary.adaptive={profileKey:performanceKey,initialParallel:parallel,maxParallel:serverParallel,batchPages};
+    sendHarvestTranslation(tab,{type:'stage',stage:'translate-parallel',progress:0.73,message:`AI Auto • ${groups.length} ชุด • เริ่ม ${parallel} task • ${batchPages} หน้า/ชุด${performanceProfile?.updatedAt?' • ใช้ค่าที่เรียนรู้ไว้':' • กำลังเรียนรู้เครื่องนี้'}`});
     const processGroup=async(group,taskId)=>{
       assertHarvestTranslationRunning(job);
-      const all=[];
+      const groupStarted=Date.now(),all=[];
       for(const page of group){
         const regions=(page?.ocr?.regions||[]).filter(r=>r.text?.trim());
         for(let i=0;i<regions.length;i++)if(!regions[i].id)regions[i].id=page.id+'-r'+(i+1);
         all.push(...regions);
         sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:0.74,status:`AI Task ${taskId} • รวม ${group.length} หน้า • กำลังแปลเป็นชุดเดียว`});
       }
-      if(!all.length){finishedPages+=group.length;return;}
+      if(!all.length){finishedPages+=group.length;return {regions:0,translated:0,failed:0,transportFailures:0,providerMetrics:[],wallMs:Date.now()-groupStarted};}
       const first=Number(group[0]?.index)+1,last=Number(group[group.length-1]?.index)+1;
       let result;
       try{
@@ -1625,8 +1656,9 @@ async function runHarvestTranslateStage(tab, job, manifestPages, settings, model
       }catch(error){
         assertHarvestTranslationRunning(job);
         for(const page of group)sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:.82,status:`Task ${taskId} • batch ตอบไม่ครบ กำลัง fallback แปลทีละหน้า…`});
-        for(const page of group)await processPage(page,taskId);
-        return;
+        const samples=[];for(const page of group)samples.push(await processPage(page,taskId));
+        const batchTransportFailures=error.providerTransportFailure?all.length:0;
+        return {regions:samples.reduce((n,x)=>n+(x?.regions||0),0),translated:samples.reduce((n,x)=>n+(x?.translated||0),0),failed:samples.reduce((n,x)=>n+(x?.failed||0),0),transportFailures:batchTransportFailures+samples.reduce((n,x)=>n+(x?.transportFailures||0),0),providerMetrics:samples.flatMap(x=>x?.providerMetrics||[]),wallMs:Date.now()-groupStarted};
       }
       const allById=new Map(result.items.map(r=>[r.id,r])),skipById=new Map((result.skipped||[]).map(r=>[r.id,r]));
       for(const page of group){
@@ -1640,10 +1672,34 @@ async function runHarvestTranslateStage(tab, job, manifestPages, settings, model
         sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:1,error:Boolean(page.overlay.error||pageResult.failed),status:`Task ${taskId} • แปลแล้ว ${pageResult.translated}/${pageResult.total} จุด${pageResult.failed?' • ไม่สำเร็จ '+pageResult.failed+' จุด':''}${skipped.some(r=>r.role==='uncertain')?' • รอตรวจ '+skipped.filter(r=>r.role==='uncertain').length+' จุด':''} • ${failReason?String(failReason).slice(0,120):page.overlay.error?'วางไม่ได้: '+page.overlay.error:page.overlay.pending?'คำแปลพร้อม • รอภาพนี้แสดงบนเว็บ':page.overlay.pageDrawn>0?'วางแล้ว '+page.overlay.pageDrawn+' จุด':'พร้อม'}`});
       }
       finishedPages+=group.length;
+      return {regions:result.total,translated:result.translated,failed:result.failed,transportFailures:Number(result.transportFailures)||0,providerMetrics:result.providerMetrics||[],wallMs:Date.now()-groupStarted};
     };
-    await runPageTaskGroups(groups,{taskSize:1,concurrency:parallel,signal:job.abort.signal,handlePage:(group,{taskId})=>processGroup(group,taskId)});
+    let cursor=0,taskSequence=0;
+    while(cursor<groups.length){
+      assertHarvestTranslationRunning(job);
+      const active=Math.max(1,Math.min(parallel,serverParallel,groups.length-cursor)),wave=groups.slice(cursor,cursor+active),waveStarted=Date.now();
+      sendHarvestTranslation(tab,{type:'stage',stage:'translate-parallel',progress:0.73+0.20*(cursor/Math.max(1,groups.length)),message:`AI Auto • ${active} task พร้อมกัน • ชุด ${cursor+1}-${cursor+wave.length}/${groups.length}`});
+      const samples=await Promise.all(wave.map(group=>processGroup(group,++taskSequence)));
+      cursor+=wave.length;
+      const sample={parallel:active,batchPages,regions:samples.reduce((n,x)=>n+(x?.regions||0),0),translated:samples.reduce((n,x)=>n+(x?.translated||0),0),failed:samples.reduce((n,x)=>n+(x?.failed||0),0),transportFailures:samples.reduce((n,x)=>n+(x?.transportFailures||0),0),providerMetrics:samples.flatMap(x=>x?.providerMetrics||[]),wallMs:Date.now()-waveStarted};
+      if(performanceKey&&performanceProfile){
+        performanceProfile=recordTranslationWave(performanceProfile,sample,{maxParallel:serverParallel});
+        await harvestTranslationPerformance.set(performanceKey,performanceProfile).catch(()=>{});
+        harvestTranslationProbeCache.performanceProfile=performanceProfile;harvestTranslationProbeCache.batchPages=performanceProfile.batchPages;harvestTranslationProbeCache.parallel=performanceProfile.recommendedParallel;
+        let nextParallel;
+        if(performanceProfile.recommendedParallel<active)nextParallel=Math.max(1,performanceProfile.recommendedParallel);
+        else nextParallel=recommendTranslationParallel(performanceProfile,{currentParallel:active,maxParallel:serverParallel,remainingGroups:groups.length-cursor,providerMetrics:sample.providerMetrics,wallMs:sample.wallMs});
+        nextParallel=Math.max(1,Math.min(serverParallel,nextParallel));
+        const metrics=summarizeProviderMetrics(sample.providerMetrics),metricText=(metrics.tps?` • ${metrics.tps.toFixed(1)} tok/s`:'')+(metrics.ttftMs?` • TTFT ${(metrics.ttftMs/1000).toFixed(1)}s`:'');
+        if(nextParallel!==active)sendHarvestTranslation(tab,{type:'stage',stage:'translate-parallel',progress:0.73+0.20*(cursor/Math.max(1,groups.length)),message:`Auto tune ${active} → ${nextParallel} task${metricText} • จำค่านี้สำหรับเครื่อง+โมเดลนี้แล้ว`});
+        else sendHarvestTranslation(tab,{type:'stage',stage:'translate-parallel',progress:0.73+0.20*(cursor/Math.max(1,groups.length)),message:`Auto tune คง ${active} task${metricText} • จำผลไว้แล้ว`});
+        parallel=nextParallel;
+      }
+    }
+    summary.adaptive.finalParallel=parallel;summary.adaptive.profile=performanceProfile||null;
   }else{
-    await runPageTaskGroups(pages,{taskSize:4,concurrency:4,signal:job.abort.signal,handlePage:(page,{taskId})=>processPage(page,taskId)});
+    const pageParallel=settings.engine==='ai'?Math.max(1,Math.min(4,Number(harvestTranslationProbeCache?.parallel)||1)):4;
+    await runPageTaskGroups(pages,{taskSize:4,concurrency:pageParallel,signal:job.abort.signal,handlePage:(page,{taskId})=>processPage(page,taskId)});
   }
   summary.ms=Date.now()-started;return summary;
 }

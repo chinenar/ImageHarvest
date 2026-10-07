@@ -78,9 +78,10 @@ test('LM Studio native adapter disables reasoning only when supported and reads 
    calls.push({url,options});
    if(url.endsWith('/api/v1/models'))return new Response(JSON.stringify({models:[{type:'llm',key:'m',capabilities:{reasoning:{allowed_options:['on','off']}}}]}));
    const input=JSON.parse(options.body);assert.equal(input.reasoning,'off');assert.equal(input.store,false);assert.ok(input.system_prompt.includes('Thai'));assert.equal(JSON.parse(input.input).items[0].id,'a');
-   return new Response(JSON.stringify({output:[{type:'reasoning',content:'ignored'},{type:'message',content:'{"items":[{"id":"a","translation":"สวัสดี"}]}'}]}));
+   return new Response(JSON.stringify({output:[{type:'reasoning',content:'ignored'},{type:'message',content:'{"items":[{"id":"a","translation":"สวัสดี"}]}'}],stats:{tokens_per_second:12.5,time_to_first_token_seconds:1.25,input_tokens:30,total_output_tokens:8,reasoning_output_tokens:0}}));
  }});
- assert.deepEqual(await ai.translateRegions([region('a')],{model:'m'}),[{id:'a',translation:'สวัสดี'}]);
+ const translated=await ai.translateRegions([region('a')],{model:'m'});assert.deepEqual(translated,[{id:'a',translation:'สวัสดี'}]);
+ assert.equal(translated.providerMetrics.tokensPerSecond,12.5);assert.equal(translated.providerMetrics.ttftMs,1250);assert.equal(translated.providerMetrics.inputTokens,30);assert.equal(translated.providerMetrics.outputTokens,8);
  assert.ok(calls[1].url.endsWith('/api/v1/chat'));
 });
 test('servers without LM Studio native API continue using chat completions',async()=>{

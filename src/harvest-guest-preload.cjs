@@ -783,7 +783,7 @@ function handleTranslationProgress(payload = {}) {
     start.textContent = 'Stop';
   } else if (payload.type === 'model') {
     if (payload.ok === true) {
-      translationModelText = 'โมเดลพร้อม: ' + (payload.model || 'ไม่ทราบชื่อ') + (payload.sample ? ' • test: ' + payload.sample : '');
+      translationModelText = payload.message || ('โมเดลพร้อม: ' + (payload.model || 'ไม่ทราบชื่อ') + (payload.sample ? ' • test: ' + payload.sample : ''));
       $('.model').className = 'model ok';
     } else if (payload.ok === false) {
       translationModelText = 'โมเดลยังไม่พร้อม: ' + (payload.error || payload.message || 'เชื่อมต่อไม่ได้');

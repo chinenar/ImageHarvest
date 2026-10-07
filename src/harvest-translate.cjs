@@ -250,13 +250,24 @@ class HarvestTranslationClient {
     const native=await this.nativeModelInfo(selectedModel,signal);
     if(signal?.aborted)throw new Error('ยกเลิกการแปลแล้ว');
     if(native){
+      const requestStarted=Date.now();
       const body=await this.request('/api/v1/chat',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({
         model:selectedModel,input:requestBody.messages[1].content,system_prompt:requestBody.messages[0].content,temperature:requestBody.temperature,
         max_output_tokens:requestBody.max_tokens,store:false,...(native.capabilities?.reasoning?.allowed_options?.includes('off')?{reasoning:'off'}:{})
       })},10*60*1000);
       const parsed=parseJsonContent((body.output||[]).filter(r=>r.type==='message').map(r=>r.content||'').join('\n'));
-      return Array.isArray(parsed.items)?parsed.items:[];
+      const items=Array.isArray(parsed.items)?parsed.items:[],stats=body?.stats||{};
+      Object.defineProperty(items,'providerMetrics',{enumerable:false,value:{
+        wallMs:Date.now()-requestStarted,
+        tokensPerSecond:Number(stats.tokens_per_second)||0,
+        ttftMs:(Number(stats.time_to_first_token_seconds)||0)*1000,
+        inputTokens:Number(stats.input_tokens)||0,
+        outputTokens:Number(stats.total_output_tokens)||0,
+        reasoningTokens:Number(stats.reasoning_output_tokens)||0
+      }});
+      return items;
     }
+    const requestStarted=Date.now();
     const body = await this.request('/v1/chat/completions', {
       method: 'POST',
       signal,
@@ -264,7 +275,9 @@ class HarvestTranslationClient {
       body: JSON.stringify(requestBody)
     }, 10*60*1000);
     const parsed = parseJsonContent(body?.choices?.[0]?.message?.content || '');
-    return Array.isArray(parsed.items) ? parsed.items : [];
+    const items=Array.isArray(parsed.items)?parsed.items:[],usage=body?.usage||{};
+    Object.defineProperty(items,'providerMetrics',{enumerable:false,value:{wallMs:Date.now()-requestStarted,tokensPerSecond:0,ttftMs:0,inputTokens:Number(usage.prompt_tokens)||0,outputTokens:Number(usage.completion_tokens)||0,reasoningTokens:0}});
+    return items;
   }
 }
 

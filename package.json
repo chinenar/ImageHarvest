@@ -8,7 +8,7 @@
   "author": "chinenar",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/adaptive.test.cjs test/unit.test.cjs test/network-lookup.test.mjs test/protection-rules.test.cjs test/filter-stream.test.cjs test/manual-chrome-login.test.cjs test/ocr-review.test.cjs test/text-placement.test.cjs test/harvest-translate.test.cjs test/ocr-translation.test.cjs test/ocr-speed.test.cjs test/ocr-content-role.test.cjs test/translation-overlay.test.cjs test/reader-stability.test.cjs test/reader-quality.test.cjs test/reader-priority.test.cjs",
+    "test": "node --test test/adaptive.test.cjs test/unit.test.cjs test/network-lookup.test.mjs test/protection-rules.test.cjs test/filter-stream.test.cjs test/manual-chrome-login.test.cjs test/ocr-review.test.cjs test/text-placement.test.cjs test/harvest-translate.test.cjs test/ocr-translation.test.cjs test/translation-performance.test.cjs test/ocr-speed.test.cjs test/ocr-content-role.test.cjs test/translation-overlay.test.cjs test/reader-stability.test.cjs test/reader-quality.test.cjs test/reader-priority.test.cjs",
     "test:e2e": "node test/e2e.cjs && node test/transient-preview.e2e.cjs && node test/browser-header-replay.e2e.cjs",
     "test:capture": "node test/capture.e2e.cjs",
     "package": "node scripts/package.cjs",
@@ -25,7 +25,7 @@
     "test:adaptive": "node --test test/adaptive.test.cjs && node test/adaptive-browser.e2e.cjs && node test/adaptive-production.e2e.cjs",
     "test:ocr": "node --test --test-concurrency=1 test/ocr-review.test.cjs test/ocr-engine.test.cjs test/ocr-backend.test.cjs test/ocr-advanced.test.cjs test/text-placement.test.cjs test/ocr-speed.test.cjs test/ocr-content-role.test.cjs",
     "test:ocr-lab": "node test/ocr-lab.e2e.cjs",
-    "test:translation": "node --test test/harvest-translate.test.cjs test/ocr-translation.test.cjs",
+    "test:translation": "node --test test/harvest-translate.test.cjs test/ocr-translation.test.cjs test/translation-performance.test.cjs",
     "test:translation:live": "node test/ocr-translation.e2e.cjs",
     "benchmark:ocr-speed": "node scripts/benchmark-ocr-speed.cjs",
     "test:overlay": "node --test test/translation-overlay.test.cjs && node test/translation-overlay.e2e.cjs && node test/harvest-translation.e2e.cjs && node test/reader-stability.e2e.cjs",

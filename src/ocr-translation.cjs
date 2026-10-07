@@ -65,12 +65,13 @@ class OcrTranslationService {
     const maxBatch=provider==='ai'?42:20,maxChars=provider==='ai'?9000:6000;
     const batches=[];let batch=[],chars=0;
     for(const r of source){if(batch.length&&(batch.length>=maxBatch||chars+r.text.length>maxChars)){batches.push(batch);batch=[];chars=0;}batch.push(r);chars+=r.text.length;}if(batch.length)batches.push(batch);
-    const output=[];let done=0;
+    const output=[],providerMetrics=[];let done=0;
     const request=async(list,effectiveSourceLanguage=sourceLanguage)=>{
       checkSignal(signal);
       const payload=list.map(r=>({id:r.id,text:translationText(r,effectiveSourceLanguage),kind:r.kind||'dialogue',orientation:r.orientation||'horizontal'}));
       let reply;try{reply=provider==='google'?await this.google.translate(payload,{sourceLanguage:effectiveSourceLanguage,targetLanguage,signal}):await this.ai.translateRegions(payload,{model:selectedModel,context,targetLanguage:LANGUAGES[targetLanguage],signal});}
       catch(error){checkSignal(signal);error.providerTransportFailure=true;throw error;}
+      if(provider==='ai'&&reply?.providerMetrics)providerMetrics.push({...reply.providerMetrics,items:list.length});
       checkSignal(signal);return validateReply(reply,list);
     };
     for(const list of batches){
@@ -107,7 +108,7 @@ class OcrTranslationService {
       }
       done+=list.length;onProgress?.({done,total:source.length,provider});
     }
-    return {runId,provider,model:selectedModel,sourceLanguage,targetLanguage,imageDigest,createdAt,ms:Date.now()-started,total:source.length,translated:output.filter(r=>r.status==='translated').length,failed:output.filter(r=>r.status==='failed').length,transportFailures:output.filter(r=>r.providerTransportFailure).length,skipped,items:output};
+    return {runId,provider,model:selectedModel,sourceLanguage,targetLanguage,imageDigest,createdAt,ms:Date.now()-started,total:source.length,translated:output.filter(r=>r.status==='translated').length,failed:output.filter(r=>r.status==='failed').length,transportFailures:output.filter(r=>r.providerTransportFailure).length,providerMetrics,skipped,items:output};
   }
 }
 module.exports={OcrTranslationService,translationText,validateRegions,validateReply,translationLanguageIssue};
