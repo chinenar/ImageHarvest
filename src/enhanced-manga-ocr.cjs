@@ -198,11 +198,19 @@ class EnhancedMangaOcrPool extends MangaOcrPool {
       const container=candidate.containerBBox,innerArea=area(b),containerArea=container?area(container):0,containerCoverage=containerArea?innerArea/containerArea:1;
       const uniqueContainer=Boolean(candidate.containerId&&containerCounts.get(candidate.containerId)===1);
       if(!verificationFailed&&language!=='ja'&&!candidate.segmentation&&uniqueContainer&&containerArea>innerArea&&containerArea<=innerArea*5&&containerCoverage<.68){
-        const variants=['original','contrast','invert'];
-        const broadRaw=await Promise.all(variants.map(variant=>readVariant(variant,{box:container,pad:0})));
-        const broadReadings=broadRaw.map((read,index)=>({...read,variant:'container-'+variants[index]}));
-        const broad=chooseReadings(broadReadings,{...chosen},{allowBaseline:false});
-        if(shouldPromoteContainerReading(chosen,broad,{coverage:containerCoverage,shared:false}))chosen={...broad,selectionReason:'container-recovery',containerRecovery:true};
+        const first={...await readVariant('original',{box:container,pad:0}),variant:'container-original'};
+        const broadReadings=[first];
+        let broad=first,promote=shouldPromoteContainerReading(chosen,broad,{coverage:containerCoverage,shared:false});
+        // The full detector container is a recovery path, not a normal OCR
+        // pass. Usually one read is enough; only pay for contrast/invert when
+        // that first broad read is still uncertain or disagrees strongly.
+        if(!promote&&this.retryVariants&&(first.error||Number(first.confidence||0)<85||disagreement(first.text,chosen.text)>.16)){
+          const variants=['contrast','invert'];
+          broadReadings.push(...(await Promise.all(variants.map(variant=>readVariant(variant,{box:container,pad:0})))).map((read,index)=>({...read,variant:'container-'+variants[index]})));
+          broad=chooseReadings(broadReadings,{...chosen},{allowBaseline:false});
+          promote=shouldPromoteContainerReading(chosen,broad,{coverage:containerCoverage,shared:false});
+        }
+        if(promote)chosen={...broad,selectionReason:'container-recovery',containerRecovery:true};
         readings.push(...broadReadings);
       }
       // Manga OCR always emits text, even on blank artwork. Do not promote

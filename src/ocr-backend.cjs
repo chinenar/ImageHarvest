@@ -3,7 +3,7 @@ const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:
 const {spawn}=require('node:child_process'),{createHash}=require('node:crypto'),readline=require('node:readline');
 const runtimeRoot=()=>path.join(process.env.LOCALAPPDATA||os.homedir(),'ImageHarvest','ocr-runtime');
 class LocalOcrBackend {
-  constructor({python,timeout=240000,device='auto'}={}){this.python=python||path.join(runtimeRoot(),'Scripts','python.exe');this.timeout=timeout;this.device=device;this.pending=new Map();this.sequence=0;this.logs='';this.timings=new Map();this.readQueue=[];this.batchEnabled=false;}
+  constructor({python,timeout=240000,device='auto'}={}){this.python=python||path.join(runtimeRoot(),'Scripts','python.exe');this.timeout=timeout;this.device=device;this.pending=new Map();this.sequence=0;this.logs='';this.timings=new Map();this.readQueue=[];this.batchEnabled=false;this.commandQueue=Promise.resolve();}
   stats(){return Object.fromEntries([...this.timings].map(([key,value])=>[key,{...value}]));}
   async start(){
     if(this.child)return;
@@ -28,11 +28,20 @@ class LocalOcrBackend {
     const failed=error=>{if(this.child!==child)return;this.child=null;for(const p of this.pending.values()){p.cleanup();p.reject(error);}this.pending.clear();};
     child.on('error',failed);child.on('exit',code=>failed(Error('Local OCR worker exited '+code+' '+this.logs.slice(-1000))));
   }
-  async request(data,{signal}={}){
+  request(data,{signal}={}){
+    if(signal?.aborted)return Promise.reject(Error('ยกเลิก OCR'));
+    // The Python worker reads one JSON command at a time. Queue commands here
+    // so the per-request timeout starts only when that command actually runs,
+    // not while it is waiting behind work from other OCR pages.
+    const task=this.commandQueue.catch(()=>{}).then(()=>this.requestNow(data,{signal}));
+    this.commandQueue=task.then(()=>undefined,()=>undefined);
+    return task;
+  }
+  async requestNow(data,{signal}={}){
     if(signal?.aborted)throw Error('ยกเลิก OCR');await this.start();if(signal?.aborted){this.close();throw Error('ยกเลิก OCR');}const id=++this.sequence;
     return new Promise((resolve,reject)=>{
       const abort=()=>this.close(Error('ยกเลิก OCR'));
-      const timer=setTimeout(()=>this.close(Error('OCR เพิ่มเติมใช้เวลานานเกินกำหนด '+this.logs.slice(-1000))),this.timeout);
+      const timer=setTimeout(()=>this.close(Error('OCR เพิ่มเติมใช้เวลานานเกินกำหนด')),this.timeout);
       const cleanup=()=>{clearTimeout(timer);signal?.removeEventListener('abort',abort);};
       signal?.addEventListener('abort',abort,{once:true});this.pending.set(id,{resolve,reject,cleanup,started:Date.now(),key:[data.op||data.engine,data.op==='recognize-batch'?data.engine:null,data.language,data.variant].filter(Boolean).join('/')});
       this.child.stdin.write(JSON.stringify({...data,id})+'\n',error=>{if(error){this.pending.delete(id);cleanup();reject(error);}});
