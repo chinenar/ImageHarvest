@@ -78,12 +78,12 @@ class OcrTranslationService {
       try{byId=await request(list);}catch(error){checkSignal(signal);if(!error.providerTransportFailure)throw error;batchError=error;byId=new Map();}
       for(const r of list){
         const candidate=byId.get(r.id);
-        let result=candidate?.translation?candidate:null,error=candidate?.error||batchError?.message||'',rejectedTranslation='';
+        let result=candidate?.translation?candidate:null,error=candidate?.error||batchError?.message||'',rejectedTranslation='',transportFailure=Boolean(batchError||candidate?.providerFailure);
         if(!batchError&&!candidate?.providerFailure&&(!result||translationLanguageIssue(result.translation,targetLanguage,r.text))){
           rejectedTranslation=result?.translation||'';
-          try{result=(await request([r])).get(r.id);}catch(e){checkSignal(signal);error=e.message;result=null;}
+          try{result=(await request([r])).get(r.id);}catch(e){checkSignal(signal);error=e.message;transportFailure=Boolean(e.providerTransportFailure);result=null;}
         }
-        if(result){const issue=translationLanguageIssue(result.translation,targetLanguage,r.text);if(issue){error=issue;rejectedTranslation=result.translation;result=null;}}
+        if(result){const issue=translationLanguageIssue(result.translation,targetLanguage,r.text);if(issue){error=issue;rejectedTranslation=result.translation;result=null;transportFailure=false;}}
         // Auto-detect can occasionally leave a badly OCR'd Latin line mostly
         // untranslated. One final retry with an inferred source script gives
         // Google a deterministic direction without changing the user's saved
@@ -97,17 +97,17 @@ class OcrTranslationService {
               const issue=explicit?.translation?translationLanguageIssue(explicit.translation,targetLanguage,r.text):'';
               if(explicit?.translation&&!issue){result=explicit;effectiveSourceLanguage=inferred;}
               else if(explicit?.translation){error=issue;rejectedTranslation=explicit.translation;}
-            }catch(e){checkSignal(signal);error=e.message||error;}
+            }catch(e){checkSignal(signal);error=e.message||error;transportFailure=Boolean(e.providerTransportFailure);}
           }
         }
         output.push({id:r.id,translation:result?.translation||'',status:result?'translated':'failed',error:result?'':error||'ผู้ให้บริการไม่ส่งคำแปลของกรอบนี้',
           sourceText:r.text,sourceTextDigest:createHash('sha256').update(r.text).digest('hex'),bbox:r.bbox?{...r.bbox}:undefined,orientation:r.orientation||'horizontal',
           sourceReviewRequired:Boolean(r.reviewRequired&&!r.reviewed),provider,model:selectedModel,sourceLanguage,effectiveSourceLanguage,targetLanguage,imageDigest,createdAt,runId,
-          detectedSourceLanguage:result?.detectedSourceLanguage||'',rejectedTranslation});
+          detectedSourceLanguage:result?.detectedSourceLanguage||'',rejectedTranslation,providerTransportFailure:Boolean(!result&&transportFailure)});
       }
       done+=list.length;onProgress?.({done,total:source.length,provider});
     }
-    return {runId,provider,model:selectedModel,sourceLanguage,targetLanguage,imageDigest,createdAt,ms:Date.now()-started,total:source.length,translated:output.filter(r=>r.status==='translated').length,failed:output.filter(r=>r.status==='failed').length,skipped,items:output};
+    return {runId,provider,model:selectedModel,sourceLanguage,targetLanguage,imageDigest,createdAt,ms:Date.now()-started,total:source.length,translated:output.filter(r=>r.status==='translated').length,failed:output.filter(r=>r.status==='failed').length,transportFailures:output.filter(r=>r.providerTransportFailure).length,skipped,items:output};
   }
 }
 module.exports={OcrTranslationService,translationText,validateRegions,validateReply,translationLanguageIssue};

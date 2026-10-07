@@ -337,6 +337,20 @@ function ensureTranslationLauncher() {
   settingsHead.append(settingsHeadCopy, settingsClose);
 
   const settingsBody = make('div', 'settings-body');
+  const enableWheelScroll = scroller => scroller.addEventListener('wheel', event => {
+    if (event.ctrlKey) return;
+    const max = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+    if (!max) return;
+    const unit = event.deltaMode === 1 ? 18 : event.deltaMode === 2 ? Math.max(1, scroller.clientHeight) : 1;
+    const before = scroller.scrollTop;
+    scroller.scrollTop = Math.max(0, Math.min(max, before + event.deltaY * unit));
+    if (scroller.scrollTop !== before || (event.deltaY < 0 && before > 0) || (event.deltaY > 0 && before < max)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, { passive:false });
+  enableWheelScroll(body);
+  enableWheelScroll(settingsBody);
 
   const engineSetting = make('div', 'setting');
   engineSetting.append(make('div', 'setting-title', 'Mode'));

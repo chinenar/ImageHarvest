@@ -1153,8 +1153,13 @@ async function probeHarvestTranslationApi(tab, job) {
   sendHarvestTranslation(tab,{type:'model',ok:null,endpoint:discovered.endpoint||DEFAULT_TRANSLATION_ENDPOINT,model:discovered.model,message:'พบ '+discovered.model+' • กำลังโหลดและ warm-up ให้พร้อมจริง…'});
   const ready=await harvestTranslationClient.ensureModelReady(discovered.model,{signal:job.abort.signal,timeoutMs:8*60*1000,onStatus:status=>{if(!job.abort.signal.aborted)sendHarvestTranslation(tab,{type:'model',ok:null,endpoint:discovered.endpoint||DEFAULT_TRANSLATION_ENDPOINT,model:discovered.model,message:status.message||'กำลังเตรียมโมเดล…'});}});
   assertHarvestTranslationRunning(job);
-  harvestTranslationProbeCache={...discovered,...ready,checkedAt:Date.now()};
-  sendHarvestTranslation(tab,{type:'model',ok:true,...harvestTranslationProbeCache,message:'โมเดลพร้อมจริง • '+discovered.model+(ready.parallel>1?' • parallel '+ready.parallel:'')});
+  const nativeInfo=ready.native?await harvestTranslationClient.nativeModelInfo(discovered.model,job.abort.signal,{fresh:true}).catch(()=>null):null;
+  const modelSizeBytes=Math.max(0,Number(nativeInfo?.size_bytes)||0),serverParallel=Math.max(1,Number(ready.parallel)||1);
+  const safeParallel=ready.native?Math.min(serverParallel,modelSizeBytes>=14*1024**3?1:modelSizeBytes>=8*1024**3?2:4):1;
+  harvestTranslationProbeCache={...discovered,...ready,serverParallel,parallel:Math.max(1,safeParallel),modelSizeBytes,contextLength:Number(nativeInfo?.loaded_instances?.[0]?.config?.context_length)||0,checkedAt:Date.now()};
+  const parallelNote=harvestTranslationProbeCache.parallel>1?' • parallel '+harvestTranslationProbeCache.parallel:'';
+  const limitedNote=serverParallel>harvestTranslationProbeCache.parallel?' (จำกัดจาก server '+serverParallel+' เพื่อไม่ให้โมเดลใหญ่ค้าง)':'';
+  sendHarvestTranslation(tab,{type:'model',ok:true,...harvestTranslationProbeCache,message:'โมเดลพร้อมจริง • '+discovered.model+parallelNote+limitedNote});
   return harvestTranslationProbeCache;
 }
 function sameHarvestTranslationPage(a, b) { return sameReaderDocument(a, b); }
@@ -1539,7 +1544,7 @@ async function runHarvestOcrStage(tab, job, manifestPages, settings={}) {
 }
 
 async function runHarvestTranslateStage(tab, job, manifestPages, settings, model='', {retryOnly=false}={}) {
-  const summary={provider:settings.engine,sourceLanguage:settings.sourceLanguage,targetLanguage:settings.targetLanguage,regions:0,translated:0,failed:0,review:0,skipped:0,ms:0,tasks:0,taskSize:4};
+  const summary={provider:settings.engine,sourceLanguage:settings.sourceLanguage,targetLanguage:settings.targetLanguage,regions:0,translated:0,failed:0,transportFailures:0,review:0,skipped:0,ms:0,tasks:0,taskSize:4};
   const started=Date.now(),reusable=require('./google-web-result.cjs').reusableTranslation;
   const pages=manifestPages.filter(page=>(page?.ocr?.regions||[]).some(r=>r.text?.trim()));
   if(!pages.length){summary.ms=Date.now()-started;return summary;}
@@ -1564,21 +1569,23 @@ async function runHarvestTranslateStage(tab, job, manifestPages, settings, model
         context:'Translate the supplied manga dialogue in reading order. Page '+(Number(page.index)+1)+'.',
         onProgress:({done,total})=>sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:0.73+0.20*done/Math.max(1,total),status:(settings.engine==='ai'?'AI':'Google')+' Task '+taskId+' • '+done+'/'+total+' จุด'})});
       assertHarvestTranslationRunning(job);
-      if(retryOnly){const retained=regions.filter(r=>!pending.includes(r)).map(r=>r.translationRecord).filter(Boolean);result={...result,items:[...retained,...result.items]};result.total=result.items.length;result.translated=result.items.filter(r=>r.status==='translated').length;result.failed=result.items.filter(r=>r.status==='failed').length;}
+      if(result.failed>0&&result.translated===0&&result.transportFailures===result.failed){const failure=result.items.find(r=>r.providerTransportFailure);const error=new Error(failure?.error||'Translation provider failed for this page');error.providerTransportFailure=true;throw error;}
+      if(retryOnly){const retained=regions.filter(r=>!pending.includes(r)).map(r=>r.translationRecord).filter(Boolean);result={...result,items:[...retained,...result.items]};result.total=result.items.length;result.translated=result.items.filter(r=>r.status==='translated').length;result.failed=result.items.filter(r=>r.status==='failed').length;result.transportFailures=result.items.filter(r=>r.providerTransportFailure).length;}
       const byId=new Map(result.items.map(r=>[r.id,r]));
       for(const r of regions){const t=byId.get(r.id);if(t){r.translation=t.translation;r.translationProvider=result.provider;r.translationRecord=t;}}
       for(const skipped of result.skipped||[]){const r=regions.find(r=>r.id===skipped.id);if(r){r.contentRole={...skipped};delete r.translation;delete r.translationRecord;}}
-      page.translation=result;summary.regions+=result.total;summary.translated+=result.translated;summary.failed+=result.failed;summary.skipped+=(result.skipped||[]).length;summary.review+=(result.skipped||[]).filter(r=>r.role==='uncertain').length;
+      page.translation=result;summary.regions+=result.total;summary.translated+=result.translated;summary.failed+=result.failed;summary.transportFailures+=Number(result.transportFailures)||0;summary.skipped+=(result.skipped||[]).length;summary.review+=(result.skipped||[]).filter(r=>r.role==='uncertain').length;
       try {
         const rendered=await prepareOverlayStyles(tab,overlayPage(page,{documentUrl:job.sourceUrl,targetLanguage:settings.targetLanguage}));
         assertHarvestTranslationRunning(job);
         if(!sameHarvestTranslationPage(job.sourceUrl,tab.view.webContents.getURL()))throw Error('หน้าเว็บเปลี่ยน กรุณาเริ่มแปลใหม่');
         page.overlay=await tab.view.webContents.executeJavaScript(`(() => {const overlay=window.__harvestTsTranslationOverlay;const state=overlay.apply(${JSON.stringify(rendered)},${JSON.stringify({fontScale:settings.fontScale,visible:!settings.showOriginal})});return state.error?state:overlay.whenReady(${JSON.stringify(rendered.id)});})()`);
       } catch(error) {assertHarvestTranslationRunning(job);page.overlay={error:error.message};}
-      sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:1,error:Boolean(page.overlay.error||result.failed),status:'Task '+taskId+' • แปลแล้ว '+result.translated+'/'+result.total+' จุด'+(result.failed?' • ไม่สำเร็จ '+result.failed+' จุด':'')+((result.skipped||[]).some(r=>r.role==='uncertain')?' • รอตรวจ '+result.skipped.filter(r=>r.role==='uncertain').length+' จุด':'')+' • '+(page.overlay.error?'วางไม่ได้: '+page.overlay.error:page.overlay.pending?'คำแปลพร้อม • รอภาพนี้แสดงบนเว็บ':page.overlay.pageDrawn>0?'วางแล้ว '+page.overlay.pageDrawn+' จุด':'พร้อม')});
+      const failReason=result.translated===0&&result.failed?result.items.find(r=>r.status==='failed')?.error:'';
+      sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:1,error:Boolean(page.overlay.error||result.failed),status:'Task '+taskId+' • แปลแล้ว '+result.translated+'/'+result.total+' จุด'+(result.failed?' • ไม่สำเร็จ '+result.failed+' จุด':'')+((result.skipped||[]).some(r=>r.role==='uncertain')?' • รอตรวจ '+result.skipped.filter(r=>r.role==='uncertain').length+' จุด':'')+' • '+(failReason?String(failReason).slice(0,120):page.overlay.error?'วางไม่ได้: '+page.overlay.error:page.overlay.pending?'คำแปลพร้อม • รอภาพนี้แสดงบนเว็บ':page.overlay.pageDrawn>0?'วางแล้ว '+page.overlay.pageDrawn+' จุด':'พร้อม')});
     }catch(error){
       assertHarvestTranslationRunning(job);
-      summary.regions+=regions.length;summary.failed+=regions.length;page.translation={provider:settings.engine,error:error.message};
+      summary.regions+=regions.length;summary.failed+=regions.length;if(error.providerTransportFailure)summary.transportFailures+=regions.length;page.translation={provider:settings.engine,error:error.message,providerTransportFailure:Boolean(error.providerTransportFailure)};
       sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:0.9,error:true,status:'Task '+taskId+' • แปลไม่สำเร็จ: '+error.message});
     }finally{
       finishedPages++;
@@ -1587,10 +1594,11 @@ async function runHarvestTranslateStage(tab, job, manifestPages, settings, model
   };
 
   if(settings.engine==='ai'&&!retryOnly){
-    const groups=[];for(let i=0;i<pages.length;i+=4)groups.push(pages.slice(i,i+4));
+    const largeLocalModel=Number(harvestTranslationProbeCache?.modelSizeBytes)>=14*(1024**3);
+    const batchPages=largeLocalModel?2:4,groups=[];for(let i=0;i<pages.length;i+=batchPages)groups.push(pages.slice(i,i+batchPages));
     const parallel=Math.min(4,groups.length,Math.max(1,Number(harvestTranslationProbeCache?.parallel)||4));
-    summary.tasks=groups.length;
-    sendHarvestTranslation(tab,{type:'stage',stage:'translate-parallel',progress:0.73,message:`AI แปลแบบ batch • ${groups.length} ชุด • พร้อมกัน ${parallel} task • สูงสุด 4 หน้า/ชุด`});
+    summary.tasks=groups.length;summary.taskSize=batchPages;
+    sendHarvestTranslation(tab,{type:'stage',stage:'translate-parallel',progress:0.73,message:`AI แปลแบบ batch • ${groups.length} ชุด • พร้อมกัน ${parallel} task • สูงสุด ${batchPages} หน้า/ชุด`});
     const processGroup=async(group,taskId)=>{
       assertHarvestTranslationRunning(job);
       const all=[];
@@ -1613,6 +1621,7 @@ async function runHarvestTranslateStage(tab, job, manifestPages, settings, model
             for(const page of group)sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress,status:`AI Task ${taskId} • ${done}/${total} จุด • หน้า ${first}-${last}`});
           }
         });
+        if(result.failed>0&&result.translated===0&&result.transportFailures===result.failed){const failure=result.items.find(r=>r.providerTransportFailure);const transport=new Error(failure?.error||'AI batch failed');transport.providerTransportFailure=true;throw transport;}
       }catch(error){
         assertHarvestTranslationRunning(job);
         for(const page of group)sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:.82,status:`Task ${taskId} • batch ตอบไม่ครบ กำลัง fallback แปลทีละหน้า…`});
@@ -1624,10 +1633,11 @@ async function runHarvestTranslateStage(tab, job, manifestPages, settings, model
         const regions=(page?.ocr?.regions||[]).filter(r=>r.text?.trim()),ids=new Set(regions.map(r=>r.id));
         const items=result.items.filter(r=>ids.has(r.id)),skipped=(result.skipped||[]).filter(r=>ids.has(r.id));
         for(const region of regions){const t=allById.get(region.id);if(t){region.translation=t.translation;region.translationProvider=result.provider;region.translationRecord=t;}const sk=skipById.get(region.id);if(sk){region.contentRole={...sk};delete region.translation;delete region.translationRecord;}}
-        const pageResult={...result,items,skipped,total:items.length,translated:items.filter(r=>r.status==='translated').length,failed:items.filter(r=>r.status==='failed').length};
-        page.translation=pageResult;summary.regions+=pageResult.total;summary.translated+=pageResult.translated;summary.failed+=pageResult.failed;summary.skipped+=skipped.length;summary.review+=skipped.filter(r=>r.role==='uncertain').length;
+        const pageResult={...result,items,skipped,total:items.length,translated:items.filter(r=>r.status==='translated').length,failed:items.filter(r=>r.status==='failed').length,transportFailures:items.filter(r=>r.providerTransportFailure).length};
+        page.translation=pageResult;summary.regions+=pageResult.total;summary.translated+=pageResult.translated;summary.failed+=pageResult.failed;summary.transportFailures+=pageResult.transportFailures;summary.skipped+=skipped.length;summary.review+=skipped.filter(r=>r.role==='uncertain').length;
         try{const rendered=await prepareOverlayStyles(tab,overlayPage(page,{documentUrl:job.sourceUrl,targetLanguage:settings.targetLanguage}));if(!sameHarvestTranslationPage(job.sourceUrl,tab.view.webContents.getURL()))throw Error('หน้าเว็บเปลี่ยน กรุณาเริ่มแปลใหม่');page.overlay=await tab.view.webContents.executeJavaScript(`(() => {const overlay=window.__harvestTsTranslationOverlay;const state=overlay.apply(${JSON.stringify(rendered)},${JSON.stringify({fontScale:settings.fontScale,visible:!settings.showOriginal})});return state.error?state:overlay.whenReady(${JSON.stringify(rendered.id)});})()`);}catch(error){page.overlay={error:error.message};}
-        sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:1,error:Boolean(page.overlay.error||pageResult.failed),status:`Task ${taskId} • แปลแล้ว ${pageResult.translated}/${pageResult.total} จุด${pageResult.failed?' • ไม่สำเร็จ '+pageResult.failed+' จุด':''}${skipped.some(r=>r.role==='uncertain')?' • รอตรวจ '+skipped.filter(r=>r.role==='uncertain').length+' จุด':''} • ${page.overlay.error?'วางไม่ได้: '+page.overlay.error:page.overlay.pending?'คำแปลพร้อม • รอภาพนี้แสดงบนเว็บ':page.overlay.pageDrawn>0?'วางแล้ว '+page.overlay.pageDrawn+' จุด':'พร้อม'}`});
+        const failReason=pageResult.translated===0&&pageResult.failed?pageResult.items.find(r=>r.status==='failed')?.error:'';
+        sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:1,error:Boolean(page.overlay.error||pageResult.failed),status:`Task ${taskId} • แปลแล้ว ${pageResult.translated}/${pageResult.total} จุด${pageResult.failed?' • ไม่สำเร็จ '+pageResult.failed+' จุด':''}${skipped.some(r=>r.role==='uncertain')?' • รอตรวจ '+skipped.filter(r=>r.role==='uncertain').length+' จุด':''} • ${failReason?String(failReason).slice(0,120):page.overlay.error?'วางไม่ได้: '+page.overlay.error:page.overlay.pending?'คำแปลพร้อม • รอภาพนี้แสดงบนเว็บ':page.overlay.pageDrawn>0?'วางแล้ว '+page.overlay.pageDrawn+' จุด':'พร้อม'}`});
       }
       finishedPages+=group.length;
     };
@@ -2130,13 +2140,14 @@ async function runHarvestTsTranslationJob(tab) {
       translation = await runHarvestTranslateStage(tab, job, manifestPages, settings, model?.model || '');
       let previousFailed = Number(translation.failed) || 0;
       let autoRetryAttempts = 0, staleRetryRounds = 0;
-      while (previousFailed > 0 && autoRetryAttempts < 3) {
+      const maxAutoRetries=previousFailed>0&&Number(translation.transportFailures)>=previousFailed?1:3;
+      while (previousFailed > 0 && autoRetryAttempts < maxAutoRetries) {
         autoRetryAttempts++;
         sendHarvestTranslation(tab, {
           type:'stage',
           stage:'translate-retry',
           progress:0.94,
-          message:`พบ ${previousFailed} จุดที่แปลไม่สำเร็จ • ส่งกลับเข้า queue อัตโนมัติ ${autoRetryAttempts}/3`
+          message:`พบ ${previousFailed} จุดที่แปลไม่สำเร็จ • ส่งกลับเข้า queue อัตโนมัติ ${autoRetryAttempts}/${maxAutoRetries}`
         });
         const retried = await runHarvestTranslateStage(tab, job, manifestPages, settings, model?.model || '', { retryOnly:true });
         retried.autoRetryAttempts = autoRetryAttempts;
@@ -2146,8 +2157,10 @@ async function runHarvestTsTranslationJob(tab) {
         if (nextFailed < previousFailed) staleRetryRounds = 0;
         else staleRetryRounds++;
         previousFailed = nextFailed;
-        // A transient Google result often repeats once. Give it a second stale
-        // round before stopping, but never loop indefinitely.
+        // Transport-wide failures (timeout/server/model output) already receive
+        // one automatic retry. Repeating the same long request three times only
+        // makes a local-model failure take tens of minutes to surface.
+        if(Number(retried.transportFailures)>=nextFailed&&nextFailed>0)break;
         if (staleRetryRounds >= 2) break;
       }
       translation.status = translation.failed ? 'partial' : 'translated';

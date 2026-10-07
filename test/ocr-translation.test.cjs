@@ -20,6 +20,11 @@ test('AI gets bounded batches, language names, context and model, including beyo
  const result=await service.translate(Array.from({length:125},(_,i)=>region(String(i))),{provider:'ai',context:'school festival',targetLanguage:'th'});
  assert.equal(result.total,125);assert.equal(result.translated,125);assert.equal(calls.length,3);assert.equal(calls[0].rows.length,42);assert.equal(calls[0].o.model,'text-model');assert.equal(calls[0].o.targetLanguage,'Thai');assert.equal(calls[0].o.context,'school festival');
 });
+test('AI transport-wide batch failures are explicitly marked so the page scheduler can shrink and retry them',async()=>{
+ let calls=0;const service=new OcrTranslationService({ai:{translateRegions:async()=>{calls++;throw new Error('Translation API ตอบช้าเกินกำหนด');}}});
+ const result=await service.translate([region('a'),region('b')],{provider:'ai',model:'m'});
+ assert.equal(calls,1);assert.equal(result.translated,0);assert.equal(result.failed,2);assert.equal(result.transportFailures,2);assert.ok(result.items.every(r=>r.providerTransportFailure));assert.match(result.items[0].error,/ตอบช้า/);
+});
 test('missing AI ids retry individually; persistent omissions stay failed',async()=>{
  const calls=[];const service=new OcrTranslationService({ai:{translateRegions:async rows=>{calls.push(rows.map(r=>r.id));return rows.length>1?[{id:'a',translation:'หนึ่ง'}]:[];}}});
  const result=await service.translate([region('a'),region('b')],{provider:'ai',model:'m'});
