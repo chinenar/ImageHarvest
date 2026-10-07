@@ -1,0 +1,23 @@
+'use strict';
+const {_electron:electron,chromium}=require('playwright-core'),fs=require('node:fs/promises'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
+const {overlayPage,createTranslationOverlay}=require('../src/translation-overlay.cjs');
+const root=path.resolve(__dirname,'..'),out=path.join(root,'test-results/translation-overlay');let app,browser,server;
+(async()=>{
+ await fs.mkdir(out,{recursive:true});const source=require('../test-results/new-sets/set-2/files.json')[36],image=await fs.readFile(source);
+ server=http.createServer((req,res)=>{if(req.url==='/page.webp'){res.setHeader('Content-Type','image/webp');res.end(image);}else{res.setHeader('Content-Type','text/html; charset=utf-8');res.end('<body style="margin:0;background:#222"><main class="manga-reader"><img src="/page.webp" alt="Manga page" style="display:block;width:min(900px,100%);height:auto;margin:auto"></main></body>');}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const url=`http://127.0.0.1:${server.address().port}/chapter`;
+ const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({...(env.EIW_OCR_EXE?{executablePath:env.EIW_OCR_EXE}:{}),args:env.EIW_OCR_EXE?['--eiw-test']:[root,'--eiw-test'],env,timeout:45000});const main=await app.firstWindow();await main.waitForFunction(()=>!!window.eiw);
+ await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().forEach(w=>{w.hide();w.webContents.setBackgroundThrottling(false);}));
+ await main.evaluate(()=>window.eiw.harvestTsLayout({visible:true,bounds:{x:220,y:100,width:1000,height:850}}));await main.evaluate(url=>window.eiw.harvestTsCreate({url,activate:true}),url);
+ await app.evaluate(async({webContents},url)=>{const wc=webContents.getAllWebContents().find(w=>w.getURL()===url);if(wc?.isLoading())await new Promise(r=>wc.once('did-stop-loading',r));},url);
+ await app.evaluate(()=>global.__eiwTest.harvestTranslateSettingsUpdate({engine:'google',sourceLanguage:'en',targetLanguage:'th',fontScale:1}));
+ const started=Date.now(),result=await app.evaluate(()=>global.__eiwTest.harvestTranslationStart()),state=await app.evaluate(()=>global.__eiwTest.harvestTranslationState());assert.equal(result.total,1);assert.equal(result.translation.failed,0);assert.ok(result.translation.translated>=8);
+ const actual=await app.evaluate(async({webContents},url)=>webContents.getAllWebContents().find(w=>w.getURL()===url).executeJavaScript(`({stats:window.__harvestTsTranslationOverlay.stats(),texts:[...document.getElementById('__harvestts_translation_overlay__').shadowRoot.querySelectorAll('.text span')].map(n=>n.textContent)})`),url);
+ assert.equal(actual.stats.drawn,result.translation.translated);assert.ok(actual.texts.every(t=>/\p{Script=Thai}/u.test(t)));const manifest=state.manifest;
+ const mark=manifest.pages[0].ocr.regions.find(r=>r.text.replace(/\s/g,'')==='RITHASCAN');assert.ok(mark);assert.equal(mark.translation,undefined);assert.equal(mark.contentRole.excluded,true);assert.equal(result.translation.translated,10);
+ await fs.writeFile(path.join(out,'live-google-result.json'),JSON.stringify({appVersion:await app.evaluate(({app})=>app.getVersion()),source,ms:Date.now()-started,result,actual,manifest},null,2));
+ const payload=overlayPage(manifest.pages[0],{documentUrl:url,targetLanguage:'th'});
+ browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});const preview=await browser.newPage({viewport:{width:1000,height:1400}});await preview.goto(url);await preview.evaluate('window.overlay=('+createTranslationOverlay.toString()+')()');await preview.evaluate(p=>overlay.apply(p),payload);await preview.screenshot({path:path.join(out,'translated-manga.png'),fullPage:true});
+ payload.sourceUrl='data:image/webp;base64,'+image.toString('base64');payload.documentUrl='';const safe=value=>JSON.stringify(value).replace(/</g,'\\u003c');
+ await fs.writeFile(path.join(out,'translated-manga.html'),`<!doctype html><meta charset="utf-8"><title>ImageHarvest — คำแปลบนมังงะ</title><style>body{margin:0;background:#222}img{display:block;width:min(900px,100%);margin:auto}</style><img id="manga"><script>const payload=${safe(payload)};const image=document.getElementById('manga');image.onload=()=>{window.overlay=(${createTranslationOverlay.toString()})();overlay.apply(payload)};image.src=payload.sourceUrl;</script>`);
+ console.log('PASS: live Google + actual GPU OCR + placement + webpage overlay',result.translation.translated,'regions',actual.stats,Date.now()-started,'ms');
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{await browser?.close();await app?.close();server?.close();});

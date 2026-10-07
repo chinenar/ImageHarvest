@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Block element</title>
+<link rel="stylesheet" href="block-manager.css">
+</head>
+<body>
+<div id="app">
+  <header class="dragbar">
+    <div class="titlewrap">
+      <div class="mark">▱</div>
+      <div class="titlecopy"><strong>Block element</strong><span id="origin">กำลังเตรียม…</span></div>
+    </div>
+    <div class="window-actions">
+      <button id="collapse" title="หุบ/กาง" aria-label="หุบหรือกางหน้าต่าง">⌃</button>
+      <button id="close" title="ยกเลิก" aria-label="ปิดและยกเลิก">✕</button>
+    </div>
+  </header>
+  <main id="body">
+    <div class="legend">
+      <span><i class="swatch hover"></i> กำลังชี้</span>
+      <span><i class="swatch selected"></i> เลือกแล้ว</span>
+    </div>
+    <p class="help">คลิกบนหน้าเว็บเพื่อเลือกได้หลายจุด • คลิกจุดเดิมอีกครั้งเพื่อลบออกจากชุด</p>
+    <section class="group">
+      <div class="group-head"><strong>กำลังเลือก</strong><span id="draftCount">0 จุด</span></div>
+      <div id="draftList" class="list"></div>
+      <div class="row-actions">
+        <button id="clearDraft" class="secondary">ล้างที่เลือก</button>
+        <button id="cancel" class="secondary">ยกเลิก</button>
+      </div>
+      <button id="commit" class="primary" disabled>บล็อก Element ที่เลือก</button>
+    </section>
+    <section class="group saved-group">
+      <div class="group-head"><strong>Manage filters</strong><span id="savedCount">0 กฎ</span></div>
+      <div id="savedList" class="list saved"></div>
+      <button id="clearSaved" class="danger" disabled>ล้าง Filter ทั้งหมดของเว็บนี้</button>
+    </section>
+  </main>
+  <div id="message" role="status"></div>
+</div>
+<script src="block-manager.js"></script>
+</body>
+</html>

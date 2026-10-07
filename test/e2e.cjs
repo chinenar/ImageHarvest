@@ -27,6 +27,12 @@ function pass(name) { tests.push(name); console.log('PASS:', name); }
         <img id="lazy" data-src="/img/third.png" width="460" height="580"><img src="/img/first.png"><div class="bg"></div><img src="/img/protected.png"><img id="blob" width="450" height="530"><img src="/redirect.png"><img class="hidden" src="/img/hidden.png"></main>
         <img src="${data}" width="40" height="50"><img src="${data}" width="40" height="50"><img src="/tiny.svg" width="8" height="8">
         <script>const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){setTimeout(()=>{e.target.src=e.target.dataset.src;},80);io.unobserve(e.target);}}));io.observe(document.getElementById('lazy')); fetch('/img/blob.png').then(r=>r.blob()).then(b=>document.getElementById('blob').src=URL.createObjectURL(b));</script>`);
+    } else if (/^\/chapter\/[123]$/.test(u.pathname)) {
+      const chapter = Number(u.pathname.split('/').pop());
+      const image = chapter === 1 ? 'first' : chapter === 2 ? 'second' : 'third';
+      const next = chapter < 3 ? `<a rel="next" class="chapter-next" href="/chapter/${chapter + 1}">Next Chapter</a>` : '';
+      res.setHeader('Content-Type','text/html');
+      res.end(`<title>Series — Chapter ${chapter}</title><h1>Chapter ${chapter}</h1><main class="reader"><img width="420" height="560" src="/img/${image}.png"></main>${next}`);
     } else if (u.pathname === '/nested') {
       res.setHeader('Content-Type','text/html');
       res.end(`<title>Nested reader</title><div style="height:400px;width:500px;overflow:auto"><img src="/img/first.png"><img loading="lazy" src="/img/third.png"></div>`);
@@ -122,7 +128,31 @@ function pass(name) { tests.push(name); console.log('PASS:', name); }
   assert.match(await getError(bad.id),/ไม่ใช่ไฟล์ภาพ/);pass('HTML masquerading as image is rejected');
   assert.match(await getError(large.id),/32 MB/);pass('oversized responses are rejected');
   assert.match(await getError(rate.id),/429/);
-  const before=requests.get('/later.png')||0;assert.match(await getError(later.id),/429/);assert.equal(requests.get('/later.png')||0,before);pass('HTTP 429 stops additional downloads from the host');
+  const before=requests.get('/later.png')||0;
+  const preservedLater=await app.evaluate(async(_,{id})=>(await global.__eiwTest.getImage(id)).buffer.length,{id:later.id});
+  assert.equal(preservedLater,images.first.length);assert.equal(requests.get('/later.png')||0,before);
+  pass('HTTP 429 stops replay requests while already preserved browser responses remain usable');
+
+  const continuousRoot=path.join(testRoot,'continuous'); await fs.mkdir(continuousRoot);
+  await app.evaluate((_,folder)=>global.__eiwTest.setOutput(folder),continuousRoot);
+  await page.fill('#url',`${base}/chapter/1`);
+  assert.equal(await page.getAttribute('#webMode','aria-pressed'),'true'); assert.equal(await page.isHidden('#continuousControl'),true);
+  await page.click('#mangaMode'); assert.equal(await page.getAttribute('#mangaMode','aria-pressed'),'true'); assert.equal(await page.isVisible('#continuousControl'),true);
+  await page.check('#continuousMode'); assert.equal(await page.isChecked('#hideChrome'),true); pass('continuous mode enables the conservative chrome/promo filter by default'); await page.fill('#continuousStart','7');
+  await page.click('#download');
+  await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('เก็บต่อเนื่องเสร็จ'),null,{timeout:60000});
+  assert.deepEqual((await fs.readdir(continuousRoot,{withFileTypes:true})).filter(x=>x.isDirectory()).map(x=>x.name).sort(),['7','8','9']);
+  for (const [folderNumber,chapter] of [[7,1],[8,2],[9,3]]) {
+    const chapterReport=JSON.parse(await fs.readFile(path.join(continuousRoot,String(folderNumber),'report.json'),'utf8'));
+    assert.equal(chapterReport.folderNumber,folderNumber); assert.equal(chapterReport.saved,1);
+    assert.ok(chapterReport.source.endsWith(`/chapter/${chapter}`));
+  }
+  const userData=await app.evaluate(({app})=>app.getPath('userData'));
+  const continuousLog=await fs.readFile(path.join(userData,'logs','continuous-session.log'),'utf8');
+  assert.match(continuousLog,/session start/); assert.match(continuousLog,/chapter saved/);
+  assert.equal((continuousLog.match(/next not found yet/g)||[]).length,3);
+  assert.ok(continuousLog.includes('\r\n') || continuousLog.includes('\n'));
+  pass('continuous recovery log is readable JSONL and records the three safe end-of-series retries');  pass('continuous mode follows next chapter links and writes exact sequential numeric folders');
   await fs.writeFile(path.join(testRoot,'results.json'),JSON.stringify({passed:tests.length,tests,requests:Object.fromEntries(requests)},null,2));
   console.log(`ALL ${tests.length} E2E CHECKS PASSED. Artifacts: ${testRoot}`);
 })().catch(async error=>{

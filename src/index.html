@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src eiw-image: data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' eiw-image: data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
   <title>ImageHarvest</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -12,32 +12,43 @@
   <aside>
     <div class="brand"><span class="mark">▧</span><div>Image<span class="brand-accent">Harvest</span><small>EXPORT IMAGE FROM WEB</small></div></div>
     <div class="side-label">YOUR WORKSPACE</div>
-    <div class="side-active">▦ <span>เก็บภาพจากเว็บไซต์</span><span class="pill">1.1.0</span></div>
-    <div class="side-guide"><div class="step"><b>1</b><div>เปิดเว็บไซต์<small>วาง URL หน้าที่ต้องการเก็บรูป</small></div></div><div class="step"><b>2</b><div>สแกนและเลือกภาพ<small>กรองภาพเล็ก แล้วจัดลำดับ</small></div></div><div class="step"><b>3</b><div>บันทึกลงเครื่อง<small>ชื่อไฟล์เรียง 0001, 0002…</small></div></div></div>
+    <div class="side-nav">
+      <button id="collectorNav" class="side-nav-item active" type="button">▦ <span>เก็บภาพจากเว็บไซต์</span><span id="appVersion" class="pill">—</span></button>
+      <button id="browserAccountNav" class="side-nav-item" type="button">◉ <span>บัญชี Chrome</span><span id="profileNavState" class="side-state">ตั้งค่า</span></button>
+      <button id="harvestTsNav" class="side-nav-item" type="button">⌁ <span>HarvestTS</span><span class="side-state ready">BROWSER</span></button>
+      <button id="ocrLabNav" class="side-nav-item" type="button">▧ <span>ทดสอบ OCR</span><span class="side-state">LAB</span></button>
+    </div>
+    <div id="collectorSideGuide" class="side-guide"><div class="step"><b>1</b><div>เปิดเว็บไซต์<small>วาง URL หน้าที่ต้องการเก็บรูป</small></div></div><div class="step"><b>2</b><div>สแกนและเลือกภาพ<small>กรองภาพเล็ก แล้วจัดลำดับ</small></div></div><div class="step"><b>3</b><div>บันทึกลงเครื่อง<small>ชื่อไฟล์เรียง 0001, 0002…</small></div></div></div>
     <div class="side-note"><span>LOCAL FIRST</span><p>รูปบันทึกลงเครื่องโดยตรง<br>ไม่มีการส่งผ่านเซิร์ฟเวอร์ของแอป</p><small>ใช้กับภาพที่พี่มีสิทธิ์ดาวน์โหลด<br>ไม่ข้ามล็อกอินหรือสิทธิ์ซื้อตอน</small></div>
     <footer>Made for your collection <span>✦</span></footer>
   </aside>
-  <main>
+  <main id="collectorView">
+    <nav class="workspace-tabs-row" aria-label="แท็บงาน">
+      <div id="workspaceTabs" class="workspace-tabs"></div>
+      <button id="addTab" class="quiet workspace-add" title="เพิ่มแท็บงานใหม่">＋ เพิ่มแท็บ</button>
+    </nav>
     <header><div><div class="eyebrow">A LITTLE MORE ORGANIZED.</div><h1>เก็บภาพให้ครบ เรียงให้พร้อม</h1><p>วางลิงก์ เลือกภาพ แล้วเก็บเป็นชุดในลำดับที่ต้องการ</p></div><div class="header-actions"><button id="renameTool" class="quiet">✎ ตั้งเลขหน้ารูป</button><button id="openFolder" class="quiet">▣ เปิดโฟลเดอร์</button></div></header>
     <section class="panel source-panel">
-      <div class="browser-mode-row"><label for="browserMode">เปิดเว็บไซต์ด้วย <select id="browserMode"><option value="electron">เบราว์เซอร์ในแอป</option><option value="chrome" selected>Google Chrome</option></select></label><span id="browserModeNote">ใช้เบราว์เซอร์ที่มากับแอป</span></div>
-      <div class="site-mode-row"><label class="check"><input id="protectionCompatibility" type="checkbox" checked> รองรับระบบป้องกันที่รู้จักอัตโนมัติ</label><span id="protectionCompatibilityNote">Chrome • ตรวจจากเนื้อหา ไม่ผูกชื่อเว็บ • โค้ดไม่ตรงกฎจะไม่แก้</span></div>
+      <div class="content-mode-row"><span class="mode-label">ประเภทงาน</span><div class="mode-switch" role="group" aria-label="ประเภทงาน"><button id="webMode" type="button" class="mode-button active" aria-pressed="true">เว็บทั่วไป</button><button id="mangaMode" type="button" class="mode-button" aria-pressed="false">มังงะ / มังฮวา</button></div><span id="contentModeNote">เก็บภาพจากหน้าเว็บเดียว • ไม่ใช้ระบบหา Chapter</span></div>
+      <div class="browser-mode-row"><label for="browserMode">เปิดเว็บไซต์ด้วย <select id="browserMode"><option value="electron">เบราว์เซอร์ในแอป</option><option value="chrome" selected>Google Chrome</option></select></label><label for="chromeControl">วิธีควบคุม <select id="chromeControl"><option value="minimal">Minimal — ไม่แก้สคริปต์เว็บ</option><option value="standard" selected>Standard — วิธีเดิม</option></select></label><span id="browserModeNote">ใช้เบราว์เซอร์ที่มากับแอป</span></div>
+      <div class="site-mode-row"><label class="check"><input id="protectionCompatibility" type="checkbox" checked> รองรับระบบป้องกันที่รู้จักอัตโนมัติ</label><label class="check" title="ใช้ Harvest Adblock ชุดเดียวกับ HarvestTS"><input id="collectorAdblock" type="checkbox" checked> Harvest Adblock</label><span id="protectionCompatibilityNote">Chrome • ตรวจจากเนื้อหา ไม่ผูกชื่อเว็บ • โค้ดไม่ตรงกฎจะไม่แก้</span></div>
       <details class="compatibility-details"><summary>รายละเอียดการตรวจสคริปต์</summary><pre id="compatibilityLog">ยังไม่ได้เปิดหน้าเว็บ</pre></details>
       <div class="network-mode-row"><label for="networkMode">เครือข่าย <select id="networkMode"><option value="auto">อัตโนมัติ — Secure DNS + สำรองอัตโนมัติ</option><option value="cloudflare">Cloudflare DNS</option><option value="google">Google DNS</option><option value="adguard">AdGuard DNS — บล็อกโฆษณา/ติดตาม</option><option value="compat">Compatibility — ปิด HTTP/2 + QUIC</option></select></label><button id="applyNetwork" class="quiet small">ใช้โหมด</button><button id="restartNetwork" class="secondary small" hidden>รีสตาร์ตเพื่อใช้โหมด</button><span id="networkModeNote">ใช้ Secure DNS ของ Cloudflare/Google อัตโนมัติ และสลับสำรองเมื่อเชื่อมต่อไม่ได้</span></div>
-      <label class="field-label" for="url">ลิงก์หน้าเว็บไซต์ <span>หนึ่ง URL ต่อการสแกน ไม่ไล่ทั้งเว็บไซต์</span></label>
+      <label class="field-label" for="url">ลิงก์หน้าเว็บไซต์ <span>โหมดปกติสแกนทีละ URL • เปิดไล่ตอนเพื่อเก็บตอนถัดไปต่อเนื่อง</span></label>
       <div class="url-row"><span class="link-icon">↗</span><input id="url" type="url" placeholder="https://example.com/chapter/1" autocomplete="off" spellcheck="false"><button id="open" class="secondary">เปิดเว็บ</button><button id="scan" class="primary">✦ สแกนภาพ</button></div>
-      <div class="source-bottom"><label class="check"><input id="autoScroll" type="checkbox" checked> เลื่อนหน้าอัตโนมัติ</label><label class="check"><input id="backgrounds" type="checkbox"> รวมภาพพื้นหลัง</label><label class="check" title="เก็บ Canvas ที่หน้าเว็บวาดเสร็จแล้วเป็น PNG โดยไม่ข้ามสิทธิ์ของ browser"><input id="canvases" type="checkbox" checked> รวม Canvas</label><button id="capturePages" class="secondary small" title="เปิดเว็บไว้ แล้วกดเปลี่ยนหน้าเอง ระบบจะเก็บภาพที่มองเห็นเมื่อมีเนื้อหาใหม่">◎ จับทีละหน้า</button><button id="showBrowser" class="text-button">ดูหน้าต่างเว็บ / ล็อกอิน ↗</button><button id="advancedToggle" class="text-button">ตั้งค่าเพิ่มเติม ▾</button></div>
+      <div class="source-bottom"><label class="check"><input id="autoScroll" type="checkbox" checked> เลื่อนหน้าอัตโนมัติ</label><label id="continuousControl" class="check continuous-toggle" title="ใช้เฉพาะโหมดมังงะ: บันทึกตอนปัจจุบัน แล้วหาและเปิดตอนถัดไปอัตโนมัติ" hidden><input id="continuousMode" type="checkbox"> ไล่ตอนถัดไปอัตโนมัติ</label><label class="check" title="ระบบจะเก็บ CSS background ที่ดูเป็นภาพเนื้อหา/ปกให้อัตโนมัติอยู่แล้ว เปิดตัวเลือกนี้เพื่อรวมภาพพื้นหลังตกแต่งอื่น ๆ เพิ่มเติม"><input id="backgrounds" type="checkbox"> รวมพื้นหลังตกแต่งทั้งหมด</label><label class="check" title="เก็บ Canvas ที่หน้าเว็บวาดเสร็จแล้วเป็น PNG โดยไม่ข้ามสิทธิ์ของ browser"><input id="canvases" type="checkbox" checked> รวม Canvas</label><button id="capturePages" class="secondary small" title="เปิดเว็บไว้ แล้วกดเปลี่ยนหน้าเอง ระบบจะเก็บภาพที่มองเห็นเมื่อมีเนื้อหาใหม่">◎ จับทีละหน้า</button><button id="collectorBlockElement" class="secondary small" title="เลือก Element ในหน้าเว็บเพื่อซ่อน และแชร์กฎเดียวกับ HarvestTS">▱ Block element</button><button id="showBrowser" class="text-button">ดูหน้าต่างเว็บ ↗</button><button id="advancedToggle" class="text-button">ตั้งค่าเพิ่มเติม ▾</button></div>
       <div id="advanced" class="advanced" hidden>
         <label>CSS selector เฉพาะบริเวณ <input id="selector" placeholder="เช่น .reader-content (ไม่จำเป็น)"></label>
         <label>รอแต่ละรอบ (ms) <input id="waitMs" type="number" value="800" min="350" max="5000"></label>
         <label>จำนวนรอบสูงสุด <input id="maxSteps" type="number" value="150" min="5" max="600"></label>
         <label>ตรวจหน้าใหม่ทุก (ms) <input id="captureInterval" type="number" value="900" min="250" max="5000"></label>
-        <p>สแกนปกติ: เลื่อนหน้าได้แต่ไม่คลิกข้ามตอน • จับทีละหน้า: เปิดหน้าต่างเว็บแล้วกด Next/ลูกศรเอง ระบบจะจับทันทีเมื่อ URL/รูปเปลี่ยน และยังตรวจเป็นช่วงสำหรับ Canvas; ภาพที่เคยพลาดจะลองใหม่ได้</p>
+        <label class="check"><input id="autoReader" type="checkbox" checked> เปลี่ยนหน้าตัวอ่านอัตโนมัติเมื่อรองรับ (ทดลอง)</label>
+        <p>สแกนปกติ: เลื่อนหน้าแต่ไม่ข้ามตอน • ไล่ตอนอัตโนมัติ: บันทึกตอนปัจจุบัน หา Next Chapter ที่มั่นใจ แล้วเปิด/สแกนตอนถัดไป • จับทีละหน้า: ระบบสะสมภาพเมื่อหน้าเปลี่ยน และจะลองเปลี่ยนหน้าตัวอ่านให้อัตโนมัติเมื่อรู้จักวิธี</p>
       </div>
     </section>
     <section class="status-line"><span id="statusDot" class="status-dot"></span><span id="status" role="status">พร้อมใช้งาน — เริ่มด้วยลิงก์เว็บไซต์</span><button id="cancel" class="danger" hidden>หยุดงาน</button></section>
     <progress id="progress" value="0" max="100" hidden></progress>
-    <section class="collection-heading"><div><h2>ภาพที่รวบรวม <span id="totalCount" class="count">0</span></h2><p id="pageTitle">คอลเลกชันใหม่ของพี่จะอยู่ตรงนี้</p></div><div class="view-actions"><span id="selectionCount">เลือก 0 ภาพ</span><button id="selectAll" class="quiet small">เลือกทั้งหมดที่แสดง</button><button id="deselectAll" class="text-button">ล้างการเลือก</button></div></section>
+    <section class="collection-heading"><div><h2>ภาพที่รวบรวม <span id="totalCount" class="count">0</span></h2><p id="pageTitle">คอลเลกชันใหม่ของพี่จะอยู่ตรงนี้</p></div><div class="view-actions"><span id="selectionCount">เลือก 0 ภาพ</span><button id="preRead" class="secondary small" disabled>▤ Pre-read</button><button id="selectAll" class="quiet small">เลือกทั้งหมดที่แสดง</button><button id="deselectAll" class="text-button">ล้างการเลือก</button></div></section>
     <section class="collection-tools" aria-label="จัดการรายการภาพ">
       <button id="removeSelected" class="quiet small remove-action" disabled>นำที่เลือกออก <span id="removeCount">0</span></button>
       <button id="clearResults" class="quiet small remove-action" disabled>ล้างทั้งหมด</button>
@@ -53,8 +64,9 @@
       <label class="check dedupe"><input id="dedupe" type="checkbox" checked> ซ่อนภาพซ้ำ</label>
     </section>
     <section class="smart-filters" aria-label="กรองชนิดภาพและเนื้อหา">
-      <label class="check" title="ประเมินจากชื่อไฟล์และบริเวณของหน้าเว็บ ไม่แก้ไขพิกเซลหรือลบลายน้ำ"><input id="hideChrome" type="checkbox">ซ่อนโลโก้ / รูปประกอบเว็บ</label>
+      <label class="check" title="ประเมินจากชื่อไฟล์และบริเวณของหน้าเว็บ ไม่แก้ไขพิกเซลหรือลบลายน้ำ"><input id="hideChrome" type="checkbox">ซ่อนโลโก้ / โฆษณา / ภาพรอโหลด</label>
       <label class="check" title="เลือกบริเวณตัวอ่านก่อน main/article; ถ้าระบุไม่ได้ จะไม่ซ่อนภาพที่ไม่แน่ใจ"><input id="mainOnly" type="checkbox">เฉพาะเนื้อหาหลัก</label>
+      <label class="check" title="ตรวจสีล้วนจากพิกเซลตัวอย่างในเครื่อง อาจเป็นหน้าว่างจริงของหนังสือ ปิดได้เพื่อคืนภาพ"><input id="hideBlank" type="checkbox">ซ่อนหน้าว่าง / สีล้วน (คาดว่า)</label>
       <select id="sourceFilter" aria-label="ชนิดภาพ"><option value="all">ทุกชนิดภาพ</option><option value="img">ภาพ IMG</option><option value="canvas">เฉพาะ Canvas</option><option value="background">ภาพพื้นหลัง</option></select>
       <button id="resetFilters" class="text-button">รีเซ็ตตัวกรอง</button>
       <p id="filterSummary" role="status">ตัวกรองประเมินจากโครงสร้างเว็บ อาจคัดผิดได้ — ปิดตัวกรองเพื่อดูภาพทั้งหมด</p>
@@ -63,10 +75,132 @@
     <div id="empty" class="empty"><div class="empty-art"><span class="photo-back">▧</span><span class="photo-front">▧</span><span class="sparkle">✦</span></div><h3>จากหน้าเว็บ สู่โฟลเดอร์ของพี่</h3><p>รองรับภาพปกติ ภาพที่โหลดเมื่อเลื่อน ภาพพื้นหลัง และ Canvas ที่อ่านได้<br>ดูตัวอย่างก่อนบันทึก แล้วจัดลำดับได้ด้วยการลากหรือปุ่มลูกศร</p><div class="format-tags"><span>JPG</span><span>PNG</span><span>WEBP</span><span>AVIF</span><span>GIF + more</span></div></div>
     <div id="grid" class="grid" aria-label="รายการภาพ"></div>
     <div id="noMatches" class="no-matches" hidden>ไม่มีภาพตรงตัวกรอง ลองลดขนาดขั้นต่ำหรือเปลี่ยนคำค้นค่ะ</div>
-    <section class="export-bar"><div class="destination"><span class="field-label">โฟลเดอร์ปลายทาง</span><button id="chooseFolder" title="เลือกโฟลเดอร์ปลายทาง"><span id="folderLabel">เลือกโฟลเดอร์บันทึก…</span><span>▾</span></button></div><label class="set-name">ชื่อโฟลเดอร์ชุดภาพ<input id="setName" placeholder="ว่าง = ชื่อเว็บ + เวลา" maxlength="70"></label><button id="exportLinks" class="secondary">บันทึกลิงก์</button><button id="download" class="primary export-button" disabled>↓ บันทึกภาพที่เลือก <span id="downloadCount">0</span></button></section>
+    <section class="export-bar"><div class="destination"><span class="field-label">โฟลเดอร์ปลายทาง</span><button id="chooseFolder" title="เลือกโฟลเดอร์ปลายทาง"><span id="folderLabel">เลือกโฟลเดอร์บันทึก…</span><span>▾</span></button></div><label id="setNameWrap" class="set-name">ชื่อโฟลเดอร์ชุดภาพ<input id="setName" placeholder="ว่าง = ชื่อเว็บ + เวลา" maxlength="70"></label><label id="continuousStartWrap" class="set-name" hidden>เลขโฟลเดอร์เริ่มต้น<input id="continuousStart" type="number" min="0" max="99999999" step="1" value="1"></label><button id="exportLinks" class="secondary">บันทึกลิงก์</button><button id="download" class="primary export-button" disabled>↓ <span id="downloadActionText">บันทึกภาพที่เลือก</span> <span id="downloadCount">0</span></button></section>
     <div class="bottom-note">ไฟล์ภาพเก็บต้นฉบับ • Canvas เก็บเป็น PNG • สร้างโฟลเดอร์ใหม่ทุกครั้ง • จำกัด 32 MB ต่อภาพ</div>
   </main>
+  <main id="browserAccountView" class="account-view" hidden>
+    <header class="account-header"><div><div class="eyebrow">BROWSER PROFILE.</div><h1>ล็อกอิน Chrome ครั้งเดียว ใช้ต่อได้เลย</h1><p>ImageHarvest ใช้โปรไฟล์ Chrome แยกของตัวเอง บัญชีและคุกกี้จะอยู่ในเครื่องนี้และใช้ต่อในครั้งถัดไป</p></div></header>
+    <section class="panel account-panel">
+      <div class="account-profile-row"><div class="account-icon">G</div><div class="account-profile-copy"><span class="field-label">GOOGLE CHROME</span><h2>โปรไฟล์ของ ImageHarvest</h2><p id="profileSummary">กำลังตรวจสถานะโปรไฟล์…</p></div><span id="profileBadge" class="account-badge">กำลังตรวจ</span></div>
+      <div class="account-detail"><span>บัญชีที่ใช้</span><strong id="profileEmail">ยังไม่ได้ล็อกอิน</strong></div>
+      <div class="account-actions"><button id="openBrowserLogin" class="primary">เปิด Chrome ปกติเพื่อล็อกอิน</button><button id="useBrowserProfile" class="secondary">ใช้บัญชีนี้เลย</button></div>
+      <p id="profileActionNote" class="account-note">รหัสผ่านกรอกใน Chrome โดยตรง แอปไม่รับหรือเก็บรหัสผ่านของบัญชี</p>
+    </section>
+    <section class="account-steps">
+      <div><b>1</b><span><strong>เปิด Chrome ปกติ</strong><small>กดปุ่มด้านบน แอปจะเปิด Chrome ที่ไม่ถูกควบคุมอัตโนมัติ แต่ใช้โปรไฟล์เฉพาะของ ImageHarvest</small></span></div>
+      <div><b>2</b><span><strong>ล็อกอินบัญชีที่ต้องการ</strong><small>ล็อกอิน Google หรือเว็บที่ต้องใช้สิทธิ์ในหน้าต่าง Chrome ตามปกติ</small></span></div>
+      <div><b>3</b><span><strong>กด “ใช้บัญชีนี้เลย”</strong><small>ระบบจะปิด Chrome เพื่อบันทึกโปรไฟล์ แล้วกลับไปหน้าเก็บภาพพร้อมใช้บัญชีนี้</small></span></div>
+    </section>
+  </main>
+  <main id="harvestTsView" class="harvest-browser-view" hidden>
+    <section class="harvest-browser-shell" aria-label="HarvestTS browser">
+      <div class="harvest-tabbar">
+        <div class="harvest-titlemark"><span>⌁</span><strong>HarvestTS</strong></div>
+        <div id="harvestTabs" class="harvest-tabs" role="tablist" aria-label="แท็บเบราว์เซอร์"></div>
+        <button id="harvestNewTab" class="harvest-icon-button" type="button" title="แท็บใหม่ (Ctrl+T)">＋</button>
+      </div>
+      <div class="harvest-toolbar">
+        <button id="harvestBack" class="harvest-nav-button" type="button" title="ย้อนกลับ (Alt+←)">←</button>
+        <button id="harvestForward" class="harvest-nav-button" type="button" title="ไปข้างหน้า (Alt+→)">→</button>
+        <button id="harvestReload" class="harvest-nav-button" type="button" title="โหลดใหม่ (Ctrl+R)">↻</button>
+        <button id="harvestHome" class="harvest-nav-button" type="button" title="หน้าแรก">⌂</button>
+        <div class="harvest-address-wrap">
+          <span id="harvestSecurity" class="harvest-security" title="สถานะการเชื่อมต่อ">●</span>
+          <input id="harvestAddress" class="harvest-address" type="text" autocomplete="off" spellcheck="false" placeholder="ค้นหาหรือพิมพ์ URL">
+          <button id="harvestGo" class="harvest-go" type="button" title="ไป">↵</button>
+        </div>
+        <button id="harvestSendToCollector" class="harvest-nav-button harvest-send-collector" type="button" title="ส่งหน้านี้ไป ImageHarvest">⇢</button>
+        <button id="harvestBookmarkQuick" class="harvest-nav-button harvest-bookmark-quick" type="button" title="บันทึก Bookmark">☆</button>
+        <button id="harvestPasswordQuick" class="harvest-nav-button harvest-password-quick" type="button" title="บัญชีและรหัสผ่าน">⌘</button>
+        <button id="harvestMenu" class="harvest-nav-button" type="button" title="เมนู HarvestTS">☰</button>
+        <div id="harvestMenuPopup" class="harvest-menu-popup" hidden>
+          <div class="harvest-menu-zoom" aria-label="ซูมหน้าเว็บ">
+            <span>Zoom</span><button id="harvestZoomOut" type="button" title="ซูมออก (Ctrl+-)">−</button><button id="harvestZoomValue" type="button" title="คืนซูม 100% (Ctrl+0)">100%</button><button id="harvestZoomIn" type="button" title="ซูมเข้า (Ctrl++)">＋</button>
+          </div>
+          <button id="harvestBookmarkMenu" type="button"><span>☆</span><b>Bookmark</b><small>บันทึกและจัดการเว็บที่ชอบ</small></button>
+          <button id="harvestPasswordMenu" type="button"><span>⌘</span><b>Password</b><small>จัดการรหัสผ่านที่เข้ารหัสไว้</small></button>
+          <button id="harvestBlockElementMenu" type="button"><span>▱</span><b>Block element</b><small>คลิกส่วนของเว็บที่ต้องการซ่อน</small></button>
+        </div>
+      </div>
+      <div id="harvestStatus" class="harvest-status">พร้อมใช้งาน</div>
+      <div id="harvestWebviews" class="harvest-webviews"></div>
+      <aside id="harvestBlockPanel" class="harvest-block-panel" hidden>
+        <div class="harvest-block-head"><div><strong>Block element</strong><span id="harvestBlockOrigin">เลือกส่วนที่ต้องการซ่อน</span></div><button id="harvestBlockClose" class="quiet" type="button">✕</button></div>
+        <div class="harvest-block-help">เลื่อนเมาส์บนหน้าเว็บแล้วคลิกได้หลายจุด • คลิกจุดเดิมอีกครั้งเพื่อยกเลิก • กรอบสีม่วงคือพื้นที่ที่เลือกไว้</div>
+        <div class="harvest-block-counter"><span>กำลังเลือก</span><strong id="harvestBlockDraftCount">0 จุด</strong></div>
+        <div id="harvestBlockDraftList" class="harvest-block-list"></div>
+        <div class="harvest-block-actions"><button id="harvestBlockCommit" class="primary" type="button" disabled>บล็อก Element ที่เลือก</button><button id="harvestBlockClearDraft" class="secondary" type="button">ล้างที่เลือก</button><button id="harvestBlockCancel" class="quiet" type="button">ยกเลิก</button></div>
+        <div class="harvest-block-saved-head"><div><strong>Manage filters</strong><span id="harvestBlockSavedCount">0 กฎ</span></div><button id="harvestBlockClearSaved" class="text-button" type="button">ล้างทั้งหมด</button></div>
+        <div id="harvestBlockSavedList" class="harvest-block-list saved"></div>
+      </aside>
+    </section>
+  </main>
 </div>
+<dialog id="harvestHistoryDialog" class="harvest-manager-dialog">
+  <div class="harvest-manager-head"><div><strong>History</strong><span id="harvestHistoryState">ประวัติการเข้าเว็บใน HarvestTS</span></div><button id="closeHarvestHistory" class="quiet">ปิด ✕</button></div>
+  <div class="harvest-manager-actions"><button id="harvestClearHistory" class="secondary">ล้างประวัติทั้งหมด</button></div>
+  <div id="harvestHistoryList" class="harvest-manager-list"></div>
+</dialog>
+<dialog id="harvestBookmarkDialog" class="harvest-manager-dialog harvest-bookmark-dialog">
+  <div class="harvest-manager-head"><div><strong>Bookmark</strong><span>บันทึกเว็บและจัดหมวดเป็นโฟลเดอร์</span></div><button id="closeHarvestBookmarks" class="quiet">ปิด ✕</button></div>
+  <div class="harvest-bookmark-savebox">
+    <div class="harvest-bookmark-current"><strong id="harvestBookmarkCurrentTitle">หน้าปัจจุบัน</strong><small id="harvestBookmarkCurrentUrl"></small></div>
+    <label>บันทึกไว้ที่
+      <select id="harvestBookmarkFolderSelect"><option value="">ทั่วไป — ไม่อยู่ในโฟลเดอร์</option></select>
+    </label>
+    <div class="harvest-bookmark-folder-create">
+      <input id="harvestBookmarkNewFolder" type="text" maxlength="80" autocomplete="off" placeholder="ชื่อโฟลเดอร์ใหม่...">
+      <button id="harvestBookmarkCreateFolder" class="secondary" type="button">＋ สร้างโฟลเดอร์</button>
+    </div>
+    <button id="harvestAddBookmark" class="primary" type="button">☆ บันทึกหน้านี้</button>
+  </div>
+  <div class="harvest-bookmark-library-head"><strong>Bookmark ทั้งหมด</strong><span id="harvestBookmarkCount">0 รายการ</span></div>
+  <div id="harvestBookmarkList" class="harvest-manager-list"></div>
+</dialog>
+<dialog id="harvestPasswordDialog" class="harvest-manager-dialog">
+  <div class="harvest-manager-head"><div><strong>Password</strong><span>รหัสผ่านเก็บแบบเข้ารหัสด้วย Windows</span></div><button id="closeHarvestPasswords" class="quiet">ปิด ✕</button></div>
+  <p id="harvestPasswordNote" class="harvest-password-note">HarvestTS เข้ารหัสรหัสผ่านด้วย Windows • เวลาเจอฟอร์มล็อกอิน ปุ่มบัญชีข้างช่อง URL จะให้เลือกบัญชีที่บันทึกไว้ หรือบันทึก/อัปเดตรหัสที่เพิ่งกรอก</p>
+  <div class="harvest-manager-actions"><button id="harvestSavePassword" class="primary">บันทึกรหัสจากหน้านี้</button><button id="harvestFillPassword" class="secondary">ใช้บัญชีที่บันทึกไว้</button></div>
+  <div id="harvestPasswordList" class="harvest-manager-list"></div>
+</dialog>
+<dialog id="harvestExtensionDialog" class="harvest-manager-dialog">
+  <div class="harvest-manager-head"><div><strong>Extensions</strong><span>ติดตั้งและจัดการส่วนเสริมของ HarvestTS</span></div><button id="closeHarvestExtensions" class="quiet">ปิด ✕</button></div>
+  <p class="harvest-password-note">รองรับ Chrome Extension แบบ unpacked (Manifest V2/V3) • Extension ที่ติดตั้งจะถูกคัดลอกเก็บไว้ในโปรไฟล์ HarvestTS</p>
+  <div class="harvest-manager-actions"><button id="harvestInstallExtension" class="primary">＋ ติดตั้งจากโฟลเดอร์</button></div>
+  <div id="harvestExtensionList" class="harvest-manager-list"></div>
+</dialog>
+<dialog id="harvestDnsDialog" class="harvest-manager-dialog harvest-dns-dialog">
+  <div class="harvest-manager-head"><div><strong>DNS & Privacy</strong><span>เลือก Secure DNS สำหรับ HarvestTS</span></div><button id="closeHarvestDns" class="quiet">ปิด ✕</button></div>
+  <div class="harvest-dns-body">
+    <label>DNS provider
+      <select id="harvestDnsMode">
+        <option value="inherit">ตามการตั้งค่าเครือข่ายของ ImageHarvest</option>
+        <option value="cloudflare">Cloudflare — 1.1.1.1 / DoH</option>
+        <option value="google">Google — 8.8.8.8 / DoH</option>
+        <option value="adguard">AdGuard DNS — บล็อกโฆษณา/ติดตาม</option>
+        <option value="quad9">Quad9 — Security filtering</option>
+        <option value="mullvad">Mullvad DNS — Privacy</option>
+        <option value="custom">Custom DoH URL</option>
+      </select>
+    </label>
+    <label id="harvestCustomDohRow" hidden>Custom DoH URL
+      <input id="harvestCustomDoh" type="url" placeholder="https://example.com/dns-query" autocomplete="off" spellcheck="false">
+    </label>
+    <div class="harvest-dns-note">การเปลี่ยน DNS จะล้าง DNS cache และ connection ของ HarvestTS ให้ทันที</div>
+  </div>
+  <div class="harvest-manager-actions"><button id="harvestApplyDns" class="primary">ใช้ DNS นี้</button><span id="harvestDnsStatus" class="harvest-inline-status"></span></div>
+</dialog>
+<dialog id="readerDialog" class="reader-dialog">
+  <div class="reader-head">
+    <div><strong>Pre-read</strong><span id="readerCount">0 ภาพ</span></div>
+    <div class="reader-controls">
+      <label>รูปแบบ <select id="readerMode"><option value="webtoon">มังฮวา — ต่อชิด</option><option value="manga">มังงะ — เว้นหน้า</option></select></label>
+      <label>ความกว้าง <select id="readerWidth"><option value="normal">พอดีอ่าน</option><option value="wide">กว้าง</option><option value="fit">เต็มพื้นที่</option></select></label>
+      <button id="closeReader" class="quiet">ปิด ✕</button>
+    </div>
+  </div>
+  <div id="readerStrip" class="reader-strip" data-mode="webtoon" data-width="normal"></div>
+</dialog>
 <dialog id="preview"><div class="preview-head"><span id="previewTitle"></span><button id="closePreview" class="quiet">ปิด ✕</button></div><div class="preview-body"><img id="previewImage" alt="ภาพขยาย"></div><p id="previewUrl"></p></dialog>
 <dialog id="renameDialog" class="rename-dialog"><div class="preview-head"><strong>ตั้งชื่อรูปเป็นเลขหน้า</strong><button id="closeRename" class="quiet">ปิด ✕</button></div><div class="rename-body"><p class="rename-help">ใช้กับรูปที่มีอยู่แล้วในโฟลเดอร์ ระบบเรียงตามชื่อเดิมแบบตัวเลข (1, 2, 10) แล้วเปลี่ยนเป็น 0001, 0002…</p><button id="chooseRenameSource" class="secondary">เลือกโฟลเดอร์รูป…</button><div id="renameFolderLabel" class="rename-folder">ยังไม่ได้เลือกโฟลเดอร์</div><div class="rename-options"><label>ลำดับ<select id="renameDirection"><option value="normal">ปกติ — ชื่อน้อยไปมาก</option><option value="reverse">ย้อนกลับ — ชื่อมากไปน้อย</option></select></label><label>เลขหน้าเริ่มต้น<input id="renameStart" type="number" min="0" max="99999999" value="1"></label><label>จำนวนหลัก<input id="renamePadding" type="number" min="1" max="8" value="4"></label></div><div id="renameSummary" class="rename-summary">เลือกโฟลเดอร์เพื่อดูตัวอย่าง</div><div id="renamePreview" class="rename-preview"></div><div class="rename-actions"><button id="applyRename" class="primary" disabled>เปลี่ยนชื่อเป็นเลขหน้า</button></div></div></dialog>
 <dialog id="collectionConfirm" class="collection-confirm" aria-labelledby="collectionConfirmTitle">

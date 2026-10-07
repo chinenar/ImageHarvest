@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="th">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline Library</title><link rel="stylesheet" href="offline.css"></head>
+<body>
+  <header class="topbar">
+    <div class="brand"><h1>Offline Library</h1><p>เรื่องที่บันทึกไว้ในเครื่อง</p></div>
+    <div class="top-actions"><input id="search" type="search" placeholder="ค้นหาเรื่องหรือตอน"><button id="newGroup" class="primary" type="button">＋ กลุ่ม</button></div>
+  </header>
+  <div id="meta" class="meta">กำลังโหลด…</div>
+  <main id="homeGrid" class="library-grid"></main>
+
+  <dialog id="groupDialog" class="library-dialog group-dialog">
+    <header class="dialog-head">
+      <div><h2 id="groupTitle">กลุ่ม</h2><p id="groupMeta"></p></div>
+      <div class="dialog-actions"><button id="renameGroup" type="button">เปลี่ยนชื่อ</button><button id="deleteGroup" class="danger" type="button">ลบกลุ่ม</button><button id="closeGroup" type="button">✕</button></div>
+    </header>
+    <div id="groupGrid" class="library-grid dialog-grid"></div>
+  </dialog>
+
+  <dialog id="storyDialog" class="library-dialog story-dialog">
+    <header class="dialog-head">
+      <div><h2 id="storyTitle">เรื่อง</h2><p id="storyMeta"></p></div>
+      <div class="dialog-actions"><button id="renameStory" type="button">เปลี่ยนชื่อ</button><button id="closeStory" type="button">✕</button></div>
+    </header>
+    <div id="chapters" class="chapter-list"></div>
+  </dialog>
+
+  <dialog id="textDialog" class="text-dialog">
+    <form id="textDialogForm">
+      <h2 id="textDialogTitle">สร้าง</h2>
+      <label id="textDialogLabel" for="textDialogInput">ชื่อ</label>
+      <input id="textDialogInput" type="text" maxlength="120" autocomplete="off">
+      <div class="text-dialog-actions"><button id="textDialogCancel" type="button">ยกเลิก</button><button class="primary" type="submit">ตกลง</button></div>
+    </form>
+  </dialog>
+  <script src="offline.js"></script>
+</body></html>

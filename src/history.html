@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>History</title>
+<link rel="stylesheet" href="history.css">
+</head>
+<body>
+<main class="history-page">
+  <header class="history-head">
+    <div>
+      <div class="eyebrow">HARVESTTS</div>
+      <h1>ประวัติการเข้าเว็บ</h1>
+      <p>ค้นหา เปิดซ้ำ หรือลบประวัติของ HarvestTS ได้จากแท็บนี้</p>
+    </div>
+    <label class="history-toggle"><input id="historyEnabled" type="checkbox"><span>บันทึกประวัติ</span></label>
+  </header>
+  <section class="history-tools">
+    <div class="history-search-wrap"><span>⌕</span><input id="historySearch" type="search" autocomplete="off" spellcheck="false" placeholder="ค้นหาชื่อเว็บหรือ URL..."></div>
+    <button id="clearHistory" class="danger" type="button">ล้างทั้งหมด</button>
+  </section>
+  <div id="historyMeta" class="history-meta"></div>
+  <section id="historyList" class="history-list"></section>
+</main>
+<script src="history.js"></script>
+</body>
+</html>

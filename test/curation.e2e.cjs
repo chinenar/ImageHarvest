@@ -18,6 +18,12 @@ const pass = name => { passed.push(name); console.log('PASS:', name); };
     if (req.url.endsWith('.svg')) { res.setHeader('Content-Type', 'image/svg+xml'); res.end('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="120"><rect width="600" height="120" fill="#789"/></svg>'); return; }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     if (req.url === '/unknown') { res.end('<title>Unknown layout</title><div><img src="/u.png" alt="Unlabelled page"></div>'); return; }
+    if (req.url === '/smart-background') {
+      res.end(`<!doctype html><title>Smart background fixture</title><style>
+        body{margin:0}.cover{width:190px;height:253px;background:center/cover no-repeat url('/smart-cover.png')}
+        .hero{width:1000px;height:300px;background:center/cover no-repeat url('/smart-hero.png')}
+      </style><div class="hero"></div><div class="cover"></div>`); return;
+    }
     res.end(`<!doctype html><title>Curation fixture</title><style>body{margin:0}img{display:block;width:200px;height:120px}header,nav,footer{display:flex}.reading-strip{width:430px}.reading-strip img{width:420px;height:560px}.reading-strip img.short{height:120px}.bg{width:420px;height:560px;background-image:url('/bg.png')}</style>
       <header><img src="/logo.png" alt="Site logo"><img src="/shared.png" alt="Header badge"></header><nav><img src="/icon.png" alt="Menu icon"></nav>
       <main><img src="/cover.png" alt="Cover"><section class="reading-strip"><img src="/p1.png" alt="Page 1"><img src="/p2.png" alt="Page 2"><canvas width="420" height="560" aria-label="Page 3"></canvas><img class="short" src="/short.svg" alt="Short final page"><div class="bg"></div><img src="/shared.png" alt="Main duplicate"></section><aside><img src="/rec.png" alt="Recommended book"></aside></main>
@@ -42,6 +48,21 @@ const pass = name => { passed.push(name); console.log('PASS:', name); };
   assert.ok(raw.find(x => x.alt === 'Site logo').filterHints.chrome);
   assert.equal(raw.find(x => x.alt === 'Page 3').filterHints.mainKind, 'reader');
   pass('scan tags IMG, Canvas and background context without removing results');
+  const firstTabIds = await page.evaluate(() => sequence.slice());
+  await page.click('#preRead'); await page.waitForFunction(() => document.getElementById('readerDialog').open);
+  assert.equal(await page.locator('#readerStrip img').count(), await page.evaluate(() => exportItems().length));
+  await page.selectOption('#readerMode', 'manga');
+  assert.equal(await page.getAttribute('#readerStrip', 'data-mode'), 'manga');
+  await page.click('#closeReader');
+  pass('Pre-read stacks the selected visible sequence and switches manga/webtoon spacing');
+  await page.click('#addTab'); await page.waitForFunction(() => activeTabId === 'tab-2' && all.length === 0);
+  assert.equal(await page.locator('.workspace-tab').count(), 2);
+  await page.fill('#url', `${base}/unknown`); await scan(); assert.equal(await page.evaluate(() => all.length), 1);
+  await page.click('[data-workspace-id="tab-1"]'); await page.waitForFunction(() => activeTabId === 'tab-1' && all.length === 13);
+  assert.deepEqual(await page.evaluate(() => sequence.slice()), firstTabIds);
+  assert.equal((await instance.evaluate(() => global.__eiwTest.getState())).count, 13);
+  await page.click('[data-close-workspace="tab-2"]'); await page.waitForFunction(() => tabs.size === 1);
+  pass('workspace tabs preserve independent URL/results/order and can close without clearing the active collection');
   await page.check('#hideChrome');
   const hiddenChrome = await page.evaluate(() => visibleItems());
   assert.equal(hiddenChrome.length, 7); assert.ok(hiddenChrome.some(x => x.alt === 'Main duplicate'));
@@ -123,6 +144,12 @@ const pass = name => { passed.push(name); console.log('PASS:', name); };
   assert.equal((await page.evaluate(() => window.eiw.settings())).data.outputRoot, testRoot);
   for (const [filename, digest] of Object.entries(savedHashes)) assert.equal(hash(await fs.readFile(path.join(savedRoot, filename))), digest);
   pass('removal and clear never modify exported files, URL or destination folder');
+  await page.uncheck('#backgrounds');
+  await page.fill('#url', `${base}/smart-background`); await scan();
+  const smartBackgrounds = await page.evaluate(() => all.filter(x => x.source === 'background').map(x => x.url));
+  assert.ok(smartBackgrounds.some(x => x.endsWith('/smart-cover.png')));
+  assert.ok(!smartBackgrounds.some(x => x.endsWith('/smart-hero.png')));
+  pass('smart scan keeps cover-like CSS background images without enabling decorative backgrounds');
   await page.fill('#url', `${base}/unknown`); await scan();
   assert.equal(await page.evaluate(() => visibleItems().length), 1);
   assert.match(await page.textContent('#filterSummary'), /ระบุเขตหลักไม่ชัด/);
@@ -146,7 +173,7 @@ const pass = name => { passed.push(name); console.log('PASS:', name); };
   pass('clear also releases records when every image has been removed');
   assert.deepEqual(uiErrors, []);
   pass('no renderer JavaScript errors during the complete workflow');
-  await fs.writeFile(path.join(testRoot, 'results.json'), JSON.stringify({ version: '1.0.4', passed: passed.length, tests: passed, executable: executablePath ? 'packaged' : 'source' }, null, 2));
+  await fs.writeFile(path.join(testRoot, 'results.json'), JSON.stringify({ version: '1.3.0', passed: passed.length, tests: passed, executable: executablePath ? 'packaged' : 'source' }, null, 2));
   console.log(`ALL ${passed.length} CURATION CHECKS PASSED. Artifacts: ${testRoot}`);
 })().catch(async error => {
   console.error(error.stack || error); process.exitCode = 1;

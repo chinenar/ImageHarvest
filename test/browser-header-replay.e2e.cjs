@@ -1,0 +1,13 @@
+'use strict';
+const {_electron}=require('playwright-core');
+const http=require('node:http'),fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..');let app,server;const seen=[];
+(async()=>{const png=await fs.readFile(path.join(__dirname,'fixtures','first.png'));
+server=http.createServer((req,res)=>{if(req.url==='/img.png'){seen.push({...req.headers});if(req.headers['sec-fetch-dest']!=='image'){res.writeHead(403,{'Cache-Control':'no-store'});res.end('dest required');return;}res.writeHead(200,{'Content-Type':'image/png','Cache-Control':'no-store'});res.end(png);return;}res.writeHead(200,{'Content-Type':'text/html'});res.end('<main class="reader"><img width="420" height="560" src="/img.png"></main>');});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const url=`http://127.0.0.1:${server.address().port}/reader`;const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
+app=await _electron.launch({args:[root,'--eiw-test'],env});const page=await app.firstWindow();await page.waitForFunction(()=>!!window.eiw);
+await app.evaluate((_,url)=>global.__eiwTest.openPage({url,backend:'electron',show:false}),url);const scan=await app.evaluate(()=>global.__eiwTest.scan({autoScroll:false}));
+let result=await app.evaluate(async(_,id)=>{try{const x=await global.__eiwTest.getImage(id);return {ok:true,bytes:x.buffer.length,via:x.via||''}}catch(e){return {ok:false,error:e.message}}},scan.items[0].id);
+console.log(JSON.stringify({result,seen:seen.map(h=>({dest:h['sec-fetch-dest']||'',mode:h['sec-fetch-mode']||'',site:h['sec-fetch-site']||'',accept:h.accept||'',ua:h['user-agent']||'',referer:h.referer||''}))},null,2));
+assert.equal(result.ok,true);
+})().catch(e=>{console.error(e.stack||e);process.exitCode=1}).finally(async()=>{if(app)await app.close().catch(()=>{});if(server){server.closeAllConnections?.();await new Promise(r=>server.close(r));}});

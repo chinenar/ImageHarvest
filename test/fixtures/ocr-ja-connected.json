@@ -1,0 +1,196 @@
+{
+  "sourceDigest": "61627da3efdc511abe761bd8f9ef3e31d9429ac5bc55e96f31fda90e8393a08a",
+  "sourceROI": {
+    "left": 740,
+    "top": 740,
+    "width": 360,
+    "height": 290
+  },
+  "width": 360,
+  "height": 290,
+  "boxes": [
+    {
+      "bbox": {
+        "x0": 54,
+        "y0": 54,
+        "x1": 283,
+        "y1": 248
+      },
+      "detectionConfidence": 0.9632954700783003,
+      "detectedLanguage": "ja",
+      "orientation": "vertical",
+      "scanType": "detail",
+      "tileIndex": 4,
+      "tileClipped": false,
+      "lines": [
+        {
+          "bbox": {
+            "x0": 228,
+            "y0": 54,
+            "x1": 251,
+            "y1": 206
+          },
+          "coreBbox": {
+            "x0": 234,
+            "y0": 60,
+            "x1": 246,
+            "y1": 201
+          },
+          "detectionConfidence": 0.9126997240759291,
+          "detectedLanguage": "unknown",
+          "orientation": "vertical",
+          "kind": "unboxed",
+          "lineOnly": true,
+          "scanType": "detail",
+          "tileIndex": 4,
+          "tileClipped": false
+        },
+        {
+          "bbox": {
+            "x0": 164,
+            "y0": 54,
+            "x1": 187,
+            "y1": 180
+          },
+          "coreBbox": {
+            "x0": 170,
+            "y0": 60,
+            "x1": 182,
+            "y1": 175
+          },
+          "detectionConfidence": 0.8865391654098785,
+          "detectedLanguage": "unknown",
+          "orientation": "vertical",
+          "kind": "unboxed",
+          "lineOnly": true,
+          "scanType": "detail",
+          "tileIndex": 4,
+          "tileClipped": false
+        },
+        {
+          "bbox": {
+            "x0": 259,
+            "y0": 55,
+            "x1": 283,
+            "y1": 130
+          },
+          "coreBbox": {
+            "x0": 265,
+            "y0": 61,
+            "x1": 278,
+            "y1": 125
+          },
+          "detectionConfidence": 0.8954749832964606,
+          "detectedLanguage": "unknown",
+          "orientation": "vertical",
+          "kind": "unboxed",
+          "lineOnly": true,
+          "scanType": "detail",
+          "tileIndex": 2,
+          "tileClipped": false
+        },
+        {
+          "bbox": {
+            "x0": 196,
+            "y0": 55,
+            "x1": 219,
+            "y1": 207
+          },
+          "coreBbox": {
+            "x0": 202,
+            "y0": 61,
+            "x1": 214,
+            "y1": 202
+          },
+          "detectionConfidence": 0.9093673311902168,
+          "detectedLanguage": "unknown",
+          "orientation": "vertical",
+          "kind": "unboxed",
+          "lineOnly": true,
+          "scanType": "detail",
+          "tileIndex": 3,
+          "tileClipped": false
+        },
+        {
+          "bbox": {
+            "x0": 117,
+            "y0": 70,
+            "x1": 141,
+            "y1": 147
+          },
+          "coreBbox": {
+            "x0": 123,
+            "y0": 76,
+            "x1": 136,
+            "y1": 142
+          },
+          "detectionConfidence": 0.9081303915008903,
+          "detectedLanguage": "unknown",
+          "orientation": "vertical",
+          "kind": "unboxed",
+          "lineOnly": true,
+          "scanType": "detail",
+          "tileIndex": 1,
+          "tileClipped": false
+        },
+        {
+          "bbox": {
+            "x0": 86,
+            "y0": 71,
+            "x1": 109,
+            "y1": 223
+          },
+          "coreBbox": {
+            "x0": 92,
+            "y0": 77,
+            "x1": 104,
+            "y1": 218
+          },
+          "detectionConfidence": 0.8940566626711022,
+          "detectedLanguage": "unknown",
+          "orientation": "vertical",
+          "kind": "unboxed",
+          "lineOnly": true,
+          "scanType": "detail",
+          "tileIndex": 4,
+          "tileClipped": false
+        },
+        {
+          "bbox": {
+            "x0": 54,
+            "y0": 71,
+            "x1": 77,
+            "y1": 248
+          },
+          "coreBbox": {
+            "x0": 60,
+            "y0": 77,
+            "x1": 72,
+            "y1": 243
+          },
+          "detectionConfidence": 0.8851744550983889,
+          "detectedLanguage": "unknown",
+          "orientation": "vertical",
+          "kind": "unboxed",
+          "lineOnly": true,
+          "scanType": "detail",
+          "tileIndex": 2,
+          "tileClipped": false
+        }
+      ],
+      "kind": "text",
+      "lineOnly": false,
+      "containerId": "block-6",
+      "containerBBox": {
+        "x0": 49,
+        "y0": 50,
+        "x1": 287,
+        "y1": 251
+      }
+    }
+  ],
+  "expected": [
+    "ただの学園祭なのにめっちゃ気合入ってんの",
+    "見た？あのメイド服空気読めっての"
+  ]
+}

@@ -15,7 +15,7 @@ test('settings migrate old toggle, default to Chrome and preserve explicit new c
 });
 test('recognition API accepts bytes only, not hostname or filename',()=>{
   assert.throws(()=>inspectScript('not bytes'),/bytes/);assert.equal(inspectScript(Buffer.from('export const ok=true')).kind,'unrelated');
-  assert.equal(RULES.length,3);assert.ok(RULES.every(r=>/^[a-f0-9]{64}$/.test(r.hash)));
+  assert.equal(RULES.length,4);assert.ok(RULES.every(r=>/^[a-f0-9]{64}$/.test(r.hash)));
 });
 test('library names are hints only and cannot authorize arbitrary modifications',()=>{
   const bytes=Buffer.from('const documentation="DisableDevtool devtoolschange DevtoolsDetector";window.normal=true;');

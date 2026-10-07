@@ -1,6 +1,10 @@
 // Scroll only the document and large reader-like panels; never click pagination.
 (input => {
   const action = typeof input === 'string' ? input : input.action;
+  const conservative = typeof input === 'object' && input.conservative === true;
+  const factor = typeof input === 'object'
+    ? Math.max(0.5, Math.min(3, Number(input.factor) || 1))
+    : 1;
   const readyBlobs = new Set(typeof input === 'object' ? input.readyBlobs || [] : []);
   const state = globalThis.__eiwScroll ||= { targets: [], saved: [] };
   if (action === 'init') {
@@ -20,10 +24,10 @@
       const doc = el === document.scrollingElement;
       const box = doc ? { top: 0, width: innerWidth } : el.getBoundingClientRect();
       const viewportTop = box.top + (doc ? 0 : el.clientTop), height = el.clientHeight;
-      let amount = Math.max(200, Math.floor(height * 0.8));
+      let amount = Math.max(conservative ? 120 : 200, Math.floor(height * (conservative ? 0.45 : 0.8) * factor));
       // Jump only within one fully loaded, wide image, retaining viewport overlap.
       // Blob images must already have a disk snapshot before jumping past them.
-      for (const img of el.querySelectorAll('img')) {
+      for (const img of (conservative ? [] : el.querySelectorAll('img'))) {
         const src = img.currentSrc || img.src;
         if (!img.complete || !img.naturalWidth || (src.startsWith('blob:') && !readyBlobs.has(src))) continue;
         const r = img.getBoundingClientRect();
@@ -33,6 +37,21 @@
         amount = Math.max(amount, Math.floor(r.bottom - viewportTop - height * 0.8));
       }
       el.scrollBy({ top: amount, behavior: 'instant' });
+      try{el.dispatchEvent(new Event('scroll'));if(el===document.scrollingElement)window.dispatchEvent(new Event('scroll'));}catch{}
+    }
+  }
+  if (action === 'start') {
+    for (const el of state.targets) el.scrollTo({ top: 0, left: el.scrollLeft, behavior: 'instant' });
+  }
+  if (action === 'end') {
+    for (const el of state.targets) {
+      // Fast completeness probe: really visit the current end instead of
+      // abusing a huge step factor (step is intentionally clamped to 3x).
+      el.scrollTo({ top: Math.max(0, el.scrollHeight - el.clientHeight), left: el.scrollLeft, behavior: 'instant' });
+      // Some readers listen to scroll rather than IntersectionObserver and do
+      // not react until the browser dispatches the next frame. Nudge that
+      // listener explicitly after the same real scroll position is applied.
+      try{el.dispatchEvent(new Event('scroll'));if(el===document.scrollingElement)window.dispatchEvent(new Event('scroll'));}catch{}
     }
   }
   if (action === 'restore') {
@@ -42,6 +61,6 @@
   }
   const height = state.targets.reduce((sum, el) => sum + el.scrollHeight, 0);
   const top = state.targets.reduce((sum, el) => sum + el.scrollTop + el.clientHeight, 0);
-  return { height, progress: height ? Math.min(1, top / height) : 1,
+  return { height, position: state.targets.reduce((sum, el) => sum + el.scrollTop, 0), progress: height ? Math.min(1, top / height) : 1,
     bottom: state.targets.every(el => el.scrollTop + el.clientHeight >= el.scrollHeight - 4) };
 })

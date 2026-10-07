@@ -1,0 +1,25 @@
+'use strict';
+const {chromium}=require('playwright-core'),http=require('node:http'),fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict');
+const {createTranslationOverlay,overlayPage}=require('../src/translation-overlay.cjs');
+let browser,server;
+(async()=>{
+ server=http.createServer((req,res)=>{if(req.url==='/image.svg'){res.setHeader('Content-Type','image/svg+xml');res.end('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900"><rect width="600" height="900" fill="white"/><rect x="40" y="80" width="210" height="210" fill="none" stroke="black"/><rect x="350" y="80" width="210" height="210" fill="none" stroke="black"/></svg>');return;}res.setHeader('Content-Type','text/html; charset=utf-8');res.end('<style>body{margin:0}img{display:block;width:600px;max-width:90vw;margin:auto}footer{height:1500px}</style><img src="/image.svg"><footer></footer>');});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const base='http://127.0.0.1:'+server.address().port;
+ browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});const tab=await browser.newPage({viewport:{width:1000,height:900}});await tab.goto(base);await tab.locator('img').evaluate(img=>img.decode());
+ const regions=[['a',60],['b',370]].map(([id,x])=>({id,text:'Hello '+id,translation:'ข้อความตัวอย่างในกรอบนี้',bbox:{x0:x,y0:100,x1:x+150,y1:230},placement:{surfaceType:'bubble',confidence:1,fillColor:'#ffffff',eraseBox:{x0:x,y0:100,x1:x+150,y1:230},safeBox:{x0:x,y0:100,x1:x+150,y1:230},polygon:[]},translationRecord:{status:'translated',sourceText:'Hello '+id,imageDigest:'same-image',bbox:{x0:x,y0:100,x1:x+150,y1:230}}}));
+ const payload=overlayPage({id:'p',source:'img',sourceUrl:base+'/image.svg',width:600,height:900,imageDigest:'same-image',ocr:{regions}},{documentUrl:base+'/',targetLanguage:'th'});
+ await tab.evaluate('window.overlay=('+createTranslationOverlay.toString()+')()');await tab.evaluate(p=>overlay.apply(p),payload);
+ await tab.evaluate(()=>{window.saved=[];document.addEventListener('__harvestts_region_style_change',e=>{const value=JSON.parse(e.detail);saved.push(value);document.dispatchEvent(new CustomEvent('__harvestts_region_style_result',{detail:JSON.stringify({token:value.token,ok:true})}));});});
+ const a=tab.locator('#__harvestts_translation_overlay__ .text[data-region-id="a"]'),b=tab.locator('#__harvestts_translation_overlay__ .text[data-region-id="b"]');
+ const otherFont=await b.getAttribute('data-font-size');await a.click();await tab.getByRole('dialog',{name:'ตั้งค่าข้อความเฉพาะกล่อง'}).waitFor({state:'visible'});
+ const range=tab.locator('[data-action="region-font-size"]');await range.fill('30');await range.dispatchEvent('input');await range.dispatchEvent('change');
+ assert.equal(Number(await a.getAttribute('data-font-size')),30);assert.equal(await b.getAttribute('data-font-size'),otherFont);assert.equal(await a.getAttribute('data-manual-font'),'true');
+ assert.ok(await tab.evaluate(()=>saved.some(s=>s.regionId==='a'&&s.style.fontSizeImagePx===30)));
+ await tab.setViewportSize({width:390,height:900});await tab.waitForTimeout(100);const small=Number(await a.getAttribute('data-font-size'));assert.ok(Math.abs(small-17.55)<.1);
+ await tab.setViewportSize({width:1000,height:900});await tab.waitForTimeout(100);assert.equal(Number(await a.getAttribute('data-font-size')),30);
+ await tab.evaluate(p=>overlay.apply(p),payload);assert.equal(Number(await a.getAttribute('data-font-size')),30,'same-image remount preserves manual size');
+ await a.click();await tab.locator('[data-action="reset-region-font"]').click();assert.equal(await a.getAttribute('data-manual-font'),'false');assert.ok(await tab.evaluate(()=>saved.at(-1).style===null));
+ await tab.getByRole('button',{name:'ปิด',exact:true}).click();await tab.mouse.move(400,400);await tab.mouse.wheel(0,500);await tab.waitForTimeout(150);assert.ok(await tab.evaluate(()=>scrollY>100));
+ await tab.evaluate(()=>scrollTo(0,0));await a.click();const out=path.resolve('test-results/reader-priority');await fs.mkdir(out,{recursive:true});await tab.screenshot({path:path.join(out,'font-editor.png')});
+ console.log('PASS: click region, independent font edit, save bridge, image-scaled resize, remount, reset, wheel scroll');
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{await browser?.close();server?.close();});

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Downloads</title>
+<link rel="stylesheet" href="downloads.css">
+</head>
+<body>
+<main class="downloads-page">
+  <header class="downloads-head">
+    <div>
+      <div class="eyebrow">HARVESTTS</div>
+      <h1>ดาวน์โหลด</h1>
+      <p>ไฟล์ที่ดาวน์โหลดจาก HarvestTS จะบันทึกลงโฟลเดอร์ Downloads ของ Windows</p>
+    </div>
+    <div class="head-badge">↓ DOWNLOADS</div>
+  </header>
+  <section class="downloads-tools">
+    <div class="downloads-search-wrap"><span>⌕</span><input id="downloadSearch" type="search" autocomplete="off" spellcheck="false" placeholder="ค้นหาชื่อไฟล์หรือเว็บไซต์..."></div>
+    <button id="clearDownloads" class="secondary" type="button">ล้างรายการที่เสร็จแล้ว</button>
+  </section>
+  <div id="downloadMeta" class="download-meta"></div>
+  <section id="downloadList" class="download-list"></section>
+</main>
+<script src="downloads.js"></script>
+</body>
+</html>

@@ -1,15 +1,15 @@
 {
   "name": "imageharvest",
   "productName": "ImageHarvest",
-  "version": "1.1.0",
+  "version": "1.6.68",
   "description": "Ordered website image collector for Windows",
   "private": true,
   "main": "src/main.cjs",
   "author": "chinenar",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/unit.test.cjs test/network-lookup.test.mjs test/protection-rules.test.cjs",
-    "test:e2e": "node test/e2e.cjs",
+    "test": "node --test test/adaptive.test.cjs test/unit.test.cjs test/network-lookup.test.mjs test/protection-rules.test.cjs test/filter-stream.test.cjs test/manual-chrome-login.test.cjs test/ocr-review.test.cjs test/text-placement.test.cjs test/harvest-translate.test.cjs test/ocr-translation.test.cjs test/ocr-speed.test.cjs test/ocr-content-role.test.cjs test/translation-overlay.test.cjs test/reader-stability.test.cjs test/reader-quality.test.cjs test/reader-priority.test.cjs",
+    "test:e2e": "node test/e2e.cjs && node test/transient-preview.e2e.cjs && node test/browser-header-replay.e2e.cjs",
     "test:capture": "node test/capture.e2e.cjs",
     "package": "node scripts/package.cjs",
     "dist": "electron-builder --win nsis --x64",
@@ -17,11 +17,24 @@
     "test:chrome": "node test/chrome.e2e.cjs",
     "test:blob": "node test/blob-scan.e2e.mjs",
     "test:sites": "node test/site-compatibility.e2e.cjs",
-    "test:protection": "node test/protection.e2e.cjs"
+    "test:protection": "node test/protection.e2e.cjs",
+    "test:minimal": "node test/chrome.e2e.cjs --minimal",
+    "test:filters": "node test/filter-stream.e2e.cjs",
+    "test:filters:chrome": "node test/filter-stream.e2e.cjs --chrome",
+    "test:next-live": "node test/live-next-chapter.e2e.cjs",
+    "test:adaptive": "node --test test/adaptive.test.cjs && node test/adaptive-browser.e2e.cjs && node test/adaptive-production.e2e.cjs",
+    "test:ocr": "node --test --test-concurrency=1 test/ocr-review.test.cjs test/ocr-engine.test.cjs test/ocr-backend.test.cjs test/ocr-advanced.test.cjs test/text-placement.test.cjs test/ocr-speed.test.cjs test/ocr-content-role.test.cjs",
+    "test:ocr-lab": "node test/ocr-lab.e2e.cjs",
+    "test:translation": "node --test test/harvest-translate.test.cjs test/ocr-translation.test.cjs",
+    "test:translation:live": "node test/ocr-translation.e2e.cjs",
+    "benchmark:ocr-speed": "node scripts/benchmark-ocr-speed.cjs",
+    "test:overlay": "node --test test/translation-overlay.test.cjs && node test/translation-overlay.e2e.cjs && node test/harvest-translation.e2e.cjs && node test/reader-stability.e2e.cjs",
+    "test:reader-stability": "node --test test/reader-stability.test.cjs && node test/reader-stability.e2e.cjs && node test/reader-lock-cancel.e2e.cjs",
+    "test:reader-priority": "node --test test/reader-priority.test.cjs && node test/reader-font-editor.e2e.cjs"
   },
   "devDependencies": {
-    "electron": "44.4.1",
     "@electron/packager": "20.3.0",
+    "electron": "44.4.1",
     "electron-builder": "26.15.3"
   },
   "engines": {
@@ -36,6 +49,7 @@
     },
     "files": [
       "src/**/*",
+      "!src/**/__pycache__/**",
       "assets/**/*",
       "package.json"
     ],
@@ -60,9 +74,23 @@
       "uninstallDisplayName": "ImageHarvest",
       "deleteAppDataOnUninstall": false,
       "runAfterFinish": true
-    }
+    },
+    "asarUnpack": [
+      "node_modules/onnxruntime-node/**/*",
+      "node_modules/sharp/**/*",
+      "node_modules/@img/**/*"
+    ]
   },
   "dependencies": {
-    "playwright-core": "1.63.0"
+    "@ghostery/adblocker-electron": "^2.18.2",
+    "@ghostery/adblocker-playwright": "^2.18.2",
+    "@tesseract.js-data/eng": "^1.0.0",
+    "@tesseract.js-data/fra": "^1.0.0",
+    "@tesseract.js-data/jpn": "^1.0.0",
+    "@tesseract.js-data/jpn_vert": "^1.0.0",
+    "onnxruntime-node": "1.30.0",
+    "playwright-core": "1.63.0",
+    "sharp": "0.35.5",
+    "tesseract.js": "^7.0.0"
   }
 }

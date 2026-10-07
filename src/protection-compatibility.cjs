@@ -44,6 +44,7 @@ class ProtectionCompatibility {
     const bytes = Buffer.from(data.body, data.base64Encoded ? 'base64' : 'utf8');
     this.inspected++; this.bytes += bytes.length;
     const analysis = inspectScript(bytes);
+    this.notify('script-observed', { url: event.request.url, hash: analysis.hash });
     if (analysis.kind === 'known') {
       const patched = patchScript(bytes);
       await this.cdp.send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: modifiedHeaders(headers, patched.body.length), body: patched.body.toString('base64') });

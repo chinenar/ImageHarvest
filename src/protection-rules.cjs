@@ -1,12 +1,13 @@
 'use strict';
 const { createHash } = require('node:crypto');
-const RULE_VERSION = '2026-09-18.2', MAX_SCRIPT = 2 * 1024 * 1024;
+const RULE_VERSION = '2026-09-28.1', MAX_SCRIPT = 2 * 1024 * 1024;
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 // Content-only recognition: URLs, filenames and library names never authorize a patch.
 const RULES = Object.freeze([
   Object.freeze({ id: 'disable-devtool-0.3.9-umd', family: 'disable-devtool', version: '0.3.9', hash: '5a7b9b2c807f85575c9ebc1f508e849b53430870b2d0fb6c02b2de3df661cb63', action: 'suspend-entrypoint' }),
   Object.freeze({ id: 'devtools-detect-modified-2.1-esm', family: 'devtools-detect', version: 'modified-2.1', hash: '3a86139fcada194deca1fa4f9f6ba14b80c6fb81694071d63e399abc8ac7feb5', action: 'inert-default-export' }),
-  Object.freeze({ id: 'reviewed-reader-guard-build-1', family: 'devtools-detector / integrated reader', version: 'reviewed-build-1', hash: '0f2664ca4e355babe279bae104d53c93ead7b5bc4dded70666e539090c805dd6', action: 'isolate-reviewed-guard' })
+  Object.freeze({ id: 'reviewed-reader-guard-build-1', family: 'devtools-detector / integrated reader', version: 'reviewed-build-1', hash: '0f2664ca4e355babe279bae104d53c93ead7b5bc4dded70666e539090c805dd6', action: 'isolate-reviewed-guard' }),
+  Object.freeze({ id: 'reviewed-reader-guard-build-2', family: 'devtools-detector / integrated reader', version: 'reviewed-build-2', hash: '0314a2a1037bf0a5abb4cc270ed0a1d309e858bd8df81b5053833906807b9b7a', action: 'isolate-reviewed-guard' })
 ]);
 const byHash = new Map(RULES.map(rule => [rule.hash, rule]));
 function inspectScript(bytes) {

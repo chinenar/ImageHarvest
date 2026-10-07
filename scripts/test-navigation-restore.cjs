@@ -1,0 +1,22 @@
+'use strict';
+const {app,BrowserWindow}=require('electron');
+const http=require('node:http');
+const assert=require('node:assert/strict');
+(async()=>{
+  await app.whenReady();
+  const server=http.createServer((req,res)=>{res.setHeader('Content-Type','text/html');res.end('<title>'+req.url+'</title><h1>'+req.url+'</h1>')});
+  await new Promise(r=>server.listen(0,'127.0.0.1',r));
+  const base='http://127.0.0.1:'+server.address().port;
+  const a=new BrowserWindow({show:false});
+  await a.loadURL(base+'/a');await a.loadURL(base+'/b');await a.loadURL(base+'/c');
+  const nav=a.webContents.navigationHistory,entries=nav.getAllEntries().map(e=>({url:e.url,title:e.title})),index=nav.getActiveIndex();
+  assert.equal(entries.length>=3,true);assert.equal(index,entries.length-1);
+  const b=new BrowserWindow({show:false});
+  await b.webContents.navigationHistory.restore({entries,index:index-1});
+  assert.equal(b.webContents.getURL(),entries[index-1].url);
+  assert.equal(b.webContents.navigationHistory.canGoBack(),true);
+  assert.equal(b.webContents.navigationHistory.canGoForward(),true);
+  b.webContents.zoomFactor=1.25;assert.ok(Math.abs(b.webContents.zoomFactor-1.25)<.01);
+  console.log(JSON.stringify({entries:entries.length,index,restored:b.webContents.getURL(),back:b.webContents.navigationHistory.canGoBack(),forward:b.webContents.navigationHistory.canGoForward(),zoom:b.webContents.zoomFactor}));
+  a.destroy();b.destroy();server.close();app.quit();
+})().catch(e=>{console.error(e);process.exitCode=1;app.quit()});

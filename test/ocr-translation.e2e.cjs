@@ -1,0 +1,64 @@
+'use strict';
+const {_electron:electron}=require('playwright-core');
+const fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..'),out=path.join(root,'test-results','ocr-translation');
+let app;
+(async()=>{
+ await fs.mkdir(out,{recursive:true});const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
+ app=await electron.launch({...(env.EIW_OCR_EXE?{executablePath:env.EIW_OCR_EXE}:{}),args:env.EIW_OCR_EXE?['--eiw-test']:[root,'--eiw-test'],env,timeout:45000});
+ const main=await app.firstWindow();await main.waitForFunction(()=>!!window.eiw);
+ await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().forEach(w=>w.hide()));
+ await main.evaluate(()=>window.eiw.ocrLabOpen());
+ const lab=await app.waitForEvent('window',{predicate:p=>p.url().endsWith('/ocr-lab.html'),timeout:1000}).catch(()=>app.windows().find(p=>p.url().endsWith('/ocr-lab.html')));
+ assert.ok(lab);await lab.waitForFunction(()=>!!window.ocrLab);
+ await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().forEach(w=>{w.hide();w.webContents.setBackgroundThrottling(false);}));
+ const errors=[];lab.on('pageerror',e=>errors.push(e.message));
+ const input=path.join(root,'test-results','ocr-advanced','final','review.json');
+ await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},input);
+ await lab.locator('#load').click();await lab.waitForFunction(()=>pages.length===3);
+ const info=await lab.evaluate(()=>window.ocrLab.info());const reports=[];
+ for(const [name,sourceLanguage,targetLanguage]of [['en-real-page.png','en','th'],['ja-real-page.png','ja','th'],['th-synthetic-page.png','th','en']]){
+  const original=await lab.evaluate(name=>structuredClone(pages.find(p=>p.name===name).regions),name);
+  const before=await lab.evaluate(async name=>{const p=pages.find(p=>p.name===name);await selectPage(p.id);p.regions=p.regions.filter(r=>!r.text.includes('RITHAR')&&!r.text.includes('XAMRIM'));renderList();return p.regions.map(r=>({id:r.id,text:r.text,bbox:r.bbox}));},name);
+  await lab.locator('#translateSource').selectOption(sourceLanguage);await lab.locator('#translateTarget').selectOption(targetLanguage);
+  await lab.locator('#translatePage').click();
+  await lab.waitForFunction(()=>!busy,{},{timeout:180000});
+  const result=await lab.evaluate(()=>({run:current().translationRuns?.at(-1),regions:current().regions,status:document.getElementById('status').textContent}));
+  assert.ok(result.run,result.status);assert.equal(result.run.failed,0,JSON.stringify(result.run));assert.equal(result.run.translated,before.length);
+  assert.deepEqual(result.regions.map(r=>({id:r.id,text:r.text,bbox:r.bbox})),before,'translation changed OCR coordinates/text');
+  assert.ok(result.regions.every(r=>r.translation&&r.translationRecord.imageDigest===currentDigest(result.run)));
+  await lab.locator('#regions button').first().click();assert.ok(await lab.locator('#translationText').inputValue());
+  reports.push({name,provider:'google',...result.run});console.log('PASS Google',name,result.run.translated);
+  await lab.evaluate(original=>{const p=current(),byId=new Map(p.regions.map(r=>[r.id,r]));p.regions=original.map(r=>byId.get(r.id)||r);renderList();},original);
+ }
+ await lab.evaluate(async()=>{await selectPage(pages.find(p=>p.name==='ja-real-page.png').id);renderList();});
+ await lab.locator('#translateProvider').selectOption('ai');await lab.locator('#translateSource').selectOption('ja');await lab.locator('#translateTarget').selectOption('th');
+ await lab.locator('#refreshModels').click();await lab.waitForFunction(()=>document.querySelector('#translateModel').options.length>1);
+ await lab.locator('#translateModel').selectOption(process.env.EIW_TRANSLATE_MODEL||'qwen3.5-9b-uncensored-hauhaucs-aggressive');
+ await lab.locator('.translation-context summary').click();
+ await lab.locator('#translateContext').fill('School festival. Students gossip about another student wearing a maid outfit. Preserve the teasing and annoyed tone.');
+ const japaneseOriginal=await lab.evaluate(()=>structuredClone(current().regions));
+ await lab.evaluate(()=>{current().regions=current().regions.filter(r=>r.text.startsWith('ただの学園祭')||r.text.startsWith('見た？'));renderList();});
+ await lab.locator('#translatePage').click();await lab.waitForFunction(()=>!busy,{},{timeout:180000});
+ const ai=await lab.evaluate(()=>({run:current().translationRuns?.at(-1),status:document.getElementById('status').textContent}));
+ assert.equal(ai.run?.provider,'ai',ai.status);assert.equal(ai.run.translated,2,JSON.stringify(ai.run));assert.equal(ai.run.failed,0);
+ reports.push({name:'ja-connected-dialogue',...ai.run});console.log('PASS AI',ai.run.model,ai.run.translated);
+ await lab.locator('#regions button').first().click();
+ const originalText=await lab.locator('#text').inputValue();
+ // Edits invalidate the displayed translation, while raw OCR remains untouched.
+ const raw=await lab.evaluate(()=>JSON.stringify(current().rawRegions));await lab.locator('#text').fill('ただの学園祭なのに');await lab.locator('#apply').click();
+ assert.match(await lab.locator('#translationMeta').textContent(),/ต้องแปลใหม่/);assert.equal(await lab.evaluate(()=>JSON.stringify(current().rawRegions)),raw);
+ await lab.locator('#text').fill(originalText);await lab.locator('#apply').click();
+ await lab.evaluate(original=>{const p=current(),byId=new Map(p.regions.map(r=>[r.id,r]));p.regions=original.map(r=>byId.get(r.id)||r);renderList();renderEditor();},japaneseOriginal);
+ const project=path.join(out,'translated-review.json');await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},project);
+ await lab.locator('#save').click();await lab.waitForFunction(()=>document.getElementById('status').textContent.startsWith('บันทึกแล้ว'));
+ await lab.locator('#load').click();await lab.waitForFunction(()=>pages.length===6);
+ assert.ok(await lab.evaluate(()=>current().translationRuns?.length));
+ await lab.evaluate(async()=>{const p=pages.findLast(p=>p.name==='ja-real-page.png');await selectPage(p.id);selectRegion(p.regions.find(r=>r.translationProvider==='ai').id,true);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
+ const png=await app.evaluate(async({webContents},url)=>(await webContents.getAllWebContents().find(w=>w.getURL()===url).capturePage(undefined,{stayHidden:true,stayAwake:true})).toPNG().toString('base64'),lab.url());
+ await fs.writeFile(path.join(out,'lab-translation.png'),Buffer.from(png,'base64'));
+ assert.deepEqual(errors,[]);await fs.writeFile(path.join(out,'live-report.json'),JSON.stringify({appVersion:info.appVersion,testedAt:new Date().toISOString(),reports},null,2));
+ await fs.rm(path.join(out,'failure.txt'),{force:true});
+ console.log('PASS: live translation, provenance, source editing, portable save/reopen');
+})().catch(async error=>{console.error(error.stack||error);process.exitCode=1;await fs.writeFile(path.join(out,'failure.txt'),String(error.stack||error));}).finally(async()=>{if(app)await app.close().catch(()=>{});});
+function currentDigest(run){return run.imageDigest;}
