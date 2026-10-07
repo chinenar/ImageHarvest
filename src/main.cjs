@@ -2078,7 +2078,7 @@ async function harvestOfflineExportFinish(tab,input={}){
   return {folder:session.folder,written:session.written,total:session.total};
 }
 
-async function restoreHarvestTranslationJob(tab){
+async function restoreHarvestTranslationJob(tab,{requireTranslations=false}={}){
   const url=tab.view.webContents.getURL();
   const entries=await fs.readdir(harvestTranslationTempRoot,{withFileTypes:true}).catch(()=>[]);
   const folders=entries.filter(e=>e.isDirectory()&&/^harvest-/.test(e.name)).map(e=>e.name).sort((a,b)=>Number(b.split('-').at(-1))-Number(a.split('-').at(-1)));
@@ -2087,6 +2087,7 @@ async function restoreHarvestTranslationJob(tab){
     try{const p=path.join(dir,'manifest.json'),stat=await fs.stat(p);if(stat.size>128*1024*1024)continue;
       const manifest=JSON.parse(await fs.readFile(p,'utf8'));
       if(!sameHarvestTranslationPage(manifest.source?.url,url)||!Array.isArray(manifest.pages)||!manifest.settings)continue;
+      if(requireTranslations){const translated=Number(manifest.translation?.translated)||manifest.pages.reduce((sum,page)=>sum+(page?.ocr?.regions||[]).filter(region=>region?.translationRecord?.status==='translated'&&region.translation).length,0);if(!translated)continue;}
       const repaired=repairBatchTranslationProvenance(manifest);if(repaired)await fs.writeFile(p,JSON.stringify(manifest,null,2),'utf8').catch(()=>{});
       const job={id:manifest.jobId||randomUUID(),dir,sourceUrl:manifest.source.url,manifest,running:false,abort:new AbortController()};harvestTranslationJobs.set(tab.id,job);return job;
     }catch{}
@@ -2096,7 +2097,7 @@ async function restoreHarvestTranslationJob(tab){
 async function restoreHarvestTemporaryOverlay(tab){
   if(!tab||tab.kind!=='web'||tab.view.webContents.isDestroyed())return null;
   const active=harvestTranslationJobFor(tab);if(active?.running)return null;
-  const job=active||await restoreHarvestTranslationJob(tab);if(!job?.manifest?.pages)return null;
+  const job=active||await restoreHarvestTranslationJob(tab,{requireTranslations:true});if(!job?.manifest?.pages)return null;
   if(!sameHarvestTranslationPage(job.sourceUrl,tab.view.webContents.getURL()))return null;
   const settings=job.manifest.settings||HARVEST_TRANSLATE_DEFAULTS,wc=tab.view.webContents;
   await wc.executeJavaScript(`window.__harvestTsTranslationOverlay||(window.__harvestTsTranslationOverlay=(${createTranslationOverlay.toString()})(${readerDocumentKey.toString()}))`).catch(()=>{});

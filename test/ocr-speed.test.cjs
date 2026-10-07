@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
 const {OcrResultCache}=require('../src/ocr-result-cache.cjs');
-const {LocalOcrBackend}=require('../src/ocr-backend.cjs');
+const {LocalOcrBackend,ocrCacheRoot}=require('../src/ocr-backend.cjs');
 test('cached OCR observations stay immutable when corrections and translations change',()=>{
  const cache=new OcrResultCache(),run={regions:[{text:'ต้นฉบับ',bbox:{x0:1,y0:2,x1:3,y1:4}}],passes:[]};
  cache.set('image+settings',run);run.regions[0].text='changed';
@@ -14,6 +14,10 @@ test('OCR cache bounds memory and evicts least recently used entries',()=>{
  assert.equal(cache.get('b'),null);assert.ok(cache.get('a'));assert.ok(cache.get('c'));
  cache.set('too large',{text:'x'.repeat(100)});assert.equal(cache.get('too large'),null);assert.ok(cache.bytes<=60);
  cache.set('a',{text:'replacement'});assert.equal(cache.get('a').text,'replacement');assert.ok(cache.bytes<=60);
+});
+test('local OCR models use a versioned per-user cache instead of the legacy ACL-prone folder',()=>{
+ assert.match(ocrCacheRoot(),/ImageHarvest[\\/]ocr-models-v2$/);
+ const custom=new LocalOcrBackend({cacheRoot:'custom-model-cache'});assert.equal(custom.cacheRoot,'custom-model-cache');
 });
 test('local OCR backend serializes worker commands so queued pages do not consume their timeout while waiting',async()=>{
  class FakeBackend extends LocalOcrBackend{

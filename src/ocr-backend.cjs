@@ -2,8 +2,13 @@
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 const {spawn}=require('node:child_process'),{createHash}=require('node:crypto'),readline=require('node:readline');
 const runtimeRoot=()=>path.join(process.env.LOCALAPPDATA||os.homedir(),'ImageHarvest','ocr-runtime');
+// Keep runtime binaries and downloaded model data separate. A model directory
+// created by an elevated updater/test can carry a protected Windows ACL even
+// though the runtime itself is fine, leaving the normal desktop app unable to
+// read inference.yml. v2 gives the app a clean per-user cache namespace.
+const ocrCacheRoot=()=>process.env.IMAGEHARVEST_OCR_CACHE||path.join(process.env.LOCALAPPDATA||os.homedir(),'ImageHarvest','ocr-models-v2');
 class LocalOcrBackend {
-  constructor({python,timeout=240000,device='auto'}={}){this.python=python||path.join(runtimeRoot(),'Scripts','python.exe');this.timeout=timeout;this.device=device;this.pending=new Map();this.sequence=0;this.logs='';this.timings=new Map();this.readQueue=[];this.batchEnabled=false;this.commandQueue=Promise.resolve();}
+  constructor({python,timeout=240000,device='auto',cacheRoot}={}){this.python=python||path.join(runtimeRoot(),'Scripts','python.exe');this.cacheRoot=cacheRoot||ocrCacheRoot();this.timeout=timeout;this.device=device;this.pending=new Map();this.sequence=0;this.logs='';this.timings=new Map();this.readQueue=[];this.batchEnabled=false;this.commandQueue=Promise.resolve();}
   stats(){return Object.fromEntries([...this.timings].map(([key,value])=>[key,{...value}]));}
   async start(){
     if(this.child)return;
@@ -15,9 +20,10 @@ class LocalOcrBackend {
     await fs.access(this.python).catch(()=>{throw Error('ยังไม่ได้ติดตั้งเอนจิน OCR เพิ่มเติม • ใช้ scripts/setup-ocr-runtime.ps1');});
     const source=await fs.readFile(path.join(__dirname,'ocr-backend.py'));
     const geometry=await fs.readFile(path.join(__dirname,'reader_surface.py'));
+    await fs.mkdir(this.cacheRoot,{recursive:true});
     const dir=path.join(runtimeRoot(),'worker',createHash('sha256').update(source).update(geometry).digest('hex').slice(0,16));await fs.mkdir(dir,{recursive:true});
     const script=path.join(dir,'ocr-backend.py');await fs.writeFile(script,source);await fs.writeFile(path.join(dir,'reader_surface.py'),geometry);
-    const child=this.child=spawn(this.python,['-u',script],{windowsHide:true,stdio:['pipe','pipe','pipe'],env:{...process.env,PYTHONIOENCODING:'utf-8',...(this.device!=='auto'?{IMAGEHARVEST_OCR_DEVICE:this.device}:{})}});
+    const child=this.child=spawn(this.python,['-u',script],{windowsHide:true,stdio:['pipe','pipe','pipe'],env:{...process.env,PYTHONIOENCODING:'utf-8',IMAGEHARVEST_OCR_CACHE:this.cacheRoot,...(this.device!=='auto'?{IMAGEHARVEST_OCR_DEVICE:this.device}:{})}});
     child.stderr.on('data',chunk=>{this.logs=(this.logs+chunk).slice(-8000);});
     readline.createInterface({input:child.stdout}).on('line',line=>{
       let data;try{data=JSON.parse(line);}catch{return;}
@@ -85,4 +91,4 @@ class LocalOcrBackend {
   async status(){const status=await this.request({op:'status'});this.batchEnabled=Boolean(status.capabilities?.batch);return status;}
   close(error=Error('Local OCR worker closed')){clearTimeout(this.batchTimer);this.batchTimer=null;for(const r of this.readQueue.splice(0)){r.cleanup();r.reject(error);}const child=this.child;this.child=null;for(const p of this.pending.values()){p.cleanup();p.reject(error);}this.pending.clear();child?.kill();}
 }
-module.exports={LocalOcrBackend,runtimeRoot};
+module.exports={LocalOcrBackend,runtimeRoot,ocrCacheRoot};
