@@ -1549,6 +1549,7 @@ async function runHarvestTranslateStage(tab, job, manifestPages, settings, model
     try {
       const retryOptions={provider:settings.engine,sourceLanguage:settings.sourceLanguage,targetLanguage:settings.targetLanguage,imageDigest:page.imageDigest||''};
       const pending=retryOnly?regions.filter(r=>!reusable(r,retryOptions)):regions;
+      if(retryOnly&&pending.length)sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:.78,error:false,status:'Task '+taskId+' • ส่ง '+pending.length+' จุดที่พลาดกลับเข้า queue แปลใหม่…'});
       let result=await ocrTranslationService.translate(pending,{provider:settings.engine,sourceLanguage:settings.sourceLanguage,targetLanguage:settings.targetLanguage,model,imageDigest:page.imageDigest||'',signal:job.abort.signal,
         context:'Translate the supplied manga dialogue in reading order. Page '+(Number(page.index)+1)+'.',
         onProgress:({done,total})=>sendHarvestTranslation(tab,{type:'page',index:page.index,id:page.id,progress:0.73+0.20*done/Math.max(1,total),status:(settings.engine==='ai'?'AI':'Google')+' Task '+taskId+' • '+done+'/'+total+' จุด'})});
@@ -2118,21 +2119,26 @@ async function runHarvestTsTranslationJob(tab) {
     if (settings.engine === 'google' || !model?.error) {
       translation = await runHarvestTranslateStage(tab, job, manifestPages, settings, model?.model || '');
       let previousFailed = Number(translation.failed) || 0;
-      let autoRetryAttempts = 0;
-      while (previousFailed > 0 && autoRetryAttempts < 2) {
+      let autoRetryAttempts = 0, staleRetryRounds = 0;
+      while (previousFailed > 0 && autoRetryAttempts < 3) {
         autoRetryAttempts++;
         sendHarvestTranslation(tab, {
           type:'stage',
           stage:'translate-retry',
           progress:0.94,
-          message:`พบ ${previousFailed} จุดที่แปลไม่สำเร็จ • กำลังลองใหม่อัตโนมัติ ${autoRetryAttempts}/2`
+          message:`พบ ${previousFailed} จุดที่แปลไม่สำเร็จ • ส่งกลับเข้า queue อัตโนมัติ ${autoRetryAttempts}/3`
         });
         const retried = await runHarvestTranslateStage(tab, job, manifestPages, settings, model?.model || '', { retryOnly:true });
         retried.autoRetryAttempts = autoRetryAttempts;
         translation = retried;
         const nextFailed = Number(retried.failed) || 0;
-        if (nextFailed <= 0 || nextFailed >= previousFailed) break;
+        if (nextFailed <= 0) break;
+        if (nextFailed < previousFailed) staleRetryRounds = 0;
+        else staleRetryRounds++;
         previousFailed = nextFailed;
+        // A transient Google result often repeats once. Give it a second stale
+        // round before stopping, but never loop indefinitely.
+        if (staleRetryRounds >= 2) break;
       }
       translation.status = translation.failed ? 'partial' : 'translated';
     } else {

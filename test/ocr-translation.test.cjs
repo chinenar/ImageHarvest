@@ -30,6 +30,15 @@ test('foreign-script AI answers retry and cannot be counted as successful Thai t
  const result=await service.translate([region('a')],{provider:'ai',model:'m'});
  assert.equal(calls,2);assert.equal(result.translated,0);assert.equal(result.failed,1);assert.equal(result.items[0].translation,'');assert.ok(result.items[0].rejectedTranslation);assert.match(result.items[0].error,/ภาษา Thai/);
 });
+test('auto source retries a stubborn Latin OCR line with explicit English before failing Thai validation',async()=>{
+ const calls=[];
+ const service=new OcrTranslationService({google:{translate:async(rows,options)=>{
+  calls.push(options.sourceLanguage);
+  return rows.map(r=>({id:r.id,translation:options.sourceLanguage==='en'?'ฉันจะไม่ยกโทษให้พวกแกทุกคน!':'NT FOKO Y ของคุณ!!'}));
+ }}});
+ const result=await service.translate([region('a','NT FOKO\nY OF YOU!!')],{provider:'google',sourceLanguage:'auto',targetLanguage:'th'});
+ assert.equal(result.translated,1);assert.equal(result.failed,0);assert.equal(result.items[0].effectiveSourceLanguage,'en');assert.equal(result.items[0].sourceLanguage,'auto');assert.deepEqual(calls,['auto','auto','en']);
+});
 test('unknown or repeated reply ids never get attached to other OCR boxes',async()=>{
  for(const reply of [[{id:'alien',translation:'x'}],[{id:'a',translation:'x'},{id:'a',translation:'y'}]]){
   const service=new OcrTranslationService({google:{translate:async()=>reply}});

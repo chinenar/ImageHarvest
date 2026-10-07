@@ -6,7 +6,7 @@ const {reconcileDiscovery,discoverText}=require('../src/ocr-discovery.cjs');
 const {prepareCrop,validateCrop}=require('../src/ocr-crop.cjs');
 const {LocalOcrBackend,runtimeRoot}=require('../src/ocr-backend.cjs');
 const {PREPROCESSING,chooseReadings,EnhancedMangaOcrPool}=require('../src/enhanced-manga-ocr.cjs');
-const {confirmedDiscoveryLines,deduplicateReadings}=require('../src/enhanced-manga-ocr.cjs');
+const {confirmedDiscoveryLines,deduplicateReadings,shouldPromoteContainerReading}=require('../src/enhanced-manga-ocr.cjs');
 const ready=fs.existsSync(path.join(runtimeRoot(),'Scripts/python.exe'));
 test('recover an agreeing colored speech line from a broad proposal containing unreliable effects',()=>{
  const bbox={x0:241,y0:191,x1:350,y1:290},line=(text,confidence,box=bbox)=>({text,confidence,bbox:box});
@@ -59,6 +59,14 @@ test('preview reconstructs the exact scaled and masked recognition crop',async()
  const prepared=await prepareCrop(scaled,{...crop,rectangle:Object.fromEntries(Object.entries(crop.rectangle).map(([k,v])=>[k,v*2])),maskLines:crop.maskLines.map(l=>({coreBbox:Object.fromEntries(Object.entries(l.coreBbox).map(([k,v])=>[k,v*2]))}))},{prepared:true});
  assert.deepEqual(original,prepared);
  for(const invalid of [{...crop,width:Infinity},{...crop,rectangle:{left:-1,top:0,width:10,height:10}},{...crop,inputScale:5},{...crop,maskLines:[{coreBbox:{x0:0,y0:0,x1:1e9,y1:5}}]}])assert.throws(()=>validateCrop(invalid,721,662));
+});
+test('a unique detector container may recover clipped manga dialogue but cannot replace it with a shorter/noisy read',()=>{
+ const narrow={text:'NT FOKO\nY OF YOU!!',confidence:96};
+ const recovered={text:"I WONT FORGIVE\nANY OF YOU!!",confidence:76};
+ assert.equal(shouldPromoteContainerReading(narrow,recovered,{coverage:.46}),true);
+ assert.equal(shouldPromoteContainerReading(narrow,{text:'NOISE',confidence:99},{coverage:.46}),false);
+ assert.equal(shouldPromoteContainerReading(narrow,recovered,{coverage:.9}),false);
+ assert.equal(shouldPromoteContainerReading(narrow,recovered,{coverage:.46,shared:true}),false);
 });
 test('position-aligned reading votes work across recrops rather than comparing crop pixels',()=>{
  const a={x0:100,y0:200,x1:250,y1:220};

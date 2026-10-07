@@ -583,7 +583,8 @@ function ensureTranslationLauncher() {
     try {
       translateSettings = await ipcRenderer.invoke('harvest-guest:translate-settings-update', patch);
       renderSettings();
-    } catch {}
+      return translateSettings;
+    } catch { return null; }
   }
 
   close.addEventListener('click', () => { panel.hidden = true; });
@@ -683,6 +684,10 @@ function ensureTranslationLauncher() {
       }
       return;
     }
+    // Starting a fresh translation should always reveal the translated view.
+    // A stale "ดูต้นฉบับ" preference from inspection must not make a completed
+    // job look empty even though translations were produced successfully.
+    if (translateSettings.showOriginal) await saveSettings({ showOriginal:false });
     translationRunning = true;
     translationPages = [];
     translationScanProgress = 0;
@@ -798,7 +803,9 @@ function handleTranslationProgress(payload = {}) {
     translationHost && translationShadow.querySelector('.launcher')?.classList.remove('running');
     const unresolved = Number(payload.translationFailed) > 0 || translationPages.some(page => page.error);
     const translatePanel = translationShadow.querySelector('.panel:not(.settings-panel)');
-    if (translatePanel) translatePanel.hidden = true;
+    // Successful jobs collapse like before. If anything is still red after
+    // automatic retries, keep the panel visible so the failure cannot vanish.
+    if (translatePanel) translatePanel.hidden = !unresolved;
     const launcher = translationShadow.querySelector('.launcher');
     if (launcher) {
       launcher.dataset.hasErrors = unresolved ? 'true' : 'false';

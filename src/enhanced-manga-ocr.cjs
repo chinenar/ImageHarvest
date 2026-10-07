@@ -33,6 +33,14 @@ function deduplicateReadings(rows){
  return selected;
 }
 function disagreement(a,b){return editDistance(a,b)/Math.max(1,Array.from(compact(a)).length,Array.from(compact(b)).length);}
+function shouldPromoteContainerReading(narrow,broad,{coverage=1,shared=false}={}){
+  if(shared||coverage>=.68||coverage<=.12)return false;
+  const current=compact(narrow?.text),expanded=compact(broad?.text),confidence=Number(broad?.confidence)||0;
+  if(!expanded||confidence<58)return false;
+  const currentChars=meaningfulScore(current),expandedChars=meaningfulScore(expanded);
+  if(!currentChars)return expandedChars>=4&&confidence>=75;
+  return expandedChars>=currentChars+4&&expandedChars>=currentChars*1.18;
+}
 function postprocessReading(read){
   if(!read.lines?.length)return read;
   const suppressed=[],kept=read.lines.filter(line=>{
@@ -120,6 +128,8 @@ class EnhancedMangaOcrPool extends MangaOcrPool {
     const selected=this.languages;
     const japaneseRows=baselineRows.filter(r=>['ja','cjk'].includes(r.script)).length;
     const pageJapanese=selected.includes('jpn')&&japaneseRows>=2&&japaneseRows/Math.max(1,baselineRows.length)>=.3;
+    const containerCounts=new Map();
+    for(const candidate of detection.boxes||[])if(candidate.containerId)containerCounts.set(candidate.containerId,(containerCounts.get(candidate.containerId)||0)+1);
     const jobs=[];
     // Finish Tesseract work before scheduling GPU crops; its worker maintains
     // mutable language/rectangle settings and must not be shared concurrently.
@@ -140,8 +150,9 @@ class EnhancedMangaOcrPool extends MangaOcrPool {
       const single=selected.length===1?selected[0]:null;
       const language=single==='jpn'||baseline.script==='ja'||baseline.script==='cjk'||original.detection.pageLanguage==='ja'||pageJapanese?'ja':single==='tha'||baseline.script==='th'||original.detection.pageLanguage==='th'?'th':single==='fra'?'fr':'en';
       const padding=language==='th'?12*this.sourceScale:6*this.sourceScale,readings=[],cropCache=new Map();
-      const readVariant=async(variant,{scale=language==='th'?1.5:2,pad=padding,engine=language==='ja'?'manga':'paddle',lang=language==='ja'?'japan':language,verification=false}={})=>{
-        const left=Math.max(0,Math.floor(b.x0)-pad),top=Math.max(0,Math.floor(b.y0)-pad),width=Math.min(meta.width,Math.ceil(b.x1)+pad)-left,height=Math.min(meta.height,Math.ceil(b.y1)+pad)-top;
+      const readVariant=async(variant,{scale=language==='th'?1.5:2,pad=padding,engine=language==='ja'?'manga':'paddle',lang=language==='ja'?'japan':language,verification=false,box=b}={})=>{
+        const sourceBox=box||b;
+        const left=Math.max(0,Math.floor(sourceBox.x0)-pad),top=Math.max(0,Math.floor(sourceBox.y0)-pad),width=Math.min(meta.width,Math.ceil(sourceBox.x1)+pad)-left,height=Math.min(meta.height,Math.ceil(sourceBox.y1)+pad)-top;
         const cropWidth=Math.max(1,Math.min(1000,Math.round(width*scale/this.sourceScale),Math.floor(Math.sqrt(2000000*width/height)),Math.floor(4000*width/height))),cropMeta={rectangle:{left,top,width,height},width:cropWidth,border:12,inputScale:this.sourceScale,
           maskLines:candidate.segmentation?candidate.lines.map(l=>({coreBbox:l.coreBbox||l.bbox,cutEdge:l.cutEdge})):undefined,maskPadding:8};
         const key=JSON.stringify(cropMeta);
@@ -179,6 +190,20 @@ class EnhancedMangaOcrPool extends MangaOcrPool {
         // every alternative are normalized before agreement is evaluated.
         if(weak){const r=await readVariant('original',{scale:language==='th'?2:2.5,pad:padding+4*this.sourceScale});readings.push({...r,variant:'original-recrop'});}
         chosen=chooseReadings(readings,{...baseline,engine:'tesseract.js'},{allowBaseline:language!=='th'});
+      }
+      // The line map can clip the beginning/end of a stylized sentence even
+      // while the learned detector block still encloses the whole balloon.
+      // Re-read that exact detector container only when it belongs to this one
+      // candidate and is substantially larger; never use an arbitrary page crop.
+      const container=candidate.containerBBox,innerArea=area(b),containerArea=container?area(container):0,containerCoverage=containerArea?innerArea/containerArea:1;
+      const uniqueContainer=Boolean(candidate.containerId&&containerCounts.get(candidate.containerId)===1);
+      if(!verificationFailed&&language!=='ja'&&!candidate.segmentation&&uniqueContainer&&containerArea>innerArea&&containerArea<=innerArea*5&&containerCoverage<.68){
+        const variants=['original','contrast','invert'];
+        const broadRaw=await Promise.all(variants.map(variant=>readVariant(variant,{box:container,pad:0})));
+        const broadReadings=broadRaw.map((read,index)=>({...read,variant:'container-'+variants[index]}));
+        const broad=chooseReadings(broadReadings,{...chosen},{allowBaseline:false});
+        if(shouldPromoteContainerReading(chosen,broad,{coverage:containerCoverage,shared:false}))chosen={...broad,selectionReason:'container-recovery',containerRecovery:true};
+        readings.push(...broadReadings);
       }
       // Manga OCR always emits text, even on blank artwork. Do not promote
       // its output for uncertain line-only proposals without supporting OCR.
@@ -235,4 +260,4 @@ class EnhancedMangaOcrPool extends MangaOcrPool {
   }
   async close(){await super.close();if(this.ownBackend)this.backend.close();}
 }
-module.exports={EnhancedMangaOcrPool,refineBalloonGroups,chooseReadings,disagreement,postprocessReading,confirmedDiscoveryLines,deduplicateReadings,PREPROCESSING};
+module.exports={EnhancedMangaOcrPool,refineBalloonGroups,chooseReadings,disagreement,shouldPromoteContainerReading,postprocessReading,confirmedDiscoveryLines,deduplicateReadings,PREPROCESSING};

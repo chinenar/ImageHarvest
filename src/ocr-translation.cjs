@@ -32,6 +32,15 @@ function validateReply(reply,request) {
   }
   return results;
 }
+function inferredSourceLanguage(text){
+  const value=String(text||'');
+  if(/\p{Script=Thai}/u.test(value))return 'th';
+  if(/[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(value))return 'ja';
+  if(/\p{Script=Hangul}/u.test(value))return 'ko';
+  if(/\p{Script=Han}/u.test(value))return 'zh';
+  if(/[A-Za-zÀ-ÿ]/u.test(value))return 'en';
+  return '';
+}
 function translationLanguageIssue(text,targetLanguage,sourceText=''){
   let translated=String(text||'').toLowerCase();
   if(sourceText){
@@ -57,10 +66,10 @@ class OcrTranslationService {
     const batches=[];let batch=[],chars=0;
     for(const r of source){if(batch.length&&(batch.length>=maxBatch||chars+r.text.length>maxChars)){batches.push(batch);batch=[];chars=0;}batch.push(r);chars+=r.text.length;}if(batch.length)batches.push(batch);
     const output=[];let done=0;
-    const request=async list=>{
+    const request=async(list,effectiveSourceLanguage=sourceLanguage)=>{
       checkSignal(signal);
-      const payload=list.map(r=>({id:r.id,text:translationText(r,sourceLanguage),kind:r.kind||'dialogue',orientation:r.orientation||'horizontal'}));
-      let reply;try{reply=provider==='google'?await this.google.translate(payload,{sourceLanguage,targetLanguage,signal}):await this.ai.translateRegions(payload,{model:selectedModel,context,targetLanguage:LANGUAGES[targetLanguage],signal});}
+      const payload=list.map(r=>({id:r.id,text:translationText(r,effectiveSourceLanguage),kind:r.kind||'dialogue',orientation:r.orientation||'horizontal'}));
+      let reply;try{reply=provider==='google'?await this.google.translate(payload,{sourceLanguage:effectiveSourceLanguage,targetLanguage,signal}):await this.ai.translateRegions(payload,{model:selectedModel,context,targetLanguage:LANGUAGES[targetLanguage],signal});}
       catch(error){checkSignal(signal);error.providerTransportFailure=true;throw error;}
       checkSignal(signal);return validateReply(reply,list);
     };
@@ -75,9 +84,25 @@ class OcrTranslationService {
           try{result=(await request([r])).get(r.id);}catch(e){checkSignal(signal);error=e.message;result=null;}
         }
         if(result){const issue=translationLanguageIssue(result.translation,targetLanguage,r.text);if(issue){error=issue;rejectedTranslation=result.translation;result=null;}}
+        // Auto-detect can occasionally leave a badly OCR'd Latin line mostly
+        // untranslated. One final retry with an inferred source script gives
+        // Google a deterministic direction without changing the user's saved
+        // source-language setting or cache identity.
+        let effectiveSourceLanguage=sourceLanguage;
+        if(!result&&provider==='google'&&sourceLanguage==='auto'&&!batchError&&!candidate?.providerFailure){
+          const inferred=inferredSourceLanguage(r.text);
+          if(inferred&&inferred!==targetLanguage){
+            try{
+              const explicit=(await request([r],inferred)).get(r.id);
+              const issue=explicit?.translation?translationLanguageIssue(explicit.translation,targetLanguage,r.text):'';
+              if(explicit?.translation&&!issue){result=explicit;effectiveSourceLanguage=inferred;}
+              else if(explicit?.translation){error=issue;rejectedTranslation=explicit.translation;}
+            }catch(e){checkSignal(signal);error=e.message||error;}
+          }
+        }
         output.push({id:r.id,translation:result?.translation||'',status:result?'translated':'failed',error:result?'':error||'ผู้ให้บริการไม่ส่งคำแปลของกรอบนี้',
           sourceText:r.text,sourceTextDigest:createHash('sha256').update(r.text).digest('hex'),bbox:r.bbox?{...r.bbox}:undefined,orientation:r.orientation||'horizontal',
-          sourceReviewRequired:Boolean(r.reviewRequired&&!r.reviewed),provider,model:selectedModel,sourceLanguage,targetLanguage,imageDigest,createdAt,runId,
+          sourceReviewRequired:Boolean(r.reviewRequired&&!r.reviewed),provider,model:selectedModel,sourceLanguage,effectiveSourceLanguage,targetLanguage,imageDigest,createdAt,runId,
           detectedSourceLanguage:result?.detectedSourceLanguage||'',rejectedTranslation});
       }
       done+=list.length;onProgress?.({done,total:source.length,provider});
