@@ -53,6 +53,9 @@ function fetchManual(url, options, session, limit) {
     });
     if (signal?.aborted) { abort(); return; }
     signal?.addEventListener('abort', abort, { once: true });
+    for (const [name, value] of Object.entries(options.headers || {})) {
+      if (value != null && !/^referer$/i.test(name)) request.setHeader(name, String(value));
+    }
     if (options.referrer) {
       const source = new URL(options.referrer), target = new URL(url);
       if (!(source.protocol === 'https:' && target.protocol === 'http:'))

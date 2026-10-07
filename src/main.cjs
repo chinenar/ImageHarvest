@@ -555,6 +555,7 @@ async function restoreHarvestTabsIfNeeded() {
       const last = snap.tabs[snap.tabs.length - 1];
       if (last) created.push(last.id);
     }
+    await Promise.all(created.map(id=>harvestTsTabs.get(id)?.bootstrapReady).filter(Boolean));
     const index = Math.max(0, Math.min(created.length - 1, Number(data.activeIndex) || 0));
     activeHarvestTsId = created[index] || created[0] || null;
     applyHarvestTsView();
@@ -1337,6 +1338,15 @@ async function scanHarvestTsTranslationPages(tab, job) {
 }
 async function acquireHarvestTsTranslationImage(tab, item, signal) {
   if (signal?.aborted) throw new Error('ยกเลิกการเตรียมหน้าแล้ว');
+  // Prefer the exact image bytes Chromium already loaded for this reader.
+  // This preserves the page's real session/cookies and avoids a second hotlink
+  // request that some CDNs intentionally answer with 403.
+  if (/^https?:/i.test(item.url) && tab?.imageStore) {
+    await Promise.resolve(tab.imageStoreReady).catch(() => false);
+    await tab.imageStore.settle().catch(() => {});
+    const loaded = await tab.imageStore.read(item.url).catch(() => null);
+    if (loaded?.buffer?.length) return { buffer:loaded.buffer, ext:loaded.ext, mime:loaded.mime };
+  }
   let buffer, contentType = '';
   if (item.url.startsWith('data:')) {
     const comma = item.url.indexOf(','), meta = item.url.slice(0, comma);
@@ -3565,6 +3575,13 @@ function registerHarvestContextMenuIpc() {
 
 function bindHarvestTs(tab) {
   const wc = tab.view.webContents;
+  let imageStoreInstalling=false;
+  const ensureHarvestImageStore=()=>{
+    if(tab.kind!=='web'||!tab.imageStore||tab.imageStore.installed||imageStoreInstalling)return tab.imageStoreReady;
+    imageStoreInstalling=true;
+    tab.imageStoreReady=tab.imageStore.install().then(()=>true).catch(()=>false).finally(()=>{imageStoreInstalling=false;});
+    return tab.imageStoreReady;
+  };
   let preparedReaderDocument = '';
   let readerPrepareTimer = null, offlineRestoreTimer = null, offlineRestoreAttempt = 0;
   const clearOfflineRestore = () => { if(offlineRestoreTimer) clearTimeout(offlineRestoreTimer); offlineRestoreTimer=null; offlineRestoreAttempt=0; };
@@ -3610,8 +3627,9 @@ function bindHarvestTs(tab) {
     emitHarvestTs();
     scheduleHarvestTabsSave();
   };
-  wc.on('did-start-loading', () => { clearOfflineRestore(); tab.offlineOverlayDocument=''; update(); });
+  wc.on('did-start-loading', () => { ensureHarvestImageStore(); clearOfflineRestore(); tab.offlineOverlayDocument=''; update(); });
   wc.on('did-start-navigation', (details, url, isInPlace, isMainFrame) => {
+    ensureHarvestImageStore();
     const target=details.url||url,mainFrame=details.isMainFrame??isMainFrame,sameDocument=details.isSameDocument??isInPlace;
     if(mainFrame===false)return;
     const translation=harvestTranslationJobFor(tab);
@@ -3750,14 +3768,34 @@ function createHarvestTsTab(input = {}) {
   const zoomFactor=normalizeHarvestZoom(input.zoomFactor),restoreEntries=kind==='web'&&Array.isArray(input.navigationHistory)?input.navigationHistory.filter(e=>e&&/^https?:\/\//i.test(e.url||'')).slice(0,120).map(e=>({url:String(e.url),title:String(e.title||e.url)})):[];
   const restoreIndex=Math.max(0,Math.min(Math.max(0,restoreEntries.length-1),Number(input.navigationIndex)||0));
   const tab = { id, kind, view, url, projectId, zoomFactor, title: kind === 'history' ? 'History' : kind === 'downloads' ? 'Downloads' : kind === 'offline' ? 'Offline' : kind === 'offline-reader' ? 'Offline Reader' : 'แท็บใหม่', skipNextHistory:input.restored === true };
+  if(kind==='web'){
+    tab.imageStore=new ElectronImageStore(view.webContents,path.join(app.getPath('temp'),'ImageHarvest',`harvestts-responses-${process.pid}-${id}-${Date.now()}`));
+    tab.imageStoreReady=Promise.resolve(false);
+  }
   harvestTsTabs.set(id, tab);
   bindHarvestTs(tab);
   if(kind==='web')view.webContents.setZoomFactor(zoomFactor);
   if (input.activate !== false || !activeHarvestTsId) activeHarvestTsId = id;
-  const loadFallback=()=>view.webContents.loadURL(url).catch(error => emit('harvestts-error', { id, message: error.message, url }));
-  if(restoreEntries.length&&view.webContents.navigationHistory?.restore){
-    view.webContents.navigationHistory.restore({entries:restoreEntries,index:restoreIndex}).catch(error=>{emit('harvestts-error',{id,message:'กู้ประวัติแท็บไม่ได้: '+(error.message||String(error)),url});loadFallback();});
-  }else loadFallback();
+  const navigation=view.webContents.navigationHistory;
+  const removeBootstrapHistory=()=>{try{const entries=navigation?.getAllEntries?.()||[];for(let i=entries.length-1;i>=0;i--)if(entries[i]?.url==='about:blank')navigation.removeEntryAtIndex(i);}catch{}};
+  const loadTarget=async()=>{
+    if(restoreEntries.length&&navigation?.restore){
+      // navigationHistory.restore must run on a fresh WebContents; navigating
+      // to a bootstrap page first collapses the restored stack to one entry.
+      await navigation.restore({entries:restoreEntries,index:restoreIndex});
+      return;
+    }
+    if(kind==='web'&&tab.imageStore){
+      await view.webContents.loadURL('about:blank');
+      await Promise.resolve(tab.imageStoreReady).catch(()=>false);
+    }
+    await view.webContents.loadURL(url);
+    removeBootstrapHistory();
+  };
+  tab.bootstrapReady=loadTarget().catch(error=>{
+    emit('harvestts-error',{id,message:(restoreEntries.length?'กู้ประวัติแท็บไม่ได้: ':'')+(error.message||String(error)),url});
+    if(restoreEntries.length)return view.webContents.loadURL(url).then(removeBootstrapHistory).catch(()=>{});
+  });
   applyHarvestTsView();
   if (input.skipEmit !== true) emitHarvestTs();
   if (input.skipSave !== true) scheduleHarvestTabsSave();
@@ -3781,6 +3819,7 @@ async function closeHarvestTsTab(input = {}) {
   const ids = [...harvestTsTabs.keys()], index = ids.indexOf(id);
   await cancelHarvestTranslationJob(tab, true).catch(() => {});
   await stopHarvestScreenLens(tab).catch(() => {});
+  await tab.imageStore?.close().catch(() => {});
   harvestTsTabs.delete(id);
   if (!tab.view.webContents.isDestroyed()) tab.view.webContents.close();
   if (activeHarvestTsId === id) {
@@ -5492,6 +5531,8 @@ async function main() {
   if (testMode) global.__eiwTest = { openPage, scan, startCaptureSession, stopCaptureSession, download, getImage, changeNetworkMode, renameImages: input => renameImages(input, true), setOutput: value => { outputRoot = value; }, setRenameFolder: value => { renameFolder = value; }, runPage, closeChrome: () => chromeBrowser.close(), chromeInfo: () => ({ profile: chromeBrowser.profile, url: chromeBrowser.url(), status: chromeBrowser.lastStatus, navigation: chromeBrowser.navigation, networkMode: chromeBrowser.networkMode, compatibility: chromeBrowser.compatibilityInfo() }), getState: () => ({ browserMode, networkMode, activeNetworkMode, autoFallbackHosts: Object.fromEntries(autoFallbackHosts), compatibilityActive, captureActive: Boolean(captureSession), busy, count: records.size - excludedIds.size, excluded: excludedIds.size, canvasTempDir, browserId: browser?.webContents.id, activeWorkspaceId, storedWorkspaces: workspaceStates.size, electronCapture: electronImageStore?.info() || null }),
     harvestTranslationStart: () => { const tab = activeHarvestTsTab(); if (!tab) throw new Error('ไม่พบแท็บ HarvestTS'); return runHarvestTsTranslationJob(tab); },
     harvestTranslationScan: () => { const tab = activeHarvestTsTab(); if (!tab) throw new Error('ไม่พบแท็บ HarvestTS'); return scanHarvestTsTranslationPages(tab,{id:'test-scan-'+Date.now(),abort:new AbortController()}); },
+    harvestTranslationAcquireFirst: async () => { const tab=activeHarvestTsTab(); if(!tab)throw new Error('ไม่พบแท็บ HarvestTS'); const job={id:'test-acquire-'+Date.now(),abort:new AbortController()}; const scan=await scanHarvestTsTranslationPages(tab,job); if(!scan.pages.length)throw new Error('ไม่พบหน้าทดสอบ'); const data=await acquireHarvestTsTranslationImage(tab,{...scan.pages[0],referrer:scan.startURL},job.abort.signal); return {bytes:data.buffer.length,ext:data.ext,mime:data.mime,imageStore:tab.imageStore?.info?.()||null}; },
+    harvestTranslationImageStoreInfo: () => { const tab=activeHarvestTsTab(); return tab?.imageStore?.info?.()||null; },
     harvestTranslationRetry: () => retryHarvestTsTranslation(activeHarvestTsTab()),
     harvestTranslationState: () => { const tab = activeHarvestTsTab(), state = harvestTranslationJobFor(tab); return state ? { id:state.id, running:state.running, dir:state.dir, manifest:state.manifest || null } : null; },
     ocrLabAddFiles:files => ocrLab.addFiles(files),
