@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
-const {OcrTranslationService,translationText,validateRegions}=require('../src/ocr-translation.cjs');
+const {OcrTranslationService,translationText,validateRegions,scopeTranslationItemsToPage,repairBatchTranslationProvenance}=require('../src/ocr-translation.cjs');
 const {HarvestTranslationClient}=require('../src/harvest-translate.cjs');
 const region=(id,text='HELLO\nWORLD')=>({id,text,bbox:{x0:1,y0:2,x1:50,y1:60},orientation:'horizontal'});
 test('AI model chooser exposes text models and filters image/video/embedding runtimes',async()=>{
@@ -14,6 +14,16 @@ test('translation preserves original OCR, coordinates, ids and independent sourc
  assert.deepEqual(source,frozen);assert.deepEqual(result.items.map(r=>r.id),['b','a']);assert.equal(result.translated,2);
  assert.equal(result.items[0].sourceText,source[0].text);assert.equal(result.items[0].imageDigest,'imagehash');assert.deepEqual(result.items[0].bbox,source[0].bbox);
  result.items[0].bbox.x0=9;assert.equal(source[0].bbox.x0,1);
+});
+test('batch translation records are rebound to each page image digest before overlay provenance checks',()=>{
+ const page={imageDigest:'page-a',ocr:{regions:[region('a'),region('b')]}};
+ const items=[{id:'a',status:'translated',sourceText:'HELLO',imageDigest:'batch:page-a|page-b'},{id:'c',status:'translated',sourceText:'OTHER',imageDigest:'batch:page-a|page-b'}];
+ assert.deepEqual(scopeTranslationItemsToPage(items,page),[{id:'a',status:'translated',sourceText:'HELLO',imageDigest:'page-a'}]);
+});
+test('old batch provenance can be repaired without translating again',()=>{
+ const r=region('a','HELLO'),record={id:'a',status:'translated',sourceText:'HELLO',bbox:{...r.bbox},imageDigest:'batch:page-a|page-b'};r.translation='สวัสดี';r.translationRecord=record;
+ const manifest={pages:[{imageDigest:'page-a',ocr:{regions:[r]},translation:{imageDigest:'batch:page-a|page-b',items:[{...record}]}}]};
+ assert.equal(repairBatchTranslationProvenance(manifest),1);assert.equal(r.translationRecord.imageDigest,'page-a');assert.equal(manifest.pages[0].translation.items[0].imageDigest,'page-a');assert.equal(manifest.pages[0].translation.imageDigest,'page-a');
 });
 test('AI gets bounded batches, language names, context and model, including beyond 120 regions',async()=>{
  const calls=[];const service=new OcrTranslationService({ai:{probe:async()=>({model:'text-model'}),translateRegions:async(rows,o)=>{calls.push({rows,o});return rows.map(r=>({id:r.id,translation:'คำแปล'}));}}});

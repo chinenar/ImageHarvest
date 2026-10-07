@@ -32,6 +32,35 @@ function validateReply(reply,request) {
   }
   return results;
 }
+function scopeTranslationItemsToPage(items,page){
+  const ids=new Set((page?.ocr?.regions||[]).map(r=>String(r.id||''))),imageDigest=String(page?.imageDigest||'');
+  return (Array.isArray(items)?items:[]).filter(item=>ids.has(String(item?.id||''))).map(item=>({...item,imageDigest}));
+}
+function repairBatchTranslationProvenance(manifest){
+  let changed=0;
+  for(const page of manifest?.pages||[]){
+    const digest=String(page?.imageDigest||'');if(!digest)continue;
+    const regions=page?.ocr?.regions||[],byId=new Map(regions.map(r=>[String(r.id||''),r]));
+    for(const region of regions){
+      const record=region?.translationRecord;if(!record||record.status!=='translated')continue;
+      const sourceDigest=String(record.imageDigest||'');
+      if(!sourceDigest.startsWith('batch:')||!sourceDigest.slice(6).split('|').includes(digest))continue;
+      if(record.sourceText!==region.text)continue;
+      const sameBox=['x0','y0','x1','y1'].every(k=>Number(record.bbox?.[k])===Number(region.bbox?.[k]));if(!sameBox)continue;
+      record.imageDigest=digest;changed++;
+    }
+    if(Array.isArray(page?.translation?.items)){
+      page.translation.items=page.translation.items.map(item=>{
+        const region=byId.get(String(item?.id||''));if(!region)return item;
+        const sourceDigest=String(item.imageDigest||'');
+        if(sourceDigest.startsWith('batch:')&&sourceDigest.slice(6).split('|').includes(digest)&&item.sourceText===region.text)return {...item,imageDigest:digest};
+        return item;
+      });
+      if(page.translation.imageDigest&&String(page.translation.imageDigest).startsWith('batch:'))page.translation.imageDigest=digest;
+    }
+  }
+  return changed;
+}
 function inferredSourceLanguage(text){
   const value=String(text||'');
   if(/\p{Script=Thai}/u.test(value))return 'th';
@@ -111,4 +140,4 @@ class OcrTranslationService {
     return {runId,provider,model:selectedModel,sourceLanguage,targetLanguage,imageDigest,createdAt,ms:Date.now()-started,total:source.length,translated:output.filter(r=>r.status==='translated').length,failed:output.filter(r=>r.status==='failed').length,transportFailures:output.filter(r=>r.providerTransportFailure).length,providerMetrics,skipped,items:output};
   }
 }
-module.exports={OcrTranslationService,translationText,validateRegions,validateReply,translationLanguageIssue};
+module.exports={OcrTranslationService,translationText,validateRegions,validateReply,translationLanguageIssue,scopeTranslationItemsToPage,repairBatchTranslationProvenance};

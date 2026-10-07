@@ -19,7 +19,7 @@ const { normalizeNetworkMode, electronResolverOptions, isCompatibility, isRetrya
 const { pageURL, imageURL, safeName, imageType, publicItem, orderItems, uniqueItems, isImageFilename, renamePlan, chooseNextChapter, chapterIndexLink, nextFromChapterListing, idFor, delay, ByteCache } = require('./core.cjs');
 const { DEFAULT_TRANSLATION_ENDPOINT, HarvestTranslationClient, selectMangaPages } = require('./harvest-translate.cjs');
 const { GoogleTranslateWebPool } = require('./google-translate-web.cjs');
-const { OcrTranslationService } = require('./ocr-translation.cjs');
+const { OcrTranslationService,scopeTranslationItemsToPage,repairBatchTranslationProvenance } = require('./ocr-translation.cjs');
 const { MangaOcrPool } = require('./manga-ocr.cjs');
 const { EnhancedMangaOcrPool } = require('./enhanced-manga-ocr.cjs');
 const { LocalOcrBackend,runtimeRoot } = require('./ocr-backend.cjs');
@@ -1660,12 +1660,12 @@ async function runHarvestTranslateStage(tab, job, manifestPages, settings, model
         const batchTransportFailures=error.providerTransportFailure?all.length:0;
         return {regions:samples.reduce((n,x)=>n+(x?.regions||0),0),translated:samples.reduce((n,x)=>n+(x?.translated||0),0),failed:samples.reduce((n,x)=>n+(x?.failed||0),0),transportFailures:batchTransportFailures+samples.reduce((n,x)=>n+(x?.transportFailures||0),0),providerMetrics:samples.flatMap(x=>x?.providerMetrics||[]),wallMs:Date.now()-groupStarted};
       }
-      const allById=new Map(result.items.map(r=>[r.id,r])),skipById=new Map((result.skipped||[]).map(r=>[r.id,r]));
+      const skipById=new Map((result.skipped||[]).map(r=>[r.id,r]));
       for(const page of group){
         const regions=(page?.ocr?.regions||[]).filter(r=>r.text?.trim()),ids=new Set(regions.map(r=>r.id));
-        const items=result.items.filter(r=>ids.has(r.id)),skipped=(result.skipped||[]).filter(r=>ids.has(r.id));
-        for(const region of regions){const t=allById.get(region.id);if(t){region.translation=t.translation;region.translationProvider=result.provider;region.translationRecord=t;}const sk=skipById.get(region.id);if(sk){region.contentRole={...sk};delete region.translation;delete region.translationRecord;}}
-        const pageResult={...result,items,skipped,total:items.length,translated:items.filter(r=>r.status==='translated').length,failed:items.filter(r=>r.status==='failed').length,transportFailures:items.filter(r=>r.providerTransportFailure).length};
+        const items=scopeTranslationItemsToPage(result.items,page),itemById=new Map(items.map(r=>[r.id,r])),skipped=(result.skipped||[]).filter(r=>ids.has(r.id));
+        for(const region of regions){const t=itemById.get(region.id);if(t){region.translation=t.translation;region.translationProvider=result.provider;region.translationRecord=t;}const sk=skipById.get(region.id);if(sk){region.contentRole={...sk};delete region.translation;delete region.translationRecord;}}
+        const pageResult={...result,imageDigest:page.imageDigest,items,skipped,total:items.length,translated:items.filter(r=>r.status==='translated').length,failed:items.filter(r=>r.status==='failed').length,transportFailures:items.filter(r=>r.providerTransportFailure).length};
         page.translation=pageResult;summary.regions+=pageResult.total;summary.translated+=pageResult.translated;summary.failed+=pageResult.failed;summary.transportFailures+=pageResult.transportFailures;summary.skipped+=skipped.length;summary.review+=skipped.filter(r=>r.role==='uncertain').length;
         try{const rendered=await prepareOverlayStyles(tab,overlayPage(page,{documentUrl:job.sourceUrl,targetLanguage:settings.targetLanguage}));if(!sameHarvestTranslationPage(job.sourceUrl,tab.view.webContents.getURL()))throw Error('หน้าเว็บเปลี่ยน กรุณาเริ่มแปลใหม่');page.overlay=await tab.view.webContents.executeJavaScript(`(() => {const overlay=window.__harvestTsTranslationOverlay;const state=overlay.apply(${JSON.stringify(rendered)},${JSON.stringify({fontScale:settings.fontScale,visible:!settings.showOriginal})});return state.error?state:overlay.whenReady(${JSON.stringify(rendered.id)});})()`);}catch(error){page.overlay={error:error.message};}
         const failReason=pageResult.translated===0&&pageResult.failed?pageResult.items.find(r=>r.status==='failed')?.error:'';
@@ -2087,10 +2087,31 @@ async function restoreHarvestTranslationJob(tab){
     try{const p=path.join(dir,'manifest.json'),stat=await fs.stat(p);if(stat.size>128*1024*1024)continue;
       const manifest=JSON.parse(await fs.readFile(p,'utf8'));
       if(!sameHarvestTranslationPage(manifest.source?.url,url)||!Array.isArray(manifest.pages)||!manifest.settings)continue;
+      const repaired=repairBatchTranslationProvenance(manifest);if(repaired)await fs.writeFile(p,JSON.stringify(manifest,null,2),'utf8').catch(()=>{});
       const job={id:manifest.jobId||randomUUID(),dir,sourceUrl:manifest.source.url,manifest,running:false,abort:new AbortController()};harvestTranslationJobs.set(tab.id,job);return job;
     }catch{}
   }
   return null;
+}
+async function restoreHarvestTemporaryOverlay(tab){
+  if(!tab||tab.kind!=='web'||tab.view.webContents.isDestroyed())return null;
+  const active=harvestTranslationJobFor(tab);if(active?.running)return null;
+  const job=active||await restoreHarvestTranslationJob(tab);if(!job?.manifest?.pages)return null;
+  if(!sameHarvestTranslationPage(job.sourceUrl,tab.view.webContents.getURL()))return null;
+  const settings=job.manifest.settings||HARVEST_TRANSLATE_DEFAULTS,wc=tab.view.webContents;
+  await wc.executeJavaScript(`window.__harvestTsTranslationOverlay||(window.__harvestTsTranslationOverlay=(${createTranslationOverlay.toString()})(${readerDocumentKey.toString()}))`).catch(()=>{});
+  let regions=0,drawn=0,pending=0,pages=0;
+  for(const page of job.manifest.pages){
+    if(!page?.ocr?.regions?.length||page.error)continue;
+    try{
+      const rendered=await prepareOverlayStyles(tab,overlayPage(page,{documentUrl:job.sourceUrl,targetLanguage:settings.targetLanguage||'th'}));
+      if(!rendered.regions.length)continue;
+      const state=await wc.executeJavaScript(`window.__harvestTsTranslationOverlay?.apply(${JSON.stringify(rendered)},${JSON.stringify({fontScale:settings.fontScale||1,visible:!settings.showOriginal})})`);
+      regions+=rendered.regions.length;pages++;drawn+=Number(state?.pageDrawn)||0;if(state?.pending)pending++;
+    }catch{}
+  }
+  if(regions)sendHarvestTranslation(tab,{type:'complete',jobId:job.id,total:job.manifest.pages.length,ready:pages,failed:0,translatedRegions:regions,translationFailed:0,message:drawn?`กู้คำแปลเดิมแล้ว • แสดง ${drawn}/${regions} จุด`:`กู้คำแปลเดิมแล้ว • รอภาพหน้าอ่านแสดง ${pending||pages} หน้า`});
+  return {regions,drawn,pending,pages};
 }
 async function retryHarvestTsTranslation(tab){
   const job=harvestTranslationJobFor(tab)||await restoreHarvestTranslationJob(tab);
@@ -2243,7 +2264,9 @@ async function runHarvestTsTranslationJob(tab) {
     job.completedAt = Date.now();
     job.manifest = manifest;
     const ready = manifestPages.length - failed;
-    const completeMessage = (settings.engine==='ai'?'AI':'Google Translate')+' แปลแล้ว '+translation.translated+'/'+translation.regions+' จุด'+(translation.failed?' • ไม่สำเร็จ '+translation.failed+' จุด':'')+(translation.review?' • รอตรวจ '+translation.review+' จุด':'')+(manifestPages.some(p=>p.overlay?.error)?' • บางหน้าวางคำแปลไม่ได้':manifestPages.some(p=>p.overlay?.pending)?' • คำแปลพร้อม รอภาพบางหน้าแสดง':' • วางคำแปลแล้ว ปลดล็อกให้เลื่อนอ่านได้');
+    const overlayError=manifestPages.some(p=>p.overlay?.error),overlayPending=manifestPages.some(p=>p.overlay?.pending),overlayRegions=manifestPages.reduce((sum,p)=>sum+(Number(p.overlay?.pageTotal)||0),0);
+    const overlayFailed=translation.translated>0&&!overlayError&&!overlayPending&&overlayRegions===0;
+    const completeMessage = (settings.engine==='ai'?'AI':'Google Translate')+' แปลแล้ว '+translation.translated+'/'+translation.regions+' จุด'+(translation.failed?' • ไม่สำเร็จ '+translation.failed+' จุด':'')+(translation.review?' • รอตรวจ '+translation.review+' จุด':'')+(overlayError?' • บางหน้าวางคำแปลไม่ได้':overlayFailed?' • แปลสำเร็จแต่ยังวางบนหน้าไม่ได้':overlayPending?' • คำแปลพร้อม รอภาพบางหน้าแสดง':' • วางคำแปลแล้ว ปลดล็อกให้เลื่อนอ่านได้');
     sendHarvestTranslation(tab, {
       type:'complete', jobId:job.id, total:manifestPages.length, ready, failed,
       model:model?.model || (settings.engine === 'google' ? 'Google Translate' : ''),
@@ -2253,6 +2276,8 @@ async function runHarvestTsTranslationJob(tab) {
       ocrPages:ocr.pages, ocrRegions:ocr.regions, ocrFailed:ocr.failed,
       translatedRegions:translation.translated || 0,
       translationFailed:translation.failed || 0,
+      overlayFailed,
+      overlayRegions,
       message:completeMessage
     });
     return {
@@ -3652,8 +3677,9 @@ function bindHarvestTs(tab) {
     return tab.imageStoreReady;
   };
   let preparedReaderDocument = '';
-  let readerPrepareTimer = null, offlineRestoreTimer = null, offlineRestoreAttempt = 0;
+  let readerPrepareTimer = null, offlineRestoreTimer = null, temporaryRestoreTimer = null, offlineRestoreAttempt = 0;
   const clearOfflineRestore = () => { if(offlineRestoreTimer) clearTimeout(offlineRestoreTimer); offlineRestoreTimer=null; offlineRestoreAttempt=0; };
+  const clearTemporaryRestore = () => { if(temporaryRestoreTimer) clearTimeout(temporaryRestoreTimer); temporaryRestoreTimer=null; };
   const scheduleOfflineRestore = (delayMs=520) => {
     if(tab.kind!=='web'||wc.isDestroyed())return;
     if(offlineRestoreTimer)clearTimeout(offlineRestoreTimer);
@@ -3662,6 +3688,16 @@ function bindHarvestTs(tab) {
       offlineRestoreTimer=null;if(wc.isDestroyed()||readerDocumentKey(wc.getURL()||'')!==documentId)return;
       const result=await restoreHarvestOfflineOverlay(tab).catch(()=>null);
       if(!tab.offlineOverlayDocument&&result&&offlineRestoreAttempt<5){offlineRestoreAttempt++;scheduleOfflineRestore(450+offlineRestoreAttempt*300);}
+    },delayMs);
+  };
+  const scheduleTemporaryRestore = (delayMs=520) => {
+    if(tab.kind!=='web'||wc.isDestroyed())return;
+    clearTemporaryRestore();
+    const documentId=readerDocumentKey(wc.getURL()||tab.url||'');
+    temporaryRestoreTimer=setTimeout(async()=>{
+      temporaryRestoreTimer=null;if(wc.isDestroyed()||readerDocumentKey(wc.getURL()||'')!==documentId)return;
+      const result=await restoreHarvestTemporaryOverlay(tab).catch(()=>null);
+      if(!result?.regions)scheduleOfflineRestore(0);
     },delayMs);
   };
   const scheduleContinuousReader = (url = wc.getURL()) => {
@@ -3696,7 +3732,7 @@ function bindHarvestTs(tab) {
     emitHarvestTs();
     scheduleHarvestTabsSave();
   };
-  wc.on('did-start-loading', () => { ensureHarvestImageStore(); clearOfflineRestore(); tab.offlineOverlayDocument=''; update(); });
+  wc.on('did-start-loading', () => { ensureHarvestImageStore(); clearTemporaryRestore(); clearOfflineRestore(); tab.offlineOverlayDocument=''; update(); });
   wc.on('did-start-navigation', (details, url, isInPlace, isMainFrame) => {
     ensureHarvestImageStore();
     const target=details.url||url,mainFrame=details.isMainFrame??isMainFrame,sameDocument=details.isSameDocument??isInPlace;
@@ -3723,12 +3759,12 @@ function bindHarvestTs(tab) {
     if(tab.kind==='web')wc.setZoomFactor(normalizeHarvestZoom(tab.zoomFactor||1));
     applyHarvestBlocks(tab).catch(() => {});
     scheduleContinuousReader(wc.getURL());
-    if(tab.kind==='web')scheduleOfflineRestore(520);
+    if(tab.kind==='web')scheduleTemporaryRestore(520);
     if (tab.skipNextHistory) tab.skipNextHistory = false;
     else queueHarvestHistory(wc.getURL() || tab.url, wc.getTitle() || tab.title);
     scheduleHarvestTabsSave();
   });
-  wc.once('destroyed', () => { if (readerPrepareTimer) clearTimeout(readerPrepareTimer); readerPrepareTimer = null; clearOfflineRestore(); });
+  wc.once('destroyed', () => { if (readerPrepareTimer) clearTimeout(readerPrepareTimer); readerPrepareTimer = null; clearTemporaryRestore(); clearOfflineRestore(); });
   wc.on('did-fail-load', (_event, code, description, url, isMainFrame) => {
     if (isMainFrame && code !== -3) emit('harvestts-error', { id: tab.id, code, message: description, url });
     update();

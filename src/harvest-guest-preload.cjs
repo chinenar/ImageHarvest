@@ -815,7 +815,7 @@ function handleTranslationProgress(payload = {}) {
     status.textContent = payload.message || 'OCR พร้อม';
     start.textContent = 'Start';
     translationHost && translationShadow.querySelector('.launcher')?.classList.remove('running');
-    const unresolved = Number(payload.translationFailed) > 0 || translationPages.some(page => page.error);
+    const unresolved = Number(payload.translationFailed) > 0 || Boolean(payload.overlayFailed) || translationPages.some(page => page.error);
     const translatePanel = translationShadow.querySelector('.panel:not(.settings-panel)');
     // Successful jobs collapse like before. If anything is still red after
     // automatic retries, keep the panel visible so the failure cannot vanish.
