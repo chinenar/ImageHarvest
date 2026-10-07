@@ -1,48 +1,60 @@
 'use strict';
-const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
-const {translationMachineKey,translationProfileKey,defaultTranslationProfile,recordTranslationWave,recommendTranslationParallel,TranslationPerformanceStore}=require('../src/translation-performance.cjs');
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs/promises');
+const os=require('node:os');
+const path=require('node:path');
+const {
+  translationMachineKey,translationProfileKey,defaultTranslationProfile,
+  recordTranslationWave,recommendTranslationParallel,TranslationPerformanceStore
+}=require('../src/translation-performance.cjs');
 
-test('translation performance key is machine + model + quant + context specific',()=>{
- const machine=translationMachineKey({platform:'win32',arch:'x64',cpu:'CPU X',memoryBytes:32*1024**3,gpu:[{vendorId:1,deviceId:2}]});
- assert.equal(machine,translationMachineKey({platform:'win32',arch:'x64',cpu:'CPU X',memoryBytes:32*1024**3,gpu:[{vendorId:1,deviceId:2}]}));
- assert.notEqual(machine,translationMachineKey({platform:'win32',arch:'x64',cpu:'CPU X',memoryBytes:32*1024**3,gpu:[{vendorId:1,deviceId:3}]}));
- const a=translationProfileKey({machineKey:machine,model:'qwen',quantization:'Q4_K_M',contextLength:8192});
- assert.notEqual(a,translationProfileKey({machineKey:machine,model:'qwen',quantization:'Q5_K_M',contextLength:8192}));
- assert.notEqual(a,translationProfileKey({machineKey:machine,model:'qwen',quantization:'Q4_K_M',contextLength:16384}));
+test('translation performance profile is scoped to machine model quantization and context',()=>{
+  const machineA=translationMachineKey({platform:'win32',arch:'x64',cpu:'CPU A',memoryBytes:64*1024**3,gpu:[{vendorId:'10de',deviceId:'2783'}]});
+  const machineB=translationMachineKey({platform:'win32',arch:'x64',cpu:'CPU A',memoryBytes:64*1024**3,gpu:[{vendorId:'10de',deviceId:'2684'}]});
+  assert.notEqual(machineA,machineB);
+  const a=translationProfileKey({machineKey:machineA,model:'qwen-27b',quantization:'Q4_K_M',contextLength:8192});
+  assert.notEqual(a,translationProfileKey({machineKey:machineB,model:'qwen-27b',quantization:'Q4_K_M',contextLength:8192}));
+  assert.notEqual(a,translationProfileKey({machineKey:machineA,model:'qwen-27b',quantization:'Q5_K_M',contextLength:8192}));
+  assert.notEqual(a,translationProfileKey({machineKey:machineA,model:'qwen-27b',quantization:'Q4_K_M',contextLength:16384}));
 });
 
-test('fresh profile probes upward only after a fast successful real wave',()=>{
- let p=defaultTranslationProfile({batchPages:2});
- p=recordTranslationWave(p,{parallel:1,batchPages:2,regions:20,translated:20,failed:0,transportFailures:0,wallMs:20000,providerMetrics:[{tokensPerSecond:20,ttftMs:1500}]},{maxParallel:4,now:1000});
- assert.equal(recommendTranslationParallel(p,{currentParallel:1,maxParallel:4,remainingGroups:4,providerMetrics:[{tokensPerSecond:20,ttftMs:1500}],wallMs:20000,now:1000}),2);
+test('auto tuner explores upward only when the current machine/model is responsive',()=>{
+  let p=defaultTranslationProfile({batchPages:2});
+  p=recordTranslationWave(p,{parallel:1,batchPages:2,regions:20,translated:20,failed:0,wallMs:24000,providerMetrics:[{tokensPerSecond:18,ttftMs:1800,wallMs:23000}]},{maxParallel:4,now:1000});
+  assert.equal(recommendTranslationParallel(p,{currentParallel:1,maxParallel:4,remainingGroups:6,providerMetrics:[{tokensPerSecond:18,ttftMs:1800}],wallMs:24000,now:1001}),2);
+  p=recordTranslationWave(p,{parallel:2,batchPages:2,regions:40,translated:40,failed:0,wallMs:26000,providerMetrics:[{tokensPerSecond:17,ttftMs:2200,wallMs:25000}]},{maxParallel:4,now:2000});
+  assert.equal(p.recommendedParallel,2);
+  assert.equal(recommendTranslationParallel(p,{currentParallel:2,maxParallel:4,remainingGroups:4,providerMetrics:[{tokensPerSecond:17,ttftMs:2200}],wallMs:26000,now:2001}),3);
 });
 
-test('slow local model stays at one task even when backend advertises more contexts',()=>{
- let p=defaultTranslationProfile({batchPages:2});
- p=recordTranslationWave(p,{parallel:1,batchPages:2,regions:20,translated:20,failed:0,transportFailures:0,wallMs:90000,providerMetrics:[{tokensPerSecond:6.5,ttftMs:9300}]},{maxParallel:4,now:1000});
- assert.equal(recommendTranslationParallel(p,{currentParallel:1,maxParallel:4,remainingGroups:4,providerMetrics:[{tokensPerSecond:6.5,ttftMs:9300}],wallMs:90000,now:1000}),1);
+test('slow or failing model stays conservative and remembers rejected concurrency',()=>{
+  let p=defaultTranslationProfile({batchPages:2});
+  p=recordTranslationWave(p,{parallel:1,batchPages:2,regions:20,translated:20,failed:0,wallMs:180000,providerMetrics:[{tokensPerSecond:6.5,ttftMs:10000,wallMs:179000}]},{maxParallel:4,now:1000});
+  assert.equal(recommendTranslationParallel(p,{currentParallel:1,maxParallel:4,remainingGroups:8,providerMetrics:[{tokensPerSecond:6.5,ttftMs:10000}],wallMs:180000,now:1001}),1);
+  p=recordTranslationWave(p,{parallel:2,batchPages:2,regions:20,translated:0,failed:20,transportFailures:20,wallMs:300000},{maxParallel:4,now:2000});
+  assert.equal(p.recommendedParallel,1);
+  assert.ok(p.rejectedUntil['2']>2000);
+  assert.equal(recommendTranslationParallel(p,{currentParallel:2,maxParallel:4,remainingGroups:8,now:2001}),1);
 });
 
-test('parallel level that does not improve throughput is rejected and remembered',()=>{
- let p=defaultTranslationProfile({batchPages:2});
- p=recordTranslationWave(p,{parallel:1,batchPages:2,regions:20,translated:20,failed:0,transportFailures:0,wallMs:20000,providerMetrics:[{tokensPerSecond:20,ttftMs:1200}]},{maxParallel:4,now:1000});
- p=recordTranslationWave(p,{parallel:2,batchPages:2,regions:40,translated:40,failed:0,transportFailures:0,wallMs:39000,providerMetrics:[{tokensPerSecond:10,ttftMs:3000},{tokensPerSecond:10,ttftMs:3000}]},{maxParallel:4,now:2000});
- assert.equal(p.recommendedParallel,1);
- assert.ok(p.rejectedUntil['2']>2000);
+test('fast single-task runs can grow batch pages while repeated single-task transport failure shrinks them',()=>{
+  let p=defaultTranslationProfile({batchPages:2});
+  p=recordTranslationWave(p,{parallel:1,batchPages:2,regions:12,translated:12,failed:0,wallMs:30000,providerMetrics:[{tokensPerSecond:18,ttftMs:1500}]},{maxParallel:4,now:1});
+  p=recordTranslationWave(p,{parallel:1,batchPages:2,regions:12,translated:12,failed:0,wallMs:28000,providerMetrics:[{tokensPerSecond:19,ttftMs:1400}]},{maxParallel:4,now:2});
+  assert.equal(p.batchPages,3);
+  p=recordTranslationWave(p,{parallel:1,batchPages:3,regions:12,translated:0,failed:12,transportFailures:12,wallMs:200000},{maxParallel:4,now:3});
+  assert.equal(p.batchPages,2);
 });
 
-test('transport failure at parallel one reduces batch size instead of retrying the same load forever',()=>{
- let p=defaultTranslationProfile({batchPages:3});
- p=recordTranslationWave(p,{parallel:1,batchPages:3,regions:30,translated:0,failed:30,transportFailures:30,wallMs:600000},{maxParallel:4,now:1000});
- assert.equal(p.recommendedParallel,1);assert.equal(p.batchPages,2);assert.equal(p.transportFailureStreak,1);
-});
-
-test('translation performance store persists learned profile',async()=>{
- const dir=await fs.mkdtemp(path.join(os.tmpdir(),'ih-perf-')),file=path.join(dir,'perf.json'),store=new TranslationPerformanceStore(file);
- const key='profile';let p=defaultTranslationProfile({batchPages:2});
- p=recordTranslationWave(p,{parallel:1,batchPages:2,regions:10,translated:10,failed:0,wallMs:10000,providerMetrics:[{tokensPerSecond:18,ttftMs:1000}]},{maxParallel:4,now:1234});
- await store.set(key,p);
- const reread=new TranslationPerformanceStore(file),loaded=await reread.get(key,{batchPages:4});
- assert.equal(loaded.batchPages,2);assert.equal(loaded.levels['1'].successes,1);assert.equal(loaded.updatedAt,1234);
- await fs.rm(dir,{recursive:true,force:true});
+test('performance store persists learned profiles',async()=>{
+  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'ih-translate-perf-'));
+  const file=path.join(dir,'performance.json');
+  try{
+    const store=new TranslationPerformanceStore(file);
+    let p=defaultTranslationProfile({batchPages:2});p.recommendedParallel=3;p.updatedAt=123;
+    await store.set('abc',p);
+    const reopened=new TranslationPerformanceStore(file),loaded=await reopened.get('abc');
+    assert.equal(loaded.recommendedParallel,3);assert.equal(loaded.updatedAt,123);assert.equal(loaded.batchPages,2);
+  }finally{await fs.rm(dir,{recursive:true,force:true});}
 });

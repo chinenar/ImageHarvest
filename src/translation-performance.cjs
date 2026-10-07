@@ -96,6 +96,7 @@ function recordTranslationWave(profile, sample, { maxParallel=4, now=Date.now() 
     if(parallel===1&&regions>0&&failed>=Math.max(1,regions*.75))next.batchPages=Math.max(1,next.batchPages-1);
   } else if(failed===0&&translated>0) {
     level.successes++;next.successStreak++;next.transportFailureStreak=0;
+    if(parallel===1&&next.successStreak>=2&&metrics.tps>=12&&wallMs<90000)next.batchPages=Math.min(4,next.batchPages+1);
     const lower=parallel>1?next.levels[String(parallel-1)]:null;
     if(lower?.ewmaThroughput>0&&level.ewmaThroughput>0){
       const gain=level.ewmaThroughput/lower.ewmaThroughput;
@@ -126,6 +127,8 @@ function recommendTranslationParallel(profile, {
 }={}) {
   const p=normalizeProfile(profile);
   const current=clamp(currentParallel,1,Math.max(1,maxParallel));
+  const learned=clamp(p.recommendedParallel||1,1,Math.max(1,maxParallel));
+  if(learned<current)return learned;
   if(current>=maxParallel||remainingGroups<2)return current;
   if(finite(p.rejectedUntil?.[String(current+1)])>now)return current;
   const metrics=summarizeProviderMetrics(providerMetrics);
