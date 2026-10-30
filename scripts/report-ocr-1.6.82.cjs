@@ -1,0 +1,14 @@
+'use strict';
+const fs=require('node:fs'),{pathToFileURL}=require('node:url');
+const {metrics}=require('./benchmark-ocr-accuracy.cjs');
+const {outline}=require('../src/ocr-display-geometry.js');
+const ref=require('../test/fixtures/ocr-romance-reference.json');
+const before=require('../test-results/ocr-accuracy/new-romance-before.json');
+const after=require('../test-results/ocr-accuracy/new-romance-after.json');
+const escape=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const bm=metrics(before.result.regions,ref),am=metrics(after.result.regions,ref);
+if(am.exact!==3||am.splitOrDuplicate)throw Error('Targeted dialogue regression');
+const panel=(d,view)=>`<svg viewBox="${view}"><image href="${escape(pathToFileURL(d.source).href)}" width="1132" height="1607"/>${d.result.regions.map(r=>`<polygon points="${outline(r).map(p=>p.join(',')).join(' ')}"/>`).join('')}</svg>`;
+fs.writeFileSync('test-results/ocr-accuracy/romance-1.6.82.json',JSON.stringify({reference:ref,before:bm,after:am,result:after},null,2));
+fs.writeFileSync('test-results/ocr-accuracy/revision-1.6.82.html',`<!doctype html><meta charset="utf-8"><title>OCR 1.6.82</title><style>body{font:18px system-ui;margin:32px auto;max-width:1200px;background:#f5f6f9;padding:24px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:24px}section{background:white;padding:24px}svg{width:100%}rect,polygon{fill:none;stroke:#e48316;stroke-width:1}td,th{padding:14px;border:1px solid #ddd;white-space:pre-wrap}table{border-collapse:collapse;background:white}</style><h1>1.6.82 — แยกคนละคำพูด และรักษาท้ายคำ</h1><p>สามหน่วยที่ตรวจ: ก่อน ${bm.exact}/3 → หลัง ${am.exact}/3 ทั้งตัวอักษรและวรรคตอนครบ ไม่ใช่คะแนนทั้งหน้า</p><div class="pair"><section><h2>ก่อน</h2>${panel(before,'430 110 290 160')}${panel(before,'620 710 260 210')}</section><section><h2>หลัง</h2>${panel(after,'430 110 290 160')}${panel(after,'620 710 260 210')}</section></div><table><tr><th>ข้อความอ้างอิง</th><th>ก่อน</th><th>หลัง</th></tr>${am.units.map((u,i)=>`<tr><td>${escape(u.expected)}</td><td>${escape(bm.units[i].actual)}</td><td>${escape(u.actual)}</td></tr>`).join('')}</table><p>แยก MASTER! ด้วยแนวข้อความและพื้นหลังที่ต่างกัน รักษา PRACTICALLY / MURDEROUS จากการถูก mask ของข้อความเอียงข้างเคียงบัง และเก็บ ALLY ALLY ที่ซ้ำกับส่วนของคำเต็มไว้ในผลที่คัดออกเพื่อตรวจย้อนหลัง</p><p>ยังไม่ปิดปัญหาทั้งหน้า: -99 ยังอ่านผิดและซ้ำ, เครื่องหมายของ LOWER... และ ...OPPORTUNITY? ยังคลาดเคลื่อน รวมถึงเอฟเฟกต์อื่น ๆ</p>`);
+console.log({before:bm.exact,after:am.exact,punctuation:am.units.filter(u=>u.exactTranscription).length});

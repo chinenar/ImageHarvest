@@ -5,7 +5,7 @@ const path=require('node:path');
 const {pathToFileURL}=require('node:url');
 const {randomUUID,createHash}=require('node:crypto');
 const {MangaOcrPool}=require('./manga-ocr.cjs');
-const {EnhancedMangaOcrPool,PREPROCESSING}=require('./enhanced-manga-ocr.cjs');
+const {EnhancedMangaOcrPool,PREPROCESSING,RECOVERY_PREPROCESSING}=require('./enhanced-manga-ocr.cjs');
 const {prepareCrop,validateCrop}=require('./ocr-crop.cjs');
 const {LocalOcrBackend}=require('./ocr-backend.cjs');
 const {evaluateRegions}=require('./ocr-review.cjs');
@@ -53,14 +53,20 @@ function createOcrLab({parent,capture,harvest,translate,translationModels,overla
     if(typeof context!=='string'||context.length>12000)throw Error('บริบทยาวเกิน 12,000 ตัวอักษร');
     const controller=new AbortController();running=controller;
     try {
-      return await translate(source,{provider,sourceLanguage,targetLanguage,context,model,includeUncertain:includeUncertain===true,imageDigest:image.digest,signal:controller.signal,
+      let checked=source;
+      if(require('./ocr-effect-candidates.cjs').needsEffectReview(source)){
+        emit({busy:true,message:'ตรวจตัวอักษรขนาดใหญ่กับพื้นผิวก่อนส่งแปล'});
+        const planned=await require('./reader-quality.cjs').planReadingPage(localBackend,image.buffer,source,{signal:controller.signal});
+        checked=planned.regions;
+      }
+      return await translate(checked,{provider,sourceLanguage,targetLanguage,context,model,includeUncertain:includeUncertain===true,imageDigest:image.digest,signal:controller.signal,
         onProgress:({done,total})=>emit({busy:true,message:`${provider==='ai'?'AI':'Google Translate'} แปล ${done}/${total} กรอบ`})});
     } finally {running=null;}
   });
   register('preview',async({id,crop,variant='original'})=>{
     const image=images.get(id);if(!image)throw Error('ไม่พบภาพ');
     if(variant==='original-recrop')variant='original';
-    if(!PREPROCESSING.includes(variant))throw Error('วิธีปรับภาพไม่ถูกต้อง');
+    if(![...PREPROCESSING,...RECOVERY_PREPROCESSING].includes(variant))throw Error('วิธีปรับภาพไม่ถูกต้อง');
     validateCrop(crop,image.width,image.height);
     if(image.width*image.height*(crop.inputScale||1)**2>40000000)throw Error('ภาพ preview เกินขนาด');
     return localBackend.preview(await prepareCrop(image.buffer,crop),{variant});
@@ -128,7 +134,7 @@ function createOcrLab({parent,capture,harvest,translate,translationModels,overla
         seen.add(value);
         for(const field of ['bbox','coreBbox','containerBBox','detectorBBox'])if(value[field]&&!seen.has(value[field])){seen.add(value[field]);for(const key of ['x0','y0','x1','y1'])value[field][key]/=imageScale;}
         if(value.rectangle&&!seen.has(value.rectangle)){seen.add(value.rectangle);for(const key of ['left','top','width','height'])value.rectangle[key]/=imageScale;}
-        if(value.polygon&&!seen.has(value.polygon)){seen.add(value.polygon);for(const point of value.polygon){if(!Array.isArray(point)||seen.has(point))continue;seen.add(point);point[0]/=imageScale;point[1]/=imageScale;}}
+        for(const polygon of [value.polygon,...(value.ownedPolygons||[]),...(value.excludedPolygons||[])])if(polygon&&!seen.has(polygon)){seen.add(polygon);for(const point of polygon){if(!Array.isArray(point)||seen.has(point))continue;seen.add(point);point[0]/=imageScale;point[1]/=imageScale;}}
         if(value.tiles)for(const tile of value.tiles){if(seen.has(tile))continue;seen.add(tile);for(const key of ['left','top','width','height'])tile[key]/=imageScale;}
         for(const [key,child] of Object.entries(value))if(!['bbox','coreBbox','containerBBox','detectorBBox','rectangle','polygon'].includes(key)){
           if(Array.isArray(child))child.forEach(remap);else if(child&&typeof child==='object')remap(child);

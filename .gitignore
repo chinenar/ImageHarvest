@@ -9,3 +9,21 @@ deploy.py
 PACKAGE_PATH.txt
 .DS_Store
 Thumbs.db
+
+# Keep Android and separately deployed website workspaces out of the desktop repo.
+/mobile/
+/sites/
+# Local agent artifacts, caches and temporary files.
+/.codex-remote-attachments/
+/%PROGRAMDATA%/
+/NVIDIA Corporation/
+/(await
+**/__pycache__/
+*.pyc
+/scripts/tmp-seg-*.cjs
+# Third-party OCR model binaries and locally downloaded training data.
+/assets/models/*.onnx
+/assets/tessdata/*.gz
+/*.traineddata
+# Local visual regression screenshots.
+/test/fixtures/vertical-boundaries/*.png

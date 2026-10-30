@@ -2,6 +2,15 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {contentRole,translationEligible}=require('../src/ocr-content-role.cjs');
 const {OcrTranslationService}=require('../src/ocr-translation.cjs');
+
+test('explicit sound effects preserve source even when uncertain translation is enabled',()=>{
+ const effect={text:'ドン',kind:'sfx',reviewed:true,contentOverride:true};
+ assert.equal(contentRole(effect).role,'sfx');
+ assert.equal(translationEligible(effect,{includeUncertain:true}),false);
+ assert.equal(effect.text,'ドン');
+ assert.equal(translationEligible({...effect,kind:'bubble'}),true);
+ assert.equal(translationEligible({text:'DIE!!',kind:'bubble',confidence:99}),true);
+});
 test('confirmed publisher mark is excluded without treating ordinary dialogue, color or SFX as watermark',()=>{
  assert.equal(contentRole({text:'RITHAR\nSCANS'}).role,'watermark');
  assert.equal(contentRole({text:'RITHA\nSCAN'}).role,'watermark','retain the confirmed clipped reading of the same publisher logo');
@@ -13,8 +22,8 @@ test('confirmed publisher mark is excluded without treating ordinary dialogue, c
 });
 test('translation never submits skipped marks/artwork and retains explicit skip reasons without changing OCR',async()=>{
  const sent=[],service=new OcrTranslationService({google:{translate:async rows=>{sent.push(...rows);return rows.map(r=>({id:r.id,translation:'คำพูด'}));}}});
- const regions=[{id:'speech',text:'AH',confidence:95},{id:'mark',text:'RITHAR\nSCANS'},{id:'art',text:'Ji\nLil |',confidence:63,reviewRequired:true},{id:'manual',text:'x',kind:'non-text'}],before=structuredClone(regions);
- const result=await service.translate(regions);assert.deepEqual(sent.map(r=>r.id),['speech']);assert.equal(result.translated,1);assert.deepEqual(result.skipped.map(r=>r.role),['watermark','uncertain','non-text']);assert.deepEqual(regions,before);
+ const regions=[{id:'speech',text:'AH',confidence:95},{id:'mark',text:'RITHAR\nSCANS'},{id:'art',text:'Ji\nLil |',confidence:63,reviewRequired:true},{id:'manual',text:'x',kind:'non-text'},{id:'effect',text:'ドン',kind:'sfx'}],before=structuredClone(regions);
+ const result=await service.translate(regions);assert.deepEqual(sent.map(r=>r.id),['speech']);assert.equal(result.translated,1);assert.deepEqual(result.skipped.map(r=>r.role),['watermark','uncertain','non-text','sfx']);assert.deepEqual(regions,before);
 });
 
 test('strong speech-bubble geometry can rescue a slightly low OCR confidence without rescuing weak surfaces',()=>{

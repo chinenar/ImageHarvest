@@ -13,8 +13,8 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
  app=await electron.launch({args:[path.resolve(__dirname,'..'),'--eiw-test'],env,timeout:45000});const ui=await app.firstWindow();await ui.waitForFunction(()=>!!window.eiw);
  await app.evaluate((_electron,url)=>global.__eiwTest.translationTestEndpoint(url),base);
  await ui.evaluate(()=>window.eiw.harvestTsLayout({visible:true,bounds:{x:20,y:115,width:900,height:700}}));
- await ui.evaluate(url=>window.eiw.harvestTsCreate({url,activate:true}),base+'/reader');await delay(400);
- const id=await app.evaluate(({webContents},base)=>webContents.getAllWebContents().find(w=>w.getURL().startsWith(base+'/reader'))?.id,base);assert.ok(id);
+ await ui.evaluate(url=>window.eiw.harvestTsCreate({url,activate:true}),base+'/reader');
+ let id;for(let n=0;n<100&&!id;n++){id=await app.evaluate(({webContents},base)=>webContents.getAllWebContents().find(w=>w.getURL().startsWith(base+'/reader')&&!w.isLoading())?.id,base);if(!id)await delay(100);}assert.ok(id,'reader guest must finish loading before testing cancellation');
  await app.evaluate(()=>{global.__cancelLockJob=global.__eiwTest.harvestTranslationStart().then(()=>({ok:true}),e=>({error:e.message}));return true;});
  let locked=false;
  for(let n=0;n<50;n++){locked=await app.evaluate(async({webContents},id)=>webContents.fromId(id).executeJavaScript('!!window.__harvestTsReaderLock?.stats().locked'),id);if(locked&&pending.length)break;await delay(50);}

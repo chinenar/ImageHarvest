@@ -1,5 +1,6 @@
 'use strict';
 const { ipcRenderer } = require('electron');
+if (process.isMainFrame !== false) {
 
 let translateSymbolDataUrl = '';
 
@@ -7,13 +8,6 @@ let suggestionHost = null;
 let suggestionShadow = null;
 let activeField = null;
 let lastSuggestions = [];
-let lastZoomWheelAt = 0;
-addEventListener('wheel',event=>{
-  if(!event.ctrlKey)return;
-  event.preventDefault();
-  const now=Date.now();if(now-lastZoomWheelAt<90)return;lastZoomWheelAt=now;
-  ipcRenderer.invoke('harvest-guest:zoom',{direction:event.deltaY<0?1:-1}).catch(()=>{});
-},{capture:true,passive:false});
 
 let zoomToastHost=null,zoomToastValue=null,zoomToastTimer=null;
 function showZoomToast(percent){
@@ -27,7 +21,11 @@ function showZoomToast(percent){
   }
   zoomToastHost.dataset.percent=String(value);zoomToastValue.textContent=value+'%';const box=zoomToastHost.__box;box.style.opacity='1';box.style.transform='translateY(0)';clearTimeout(zoomToastTimer);zoomToastTimer=setTimeout(()=>{if(!zoomToastHost?.isConnected)return;box.style.opacity='0';box.style.transform='translateY(-3px)';},850);
 }
-ipcRenderer.on('harvest-guest:zoom-display',(_event,payload)=>showZoomToast(payload?.percent));
+let refreshTranslationLauncherZoom = () => {};
+ipcRenderer.on('harvest-guest:zoom-display', (_event, payload) => {
+  showZoomToast(payload?.percent);
+  refreshTranslationLauncherZoom();
+});
 
 function visible(el){
   if(!el || !(el instanceof Element)) return false;
@@ -201,7 +199,7 @@ function ensureTranslationLauncher() {
   translationHost = document.createElement('div');
   translationHost.id = '__harvestts_manga_translate__';
   Object.assign(translationHost.style, {
-    position:'fixed', right:'20px', bottom:'20px', zIndex:'2147483646',
+    all:'initial', boxSizing:'border-box', position:'fixed', right:'20px', bottom:'20px', zIndex:'2147483646',
     width:'54px', height:'54px', pointerEvents:'auto', margin:'0', padding:'0'
   });
   translationShadow = translationHost.attachShadow({ mode:'closed' });
@@ -210,9 +208,9 @@ function ensureTranslationLauncher() {
   style.textContent = [
     ':host{all:initial}',
     '*{box-sizing:border-box}',
-    '.launcher{all:unset;width:var(--launcher-size,54px);height:var(--launcher-size,54px);border-radius:50%;display:grid;place-items:center;cursor:grab;background:#09090d;color:white;border:1px solid rgba(255,255,255,.24);box-shadow:0 10px 28px rgba(15,12,40,.42);user-select:none;touch-action:none;overflow:hidden}',
+    '.launcher{all:unset;box-sizing:border-box;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);width:var(--launcher-size,54px);height:var(--launcher-size,54px);border-radius:50%;display:grid;place-items:center;cursor:grab;background:#09090d;color:white;border:1px solid rgba(255,255,255,.24);box-shadow:0 10px 28px rgba(15,12,40,.42);user-select:none;touch-action:none;overflow:hidden}',
     '.launcher:active{cursor:grabbing}.launcher.running{box-shadow:0 0 0 3px rgba(122,104,255,.45),0 10px 28px rgba(15,12,40,.42)}',
-    '.launcher img{width:100%;height:100%;display:block;object-fit:cover;pointer-events:none}.launcher .fallback-mark{font:800 17px/1 Georgia,serif;color:#ff9fca}',
+    '.launcher img{min-width:0;min-height:0;width:100%;height:100%;display:block;object-fit:cover;pointer-events:none}.launcher .fallback-mark{font:800 17px/1 Georgia,serif;color:#ff9fca}',
     '.quickmenu{position:absolute;inset:0;z-index:5;overflow:visible;pointer-events:none}.quickmenu[hidden]{display:none}',
     '.toolbtn{all:unset;box-sizing:border-box;position:absolute;width:var(--tool-size,48px);height:var(--tool-size,48px);border-radius:50%;display:grid;grid-template-rows:var(--icon-row,21px) var(--caption-row,10px);place-content:center;text-align:center;cursor:pointer;pointer-events:auto;background:#171a24;color:#eef1fb;border:1px solid #3a4055;box-shadow:0 8px 22px rgba(0,0,0,.36);font-family:"Segoe UI",Tahoma,sans-serif;transition:transform .13s ease,opacity .13s ease}',
     '.quickmenu.opening .toolbtn{animation:tool-reveal .24s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--delay,0ms)}',
@@ -453,9 +451,18 @@ function ensureTranslationLauncher() {
 
   let launcherAnchor = null;
   let uiScale = 1;
+  let launcherZoom = 1;
+  let zoomRequest = 0;
+  // Layout uses screen DIP units; only the webpage follows its zoom factor.
+  const launcherViewportWidth = () => innerWidth / launcherZoom;
+  const launcherViewportHeight = () => innerHeight / launcherZoom;
+  function launcherRect(element) {
+    const rect = element.getBoundingClientRect();
+    return Object.fromEntries(['left', 'top', 'right', 'bottom', 'width', 'height']
+      .map(key => [key, rect[key] / launcherZoom]));
+  }
   function updateLauncherScale() {
-    uiScale = Math.min(1.12, Math.max(.82, Math.min(innerWidth / 900, innerHeight / 700)));
-    uiScale = Math.min(uiScale, Math.max(.1, (Math.min(innerWidth, innerHeight) - 16) / 180));
+    uiScale = Math.min(1, Math.max(.1, (Math.min(launcherViewportWidth(), launcherViewportHeight()) - 16) / 180));
     const size = 54 * uiScale;
     translationHost.style.width = size + 'px';
     translationHost.style.height = size + 'px';
@@ -467,27 +474,28 @@ function ensureTranslationLauncher() {
   function clampLauncher(left, top) {
     const size = 54 * uiScale, pad = 8;
     return {
-      left: Math.max(pad, Math.min(innerWidth - size - pad, left)),
-      top: Math.max(pad, Math.min(innerHeight - size - pad, top))
+      left: Math.max(pad, Math.min(launcherViewportWidth() - size - pad, left)),
+      top: Math.max(pad, Math.min(launcherViewportHeight() - size - pad, top))
     };
   }
   function rememberLauncherAnchor() {
-    const r = translationHost.getBoundingClientRect();
+    const r = launcherRect(translationHost);
     launcherAnchor = {
-      x:(r.left - 8) / Math.max(1, innerWidth - r.width - 16),
-      y:(r.top - 8) / Math.max(1, innerHeight - r.height - 16)
+      x:(r.left - 8) / Math.max(1, launcherViewportWidth() - r.width - 16),
+      y:(r.top - 8) / Math.max(1, launcherViewportHeight() - r.height - 16)
     };
   }
   updateLauncherScale();
   function positionSurface(surface, widthGuess = 348) {
     if (!surface || surface.hidden) return;
-    const r = translationHost.getBoundingClientRect();
+    const r = launcherRect(translationHost);
     const pad = 8, gap = 12;
-    surface.style.width = Math.min(widthGuess, Math.max(0, innerWidth - pad * 2)) + 'px';
-    surface.style.maxHeight = Math.max(0, innerHeight - pad * 2) + 'px';
+    surface.style.maxWidth = 'none';
+    surface.style.width = Math.min(widthGuess, Math.max(0, launcherViewportWidth() - pad * 2)) + 'px';
+    surface.style.maxHeight = Math.max(0, launcherViewportHeight() - pad * 2) + 'px';
     surface.style.right = 'auto';
     surface.style.bottom = 'auto';
-    const { width, height } = surface.getBoundingClientRect();
+    const { width, height } = launcherRect(surface);
     // Prefer above/below the launcher, then use a side when it fits better.
     const candidates = [
       { left:r.right - width, top:r.top - gap - height },
@@ -496,32 +504,35 @@ function ensureTranslationLauncher() {
       { left:r.right + gap, top:r.bottom - height }
     ];
     const fits = p => p.left >= pad && p.top >= pad &&
-      p.left + width <= innerWidth - pad && p.top + height <= innerHeight - pad;
+      p.left + width <= launcherViewportWidth() - pad && p.top + height <= launcherViewportHeight() - pad;
     const overflow = p => Math.max(0, pad - p.left) + Math.max(0, pad - p.top) +
-      Math.max(0, p.left + width - innerWidth + pad) + Math.max(0, p.top + height - innerHeight + pad);
+      Math.max(0, p.left + width - launcherViewportWidth() + pad) + Math.max(0, p.top + height - launcherViewportHeight() + pad);
     const chosen = candidates.find(fits) || candidates.reduce((best, p) => overflow(p) < overflow(best) ? p : best);
-    const left = Math.max(pad, Math.min(innerWidth - pad - width, chosen.left));
-    const top = Math.max(pad, Math.min(innerHeight - pad - height, chosen.top));
+    const left = Math.max(pad, Math.min(launcherViewportWidth() - pad - width, chosen.left));
+    const top = Math.max(pad, Math.min(launcherViewportHeight() - pad - height, chosen.top));
     surface.style.left = (left - r.left) + 'px';
     surface.style.top = (top - r.top) + 'px';
   }
   function positionQuickMenu() {
     if (quickMenu.hidden) return;
-    const r = translationHost.getBoundingClientRect();
+    const r = launcherRect(translationHost);
     const size = 48 * uiScale, radius = 84 * uiScale, pad = 8;
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     // Aim into the available viewport; score the whole fan instead of moving its anchor.
-    const ideal = Math.atan2(innerHeight / 2 - cy, innerWidth / 2 - cx);
+    const ideal = Math.atan2(launcherViewportHeight() / 2 - cy, launcherViewportWidth() / 2 - cx);
     let best;
-    for (let step = 0; step < 72; step++) {
-      const angle = ideal + step * Math.PI / 36;
+    const angles = [
+      ...Array.from({length:8}, (_, i) => i * Math.PI / 4),
+      ...Array.from({length:72}, (_, i) => ideal + i * Math.PI / 36)
+    ];
+    for (const angle of angles) {
       const points = [-Math.PI / 4, 0, Math.PI / 4].map(offset => ({
         x:cx + Math.cos(angle + offset) * radius - size / 2,
         y:cy + Math.sin(angle + offset) * radius - size / 2
       }));
       const overflow = points.reduce((sum, p) => sum + Math.max(0, pad - p.x) +
-        Math.max(0, pad - p.y) + Math.max(0, p.x + size - innerWidth + pad) +
-        Math.max(0, p.y + size - innerHeight + pad), 0);
+        Math.max(0, pad - p.y) + Math.max(0, p.x + size - launcherViewportWidth() + pad) +
+        Math.max(0, p.y + size - launcherViewportHeight() + pad), 0);
       const deviation = Math.abs(Math.atan2(Math.sin(angle - ideal), Math.cos(angle - ideal)));
       const score = overflow * 1000 + deviation;
       if (!best || score < best.score) best = { points, score };
@@ -646,13 +657,13 @@ function ensureTranslationLauncher() {
   let drag = null;
   launcher.addEventListener('pointerdown', event => {
     if (event.button !== 0) return;
-    const r = translationHost.getBoundingClientRect();
-    drag = { id:event.pointerId, x:event.clientX, y:event.clientY, left:r.left, top:r.top, moved:false };
+    const r = launcherRect(translationHost);
+    drag = { id:event.pointerId, x:event.clientX / launcherZoom, y:event.clientY / launcherZoom, left:r.left, top:r.top, moved:false };
     launcher.setPointerCapture?.(event.pointerId);
   });
   launcher.addEventListener('pointermove', event => {
     if (!drag || drag.id !== event.pointerId) return;
-    const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+    const dx = event.clientX / launcherZoom - drag.x, dy = event.clientY / launcherZoom - drag.y;
     if (!drag.moved && Math.hypot(dx, dy) < 6) return;
     drag.moved = true;
     quickMenu.classList.remove('opening');
@@ -672,17 +683,32 @@ function ensureTranslationLauncher() {
   });
   launcher.addEventListener('pointercancel', () => { drag = null; });
 
-  addEventListener('resize', () => {
+  function reflowLauncher() {
     if (!translationHost?.isConnected) return;
     updateLauncherScale();
     if (launcherAnchor) {
-      const next = clampLauncher(8 + launcherAnchor.x * Math.max(0, innerWidth - 54 * uiScale - 16),
-        8 + launcherAnchor.y * Math.max(0, innerHeight - 54 * uiScale - 16));
+      const next = clampLauncher(8 + launcherAnchor.x * Math.max(0, launcherViewportWidth() - 54 * uiScale - 16),
+        8 + launcherAnchor.y * Math.max(0, launcherViewportHeight() - 54 * uiScale - 16));
       Object.assign(translationHost.style, { left:next.left + 'px', top:next.top + 'px' });
     }
     quickMenu.classList.remove('opening');
     positionAll();
+  }
+  refreshTranslationLauncherZoom = async () => {
+    const request = ++zoomRequest;
+    try {
+      const factor = Number(await ipcRenderer.invoke('harvest-guest:zoom-factor'));
+      if (request !== zoomRequest || !translationHost?.isConnected || !(factor > 0)) return;
+      launcherZoom = 1 / factor;
+      translationHost.style.zoom = String(launcherZoom);
+      reflowLauncher();
+    } catch {}
+  };
+  addEventListener('resize', () => {
+    reflowLauncher();
+    refreshTranslationLauncherZoom();
   });
+  refreshTranslationLauncherZoom();
 
   start.addEventListener('click', async () => {
     if (translationRunning) {
@@ -846,3 +872,4 @@ ipcRenderer.on('harvest-guest:screen-lens-status', (_event, payload = {}) => {
   translationShadow?.__renderLensStatus?.();
 });
 window.addEventListener('DOMContentLoaded', ensureTranslationLauncher);
+}

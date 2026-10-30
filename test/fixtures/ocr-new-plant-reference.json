@@ -1,0 +1,17 @@
+{
+ "scope":"Twelve dialogue/caption units transcribed from a previously unused page on 2026-10-08. This page becomes a development case after inspection. SFX, tiny margin comments and graphic labels are not scored; not whole-page ground truth. The source spells creaure without t.",
+ "units":[
+  {"text":"I could get a creaure to eat me and ingest the poison, but that will probably end up killing me too.","box":[600,94,820,325]},
+  {"text":"Somehow I need to poison them without doing that.","box":[420,130,650,280]},
+  {"text":"Just, Even if I can make poison, I can't get it out of my body.","box":[845,150,1055,465]},
+  {"text":"Downed together","box":[520,670,730,710]},
+  {"text":"That's right! It's been decided!","box":[78,760,260,1020]},
+  {"text":"That's right! I can just combine the poison with Water Edge!","box":[960,799,1210,1025]},
+  {"text":"I'll call it \"Poison Edge\"!!","box":[680,820,875,980]},
+  {"text":"Ei!!","box":[600,1110,675,1168]},
+  {"text":"Hai!!","box":[540,1180,635,1232]},
+  {"text":"Time to practice!!","box":[1100,1160,1250,1255]},
+  {"text":"This is quite difficult.","box":[515,1360,655,1480]},
+  {"text":"Oh... I made a mistake :(","box":[690,1510,855,1730]}
+ ],"negative":[]
+}

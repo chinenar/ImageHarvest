@@ -49,6 +49,11 @@ function decodeLines(map,width,height,w,h,blocks){
 function groupLines(lines,vertical=false){
   const groups=[];
   const adjacent=(a,b)=>{
+    const ac=a.coreBbox||a.bbox,bc=b.coreBbox||b.bbox;
+    const thickness=c=>vertical?c.x1-c.x0:c.y1-c.y0;
+    if(Math.max(thickness(ac),thickness(bc))/Math.max(1,Math.min(thickness(ac),thickness(bc)))>2.2)return false;
+    const angle=l=>l.polygon?.length>=2?Math.atan2(l.polygon[1][1]-l.polygon[0][1],l.polygon[1][0]-l.polygon[0][0]):0;
+    if(!vertical&&Math.abs(angle(a)-angle(b))>Math.PI/8)return false;
     a=a.bbox;b=b.bbox;
     if(vertical){const overlap=Math.max(0,Math.min(a.y1,b.y1)-Math.max(a.y0,b.y0))/Math.max(1,Math.min(a.y1-a.y0,b.y1-b.y0));const gap=Math.max(0,a.x0-b.x1,b.x0-a.x1);return overlap>=.45&&gap<=Math.min(a.x1-a.x0,b.x1-b.x0)*1.8;}
     const overlap=Math.max(0,Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0))/Math.max(1,Math.min(a.x1-a.x0,b.x1-b.x0));
@@ -90,10 +95,20 @@ function refineBlocks(blocks,lines){
   blocks=consolidateBlocks(blocks,lines);
   const used=new Set(),result=[];
   for(const [index,block] of blocks.entries()){
-    const children=lines.filter(line=>intersection(block.bbox,line.coreBbox)/Math.max(1,area(line.coreBbox))>.65);
+    const children=lines.filter(line=>{
+      const a=block.bbox,b=line.coreBbox;
+      if(intersection(a,b)/Math.max(1,area(b))>.65)return true;
+      // A detail tile's block may end halfway down a complete vertical
+      // column. Attach the canonical column, not a second cropped paragraph.
+      if(line.orientation!=='vertical'||b.y1-b.y0<(b.x1-b.x0)*3)return false;
+      const across=Math.max(0,Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0))/Math.max(1,b.x1-b.x0);
+      const along=Math.max(0,Math.min(a.y1,b.y1)-Math.max(a.y0,b.y0))/Math.max(1,Math.min(a.y1-a.y0,b.y1-b.y0));
+      return across>.8&&along>.8&&a.y1-a.y0>(b.x1-b.x0)*3;
+    });
     children.forEach(l=>used.add(l));
     if(!children.length){result.push({...block,containerId:`block-${index}`});continue;}
-    const vertical=children.filter(l=>l.orientation==='vertical').length>children.length/2;
+    const verticalCount=children.filter(l=>l.orientation==='vertical').length;
+    const vertical=verticalCount>children.length/2||verticalCount>0&&block.orientation==='vertical'&&children.every(l=>{const b=l.coreBbox||l.bbox;return b.x1-b.x0<(b.y1-b.y0)*2;});
     const groups=groupLines(children,vertical);
     const heights=children.map(l=>l.coreBbox.y1-l.coreBbox.y0).sort((a,b)=>a-b);
     const lineHeight=heights[Math.floor(heights.length/2)];
@@ -106,7 +121,9 @@ function refineBlocks(blocks,lines){
     for(const group of groups)result.push({...block,...group,bbox:group.bbox,
       kind:'text',lineOnly:false,containerId:`block-${index}`,containerBBox:block.bbox,detectionConfidence:block.detectionConfidence});
   }
-  for(const group of groupLines(lines.filter(l=>!used.has(l))))result.push({...group,detectedLanguage:'unknown',kind:'unboxed',lineOnly:true});
+  // Unclaimed headings still have a detected writing direction. Passing them
+  // through the horizontal default turns short vertical headings into rows.
+  for(const vertical of [false,true])for(const group of groupLines(lines.filter(l=>!used.has(l)&&(l.orientation==='vertical')===vertical),vertical))result.push({...group,detectedLanguage:'unknown',kind:'unboxed',lineOnly:true});
   const unique=[];
   for(const row of result){
     const duplicate=unique.find(other=>row.lines?.length&&row.orientation===other.orientation&&row.lines.length===other.lines?.length&&row.lines.every(line=>other.lines.includes(line)));
@@ -116,7 +133,21 @@ function refineBlocks(blocks,lines){
     if(row.detectionConfidence>duplicate.detectionConfidence)Object.assign(duplicate,row);
     duplicate.containerObservations=observations;duplicate.groupingReason='identical-line-observations';
   }
-  return unique;
+  // A full-page block and a detail block may own the same canonical lines,
+  // with one missing a heading. Keep the complete observation once.
+  return unique.filter(row=>{
+    if(!row.lines?.length){
+      if(row.orientation==='horizontal'&&row.detectionConfidence<.7){
+        const columns=lines.filter(l=>{const b=l.coreBbox||l.bbox;return l.orientation==='vertical'&&b.y1-b.y0>(b.x1-b.x0)*6&&intersection(b,row.bbox)/Math.max(1,area(row.bbox))>.2;});
+        if(columns.length>=2)return false;
+      }
+      return true;
+    }
+    const owner=unique.find(other=>other!==row&&other.orientation===row.orientation&&other.lines?.length>row.lines.length&&row.lines.every(l=>other.lines.includes(l)));
+    if(!owner)return true;
+    owner.containerObservations=[...(owner.containerObservations||[]),{containerId:row.containerId,bbox:row.containerBBox,detectionConfidence:row.detectionConfidence}];
+    return false;
+  });
 }
 function planTiles(width,height,{detail=false,sourceScale=1}={}){
   const nativeWidth=Math.round(width/sourceScale),nativeHeight=Math.round(height/sourceScale);
@@ -145,6 +176,72 @@ function mergeTileObservations(rows){
   }
   return kept.sort((a,b)=>a.bbox.y0-b.bbox.y0||b.bbox.x0-a.bbox.x0);
 }
+function mergeLineObservations(rows){
+  const horizontal=rows.filter(r=>r.orientation!=='vertical'),vertical=[];
+  for(const row of rows.filter(r=>r.orientation==='vertical')){
+    const a=row.coreBbox||row.bbox;
+    const matches=vertical.filter(other=>{
+      const b=other.coreBbox||other.bbox,aw=a.x1-a.x0,bw=b.x1-b.x0;
+      const across=Math.max(0,Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0))/Math.max(1,Math.min(aw,bw));
+      const along=Math.max(0,Math.min(a.y1,b.y1)-Math.max(a.y0,b.y0))/Math.max(1,Math.min(a.y1-a.y0,b.y1-b.y0));
+      const gap=Math.max(0,a.y0-b.y1,b.y0-a.y1);
+      const contiguous=gap<=Math.min(aw,bw)*.8&&Math.min(a.y1-a.y0,b.y1-b.y0)>Math.max(aw,bw)*3;
+      return across>.75&&Math.max(aw,bw)/Math.max(1,Math.min(aw,bw))<1.8&&(along>.25||contiguous);
+    });
+    if(!matches.length){vertical.push(row);continue;}
+    const members=[row,...matches],bounds=key=>({x0:Math.min(...members.map(r=>(r[key]||r.bbox).x0)),y0:Math.min(...members.map(r=>(r[key]||r.bbox).y0)),x1:Math.max(...members.map(r=>(r[key]||r.bbox).x1)),y1:Math.max(...members.map(r=>(r[key]||r.bbox).y1))});
+    const complete=members.find(r=>!r.tileClipped)||row;
+    for(const other of matches)vertical.splice(vertical.indexOf(other),1);
+    vertical.push({...complete,bbox:bounds('bbox'),coreBbox:bounds('coreBbox'),tileClipped:members.every(r=>r.tileClipped),lineObservations:members.flatMap(r=>r.lineObservations||[{bbox:r.bbox,tileIndex:r.tileIndex}])});
+  }
+  // A final glyph can be classified as a horizontal component. Attach only
+  // a short, closely aligned end fragment with one unambiguous column owner;
+  // retain its observation so downstream grouping sees one canonical column.
+  const tails=new Set();
+  for(const row of horizontal){
+    const a=row.coreBbox||row.bbox,aw=a.x1-a.x0,ah=a.y1-a.y0;
+    const owners=vertical.filter(column=>{
+      const b=column.coreBbox||column.bbox,bw=b.x1-b.x0;
+      const gap=Math.max(a.y0-b.y1,b.y0-a.y1);
+      return b.y1-b.y0>bw*6&&ah<=bw*2&&aw>=bw*.45&&aw<=bw*1.4&&
+        Math.abs((a.x0+a.x1-b.x0-b.x1)/2)<=bw*.25&&gap>=0&&gap<=bw*.8;
+    });
+    if(owners.length!==1)continue;
+    const column=owners[0];
+    const bounds=key=>{const b=column[key]||column.bbox,c=row[key]||row.bbox;return {x0:Math.min(b.x0,c.x0),y0:Math.min(b.y0,c.y0),x1:Math.max(b.x1,c.x1),y1:Math.max(b.y1,c.y1)};};
+    const bbox=bounds('bbox'),coreBbox=bounds('coreBbox');
+    const observations=[...(column.lineObservations||[{bbox:column.bbox,tileIndex:column.tileIndex}]),{bbox:row.bbox,tileIndex:row.tileIndex}];
+    vertical[vertical.indexOf(column)]={...column,bbox,coreBbox,lineObservations:observations};
+    tails.add(row);
+  }
+  const independent=horizontal.filter(row=>!tails.has(row)&&!vertical.some(column=>{
+    const a=row.coreBbox||row.bbox,b=column.coreBbox||column.bbox;
+    return intersection(a,b)/Math.max(1,area(a))>.8&&a.x1-a.x0<(b.x1-b.x0)*1.8&&a.y1-a.y0<(b.y1-b.y0)*.85;
+  }));
+  const merged=[...mergeTileObservations(independent),...vertical];
+  const suppressed=new Map();
+  // Detail tiles can read several glyph columns as a wide horizontal row or
+  // one broad vertical component. Complete thin columns outrank those partial
+  // rectangles. This is positional evidence only; no OCR text is discarded.
+  const retained=merged.filter(row=>{
+    const a=row.coreBbox||row.bbox,aw=a.x1-a.x0,ah=a.y1-a.y0;
+    const columns=vertical.filter(other=>{
+      if(other===row)return false;
+      const b=other.coreBbox||other.bbox,bw=b.x1-b.x0,bh=b.y1-b.y0;
+      const along=Math.max(0,Math.min(a.y1,b.y1)-Math.max(a.y0,b.y0));
+      return bw<aw*.55&&bh>bw*6&&bh>aw*2&&along/Math.max(1,ah)>.65&&
+        b.x0>=Math.min(a.x0-bw*.5,row.bbox.x0)&&b.x1<=Math.max(a.x1+bw*.5,row.bbox.x1);
+    }).sort((p,q)=>(p.coreBbox||p.bbox).x0-(q.coreBbox||q.bbox).x0);
+    if(columns.length<2)return true;
+    if(!columns.some(l=>{const b=l.coreBbox||l.bbox;return Math.max(0,Math.min(a.y1,b.y1)-Math.max(a.y0,b.y0))/Math.max(1,ah)>.95;}))return true;
+    const first=columns[0].coreBbox||columns[0].bbox,last=columns.at(-1).coreBbox||columns.at(-1).bbox;
+    if(last.x0-first.x1<=0||last.x1-first.x0<aw*.55)return true;
+    // Retain a trace on the chosen owner rather than deleting the evidence.
+    const owner=columns[0];suppressed.set(owner,[...(suppressed.get(owner)||[]),{bbox:row.bbox,coreBbox:row.coreBbox,reason:'covered-by-complete-vertical-columns'}]);
+    return false;
+  });
+  return retained.map(row=>suppressed.has(row)?{...row,suppressedLineObservations:[...(row.suppressedLineObservations||[]),...suppressed.get(row)]}:row).sort((a,b)=>a.bbox.y0-b.bbox.y0||b.bbox.x0-a.bbox.x0);
+}
 async function detectTile(input,options={}){
   const started=Date.now(),source=sharp(input).rotate().flatten({background:'#fff'});
   const {width,height}=await source.metadata();
@@ -161,7 +258,13 @@ async function detectTile(input,options={}){
   const result=await session.run({images:new ort.Tensor('float32',planar,[1,3,SIZE,SIZE])});
   const boxes=decodeBlocks(result.blk.data,width,height,w,h,options);
   const lines=decodeLines(result.det.data,width,height,w,h,boxes);
-  return {width,height,rawBlocks:boxes,lines,ms:Date.now()-started};
+  let segmentation;
+  if(options.includeSegmentation){
+    const pixels=Buffer.alloc(SIZE*SIZE);
+    for(let i=0;i<pixels.length;i++)pixels[i]=Math.round(Math.max(0,Math.min(1,result.seg.data[i]))*255);
+    segmentation=await sharp(pixels,{raw:{width:SIZE,height:SIZE,channels:1}}).extract({left:0,top:0,width:w,height:h}).resize(width,height,{kernel:'linear'}).png().toBuffer();
+  }
+  return {width,height,rawBlocks:boxes,lines,...(segmentation?{segmentation}:{}),ms:Date.now()-started};
 }
 async function detectText(input,options={}){
   const started=Date.now(),meta=await sharp(input).metadata(),{width,height}=meta.autoOrient||meta;
@@ -179,7 +282,7 @@ async function detectText(input,options={}){
     };
     blocks.push(...result.rawBlocks.map(map));observations.push(...result.lines.map(map));
   }
-  const rawBlocks=mergeTileObservations(blocks),lines=mergeTileObservations(observations),boxes=refineBlocks(rawBlocks,lines);
+  const rawBlocks=mergeTileObservations(blocks),lines=mergeLineObservations(observations),boxes=refineBlocks(rawBlocks,lines);
   return {engine:'comic-text-detector',width,height,boxes:boxes.sort((a,b)=>a.bbox.y0-b.bbox.y0||b.bbox.x0-a.bbox.x0),rawBlocks,lines,tiles,ms:Date.now()-started};
 }
-module.exports={detectText,decodeBlocks,decodeLines,groupLines,refineBlocks,consolidateBlocks,planTiles,mergeTileObservations};
+module.exports={detectText,detectTile,decodeBlocks,decodeLines,groupLines,refineBlocks,consolidateBlocks,planTiles,mergeTileObservations,mergeLineObservations};

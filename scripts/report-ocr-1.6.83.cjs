@@ -1,0 +1,14 @@
+'use strict';
+const fs=require('node:fs'),{pathToFileURL}=require('node:url');
+const {metrics}=require('./benchmark-ocr-accuracy.cjs');
+const {outline}=require('../src/ocr-display-geometry.js');
+const before=require('../test-results/ocr-accuracy/romance-1.6.82.json').result;
+const after=require('../test-results/ocr-accuracy/new-romance-after.json');
+const old=require('../test/fixtures/ocr-romance-reference.json');
+const ref={...old,units:[...old.units,{text:'-99',box:[950,745,1027,806]}]};
+const bm=metrics(before.result.regions,ref),am=metrics(after.result.regions,ref);
+if(am.exact!==4||am.splitOrDuplicate)throw Error('Targeted units must be complete and unique');
+const panel=d=>`<svg viewBox="905 690 205 200"><image href="${pathToFileURL(d.source).href}" width="1132" height="1607"/>${d.result.regions.map(r=>`<polygon points="${outline(r).map(p=>p.join(',')).join(' ')}"/>`).join('')}</svg>`;
+fs.writeFileSync('test-results/ocr-accuracy/romance-1.6.83.json',JSON.stringify({reference:ref,before:bm,after:am,result:after},null,2));
+fs.writeFileSync('test-results/ocr-accuracy/revision-1.6.83.html',`<!doctype html><meta charset="utf-8"><title>OCR 1.6.83</title><style>body{font:18px system-ui;max-width:1100px;margin:32px auto;padding:24px;background:#f5f6f9}.pair{display:grid;grid-template-columns:1fr 1fr;gap:24px}section{background:white;padding:24px}svg{width:100%}polygon{fill:none;stroke:#e48316;stroke-width:1}</style><h1>1.6.83 — ตัวเลขที่อ่านสับสนและกรอบซ้ำ</h1><div class="pair"><section><h2>ก่อน: -qq สองกรอบ</h2>${panel(before)}</section><section><h2>หลัง: -99 หนึ่งกรอบ</h2>${panel(after)}</section></div><p>ตรวจสี่หน่วยในหน้านี้: ${bm.exact}/4 → ${am.exact}/4 รวมวรรคตอนครบและไม่ซ้ำ เป็นกรณีที่ใช้พัฒนา ไม่ใช่คะแนนทั้งหน้า</p><p>ส่งตรวจข้ามโมเดลเฉพาะข้อความสั้นมีเครื่องหมายบวก/ลบที่คำอ่านตัวเลขขัดกับตัวอักษร ต้องมีตัวเลขอยู่ในคำอ่านเดิมและอีกโมเดลยืนยันสองภาพประมวลผลที่ต่างกัน ไม่แทน q เป็น 9 โดยตรง</p><p>คงคำอ่านและกรอบเดิมไว้ใน duplicateObservations การรวมกรอบต้องตรงกันด้านตำแหน่งและหลักฐานแนวข้อความ ไม่รวมกรอบที่ผู้ใช้ตรวจแก้แล้ว</p><p>ยังเหลือเครื่องหมายวรรคตอน เช่น LOWER... และ ...OPPORTUNITY? รวมถึงเอฟเฟกต์อื่น ๆ ตัวตรวจเพิ่มเติมใช้สองครั้งเฉพาะกรณีขัดกัน จึงไม่ได้ยืนยันความเร็วทั้งหน้า</p>`);
+console.log({before:bm.exact,after:am.exact,duplicate:am.splitOrDuplicate});

@@ -94,8 +94,8 @@ async function screenshot(page,file){
  },url);
  const [captured]=await lab.evaluate(()=>window.ocrLab.capture());
  assert.equal(captured.source.url,url);assert.equal(captured.source.scrollY,300);assert.equal(captured.width,900);assert.equal(captured.height,700);
- const visibility=await app.evaluate(async({webContents},url)=>webContents.getAllWebContents().find(w=>w.getURL()===url).executeJavaScript("document.getElementById('__harvestts_manga_translate__').style.visibility"),url);
- assert.equal(visibility,'','launcher visibility must be restored after capture');
+ const visibility=await app.evaluate(async({webContents},url)=>webContents.getAllWebContents().find(w=>w.getURL()===url).executeJavaScript("getComputedStyle(document.getElementById('__harvestts_manga_translate__')).visibility"),url);
+ assert.equal(visibility,'visible','launcher visibility must be restored after capture');
  // AVIF must preserve the source digest and work for both original and 2x OCR.
  const avif=path.join(out,'thai.avif');await sharp(path.join(root,'test','fixtures','ocr-thai-bubble.png')).avif({quality:85}).toFile(avif);
  const [avifPage]=await app.evaluate(async(_electron,files)=>global.__eiwTest.ocrLabAddFiles(files),[avif]);

@@ -1,0 +1,222 @@
+{
+  "schema": 1,
+  "scope": "Manually audited selected input pages. Counts are not an estimate for all 589 corpus images. Grouping and transcription are separate.",
+  "cases": [
+    {
+      "id": "en-connected-page",
+      "source": "C:\\Users\\jinna\\Downloads\\manga test ocr\\8\\10 _ Chapter 2.1 - Koke kara Hajimaru Isekai Life - MangaDex_2026-10-06T14-58-13\\0004.png",
+      "language": "en",
+      "width": 1284,
+      "height": 1826,
+      "coverage": "complete-page",
+      "notes": "Manual dialogue/caption/table annotation; SFX excluded explicitly. Familiar development page, not held-out. Connected main speech and Well are separate units; merged output is reported as grouping issue even when readable. Glyph bounds visually rechecked on original full-resolution page; approximate edges, not pixel-mask truth.",
+      "units": [
+        {
+          "id": "main",
+          "text": "It's time!! Time to try what I've honed over the past few days!!",
+          "box": [
+            665,
+            361,
+            935,
+            620
+          ]
+        },
+        {
+          "id": "well",
+          "text": "Well... Let's go!!!",
+          "box": [
+            578,
+            609,
+            785,
+            698
+          ]
+        },
+        {
+          "id": "rabbit",
+          "text": "Usagi-san!! (mr rabbit)",
+          "box": [
+            133,
+            478,
+            251,
+            637
+          ]
+        },
+        {
+          "id": "note",
+          "text": "Pun (i think) that didn't translate well",
+          "box": [
+            246,
+            803,
+            851,
+            849
+          ]
+        },
+        {
+          "id": "slanted",
+          "text": "I don't know",
+          "box": [
+            143,
+            817,
+            249,
+            1003
+          ]
+        },
+        {
+          "id": "what",
+          "text": "A labeat? What's that?",
+          "box": [
+            222,
+            873,
+            417,
+            1010
+          ]
+        },
+        {
+          "id": "regardless",
+          "text": "Regardless of that,",
+          "box": [
+            151,
+            1050,
+            330,
+            1142
+          ]
+        },
+        {
+          "id": "level",
+          "text": "Level 12: It's superior...",
+          "box": [
+            87,
+            1147,
+            227,
+            1257
+          ]
+        },
+        {
+          "id": "appraisal",
+          "text": "Appraisal",
+          "box": [
+            1029,
+            875,
+            1163,
+            973
+          ]
+        },
+        {
+          "id": "name",
+          "text": "Labeat",
+          "box": [
+            1112,
+            1094,
+            1205,
+            1125
+          ]
+        },
+        {
+          "id": "labels",
+          "text": "Species: Rank: Level: Skills:",
+          "box": [
+            944,
+            1094,
+            1056,
+            1221
+          ]
+        },
+        {
+          "id": "rank",
+          "text": "F 12",
+          "box": [
+            1110,
+            1129,
+            1146,
+            1193
+          ]
+        },
+        {
+          "id": "jump",
+          "text": "Jump Lv.3",
+          "box": [
+            1095,
+            1192,
+            1219,
+            1224
+          ]
+        },
+        {
+          "id": "good",
+          "text": "good thing I didn't evolve into that",
+          "box": [
+            465,
+            1384,
+            633,
+            1550
+          ]
+        },
+        {
+          "id": "herbs",
+          "text": "It's obsessed with eating those herbs",
+          "box": [
+            657,
+            1395,
+            785,
+            1603
+          ]
+        },
+        {
+          "id": "chance",
+          "text": "Now's the chance!",
+          "box": [
+            92,
+            1422,
+            203,
+            1525
+          ]
+        }
+      ],
+      "ignore": [
+        [
+          80,
+          0,
+          835,
+          360
+        ],
+        [
+          850,
+          80,
+          1210,
+          358
+        ],
+        [
+          830,
+          797,
+          931,
+          1080
+        ],
+        [
+          858,
+          1370,
+          1190,
+          1750
+        ],
+        [
+          125,
+          452,
+          265,
+          490
+        ]
+      ],
+      "sourceHash": "de0beb485db2dcd1dfedc2ac49da06d188d947b0cdcaddd14f2e233cb00b5872"
+    },
+    {
+      "id": "en-dark-artwork",
+      "source": "C:\\Users\\jinna\\Downloads\\manga test ocr\\3\\After the School Belle Dumped Me, I Became a Martial Arts God · Ch.1_2026-10-05T22-05-40\\0002.webp",
+      "language": "en",
+      "width": 800,
+      "height": 1425,
+      "coverage": "complete-page",
+      "notes": "Visually audited whole input: artwork with empty luminous rectangles, no text.",
+      "units": [],
+      "ignore": [],
+      "sourceHash": "54582bfa58e05515334414cdabb382d5ae23ca868d526eb1cb6f3898fab263fc"
+    }
+  ]
+}

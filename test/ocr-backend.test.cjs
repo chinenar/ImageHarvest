@@ -1,10 +1,52 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {LocalOcrBackend,runtimeRoot}=require('../src/ocr-backend.cjs');
-const {EnhancedMangaOcrPool,postprocessReading,chooseReadings,refineBalloonGroups}=require('../src/enhanced-manga-ocr.cjs');
+const {EnhancedMangaOcrPool,postprocessReading,chooseReadings,selectVerticalReading,refineBalloonGroups}=require('../src/enhanced-manga-ocr.cjs');
 const {detectText}=require('../src/comic-text-detector.cjs');
 const sharp=require('sharp');
 const ready=fs.existsSync(path.join(runtimeRoot(),'Scripts/python.exe'));
+
+test('prepared pixel reuse respects inference identity and isolates cached geometry',{skip:!ready},()=>{
+ const result=require('node:child_process').spawnSync(path.join(runtimeRoot(),'Scripts/python.exe'),[path.join(__dirname,'ocr-read-cache.py')],{encoding:'utf8',windowsHide:true});
+ assert.equal(result.status,0,result.stderr||result.stdout);
+});
+
+test('staggered dialogue splits only at a source gap with two stable alignments',{skip:!ready},()=>{
+ const result=require('node:child_process').spawnSync(path.join(runtimeRoot(),'Scripts/python.exe'),[path.join(__dirname,'ocr-staggered.py')],{encoding:'utf8',windowsHide:true});
+ assert.equal(result.status,0,result.stderr||result.stdout);
+});
+
+test('vertical Japanese preserves small kana supported independently despite a higher model score',()=>{
+ const chosen={engine:'manga-ocr',text:'お姉ちゃんには',confidence:null};
+ const positioned={engine:'paddleocr',text:'お姉ちんには',confidence:99.9,orientation:'vertical'};
+ const result=selectVerticalReading(chosen,positioned,{readings:[chosen],baseline:{text:'お姉ちゃんには',confidence:91}});
+ assert.equal(result.text,'お姉ちゃんには');assert.equal(result.confidence,null);assert.equal(result.positionEngine,'paddleocr');
+ const variants=selectVerticalReading(chosen,positioned,{readings:[chosen,{...chosen,variant:'contrast'}]});assert.equal(variants.text,chosen.text);
+ const unsupported=selectVerticalReading({...chosen,text:'誤読です'},positioned,{readings:[]});assert.equal(unsupported.text,positioned.text);
+ assert.equal(selectVerticalReading(chosen,{...positioned,confidence:20}),chosen);
+});
+
+test('vertical Japanese and Chinese columns read right to left, keeping top-to-bottom fragments and source boxes',()=>{
+ for(const [right,left] of [['こんにちは','世界です'],['接下来','做好觉悟吧']]){
+  const line=(text,x,y)=>({text,confidence:96,bbox:{x0:x,y0:y,x1:x+20,y1:y+90}});
+  const lines=[line(left,10,20),line(right.slice(2),60,115),line(right.slice(0,2),61,20)];
+  const raw={text:'detector order',confidence:94,orientation:'vertical',lines};
+  const result=postprocessReading(raw);
+  assert.equal(result.text,right+'\n'+left);
+  assert.equal(result.rawText,'detector order');
+  assert.equal(result.rawConfidence,94);
+  assert.deepEqual(result.lines,lines,'source observations must not be reordered or mutated');
+  assert.deepEqual(result.textLines.map(l=>l.bbox),[{x0:60,y0:20,x1:81,y1:205},{x0:10,y0:20,x1:30,y1:110}]);
+  assert.equal(raw.text,'detector order');
+ }
+});
+
+test('horizontal dialogue retains spaces while upright columns are inferred from geometry',()=>{
+ const line=(text,bbox)=>({text,confidence:99,bbox});
+ assert.equal(postprocessReading({text:'',lines:[line('Hello',{x0:0,y0:0,x1:70,y1:20}),line('world',{x0:80,y0:0,x1:150,y1:20})]}).text,'Hello world');
+ const vertical=postprocessReading({text:'left first',lines:[line('左列',{x0:0,y0:0,x1:20,y1:100}),line('右列',{x0:60,y0:0,x1:80,y1:100})]});
+ assert.equal(vertical.text,'右列\n左列');assert.equal(vertical.orientation,'vertical');
+});
 test('GPU memory exhaustion replays the same request once on CPU without hiding other errors',{skip:!ready},()=>{
  const result=require('node:child_process').spawnSync(path.join(runtimeRoot(),'Scripts/python.exe'),[path.join(__dirname,'ocr-worker-fallback.py')],{encoding:'utf8',windowsHide:true});
  assert.equal(result.status,0,result.stderr||result.stdout);
@@ -13,9 +55,10 @@ test('GPU read queue batches compatible crops and keeps each response attached t
  const b=new LocalOcrBackend();b.batchEnabled=true;const calls=[];
  b.request=async data=>{calls.push(data);return data.items.map(r=>({text:Buffer.from(r.image,'base64').toString(),variant:r.variant,language:r.language}));};
  try{
-  const results=await Promise.all([b.read(Buffer.from('first'),{language:'th',variant:'original'}),b.read(Buffer.from('second'),{language:'th',variant:'contrast'}),b.read(Buffer.from('third'),{language:'en'})]);
+  const results=await Promise.all([b.read(Buffer.from('first'),{language:'th',variant:'original'}),b.read(Buffer.from('second'),{language:'th',variant:'contrast',recognizeOnly:true}),b.read(Buffer.from('third'),{language:'en'})]);
   assert.deepEqual(results.map(r=>r.text),['first','second','third']);assert.deepEqual(calls.map(c=>c.items.length),[2,1]);
   assert.equal(results[1].variant,'contrast');assert.equal(results[2].language,'en');
+  assert.equal(calls[0].items[0].recognizeOnly,false);assert.equal(calls[0].items[1].recognizeOnly,true);
   await assert.rejects(b.readBatch([{image:Buffer.alloc(1),language:'en'},{image:Buffer.alloc(1),language:'th'}]),/one engine and language/);
   b.request=async()=>[];await assert.rejects(b.readBatch([{image:Buffer.alloc(1)}]),/incomplete/);
  }finally{b.close();}

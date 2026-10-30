@@ -2,6 +2,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('harvestInternal', {
   historyList: query => ipcRenderer.invoke('harvest-internal:history-list', query || {}),
+  historyFavicons: query => ipcRenderer.invoke('harvest-internal:history-favicons', query || {}),
   historyRemove: id => ipcRenderer.invoke('harvest-internal:history-remove', { id, limit:1000 }),
   historyClear: () => ipcRenderer.invoke('harvest-internal:history-clear'),
   historySettings: () => ipcRenderer.invoke('harvest-internal:browser-settings'),

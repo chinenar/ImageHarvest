@@ -1,0 +1,15 @@
+{
+  "scope": "Two manually transcribed development regions in corpus case-22. Whitespace is ignored; character edits include punctuation and digits. Not a whole-table accuracy claim.",
+  "units": [
+    {
+      "id": "right-status-labels",
+      "box": [710, 1410, 806, 1500],
+      "text": "レベル:魔力:防御力:魔法防御力:"
+    },
+    {
+      "id": "skill-list",
+      "box": [490, 1540, 930, 1625],
+      "text": "特殊進化 言語理解 詠唱破棄 アイテムボックス Lv.4 鑑定 Lv.4 思考加速 Lv.4 生命探知 Lv.5 魔力探知 Lv.4 敵意察知 Lv.5 体力自動回復 Lv.2 魔力自動回復 Lv.4 光魔法 Lv.4 水魔法 Lv.5 時空魔法 Lv.2 重力魔法 Lv.2 光合成 Lv.5 毒生成 Lv.1"
+    }
+  ]
+}

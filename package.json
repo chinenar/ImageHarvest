@@ -1,14 +1,14 @@
 {
   "name": "imageharvest",
   "productName": "ImageHarvest",
-  "version": "1.6.68",
+  "version": "1.6.95",
   "description": "Ordered website image collector for Windows",
   "private": true,
   "main": "src/main.cjs",
   "author": "chinenar",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/adaptive.test.cjs test/unit.test.cjs test/network-lookup.test.mjs test/protection-rules.test.cjs test/filter-stream.test.cjs test/manual-chrome-login.test.cjs test/ocr-review.test.cjs test/text-placement.test.cjs test/harvest-translate.test.cjs test/ocr-translation.test.cjs test/translation-performance.test.cjs test/ocr-speed.test.cjs test/ocr-content-role.test.cjs test/translation-overlay.test.cjs test/reader-stability.test.cjs test/reader-quality.test.cjs test/reader-priority.test.cjs",
+    "test": "node --test test/adaptive.test.cjs test/unit.test.cjs test/network-lookup.test.mjs test/protection-rules.test.cjs test/filter-stream.test.cjs test/manual-chrome-login.test.cjs test/ocr-review.test.cjs test/text-placement.test.cjs test/harvest-translate.test.cjs test/ocr-translation.test.cjs test/translation-performance.test.cjs test/ocr-speed.test.cjs test/ocr-content-role.test.cjs test/translation-overlay.test.cjs test/reader-stability.test.cjs test/reader-quality.test.cjs test/reader-priority.test.cjs test/cdp-transport.test.cjs test/desktop-features.test.cjs test/ocr-ownership.test.cjs test/ocr-effect-candidates.test.cjs test/ocr-targeted-recovery.test.cjs test/reader-cleanup-masks.test.cjs test/reader-slanted-text.test.cjs test/ocr-corpus-inventory.test.cjs test/ocr-detection-metrics.test.cjs test/ocr-segmentation-boundaries.test.cjs test/ocr-japanese-line-recovery.test.cjs test/ocr-vertical-transcription.test.cjs test/ocr-vertical-boundaries.test.cjs",
     "test:e2e": "node test/e2e.cjs && node test/transient-preview.e2e.cjs && node test/browser-header-replay.e2e.cjs",
     "test:capture": "node test/capture.e2e.cjs",
     "package": "node scripts/package.cjs",
@@ -23,19 +23,34 @@
     "test:filters:chrome": "node test/filter-stream.e2e.cjs --chrome",
     "test:next-live": "node test/live-next-chapter.e2e.cjs",
     "test:adaptive": "node --test test/adaptive.test.cjs && node test/adaptive-browser.e2e.cjs && node test/adaptive-production.e2e.cjs",
-    "test:ocr": "node --test --test-concurrency=1 test/ocr-review.test.cjs test/ocr-engine.test.cjs test/ocr-backend.test.cjs test/ocr-advanced.test.cjs test/text-placement.test.cjs test/ocr-speed.test.cjs test/ocr-content-role.test.cjs",
+    "test:ocr": "node --test --test-concurrency=1 test/ocr-review.test.cjs test/ocr-engine.test.cjs test/ocr-backend.test.cjs test/ocr-advanced.test.cjs test/text-placement.test.cjs test/ocr-speed.test.cjs test/ocr-content-role.test.cjs test/ocr-ownership.test.cjs test/ocr-effect-candidates.test.cjs test/ocr-targeted-recovery.test.cjs",
     "test:ocr-lab": "node test/ocr-lab.e2e.cjs",
     "test:translation": "node --test test/harvest-translate.test.cjs test/ocr-translation.test.cjs test/translation-performance.test.cjs",
     "test:translation:live": "node test/ocr-translation.e2e.cjs",
     "benchmark:ocr-speed": "node scripts/benchmark-ocr-speed.cjs",
     "test:overlay": "node --test test/translation-overlay.test.cjs && node test/translation-overlay.e2e.cjs && node test/harvest-translation.e2e.cjs && node test/reader-stability.e2e.cjs",
     "test:reader-stability": "node --test test/reader-stability.test.cjs && node test/reader-stability.e2e.cjs && node test/reader-lock-cancel.e2e.cjs",
-    "test:reader-priority": "node --test test/reader-priority.test.cjs && node test/reader-font-editor.e2e.cjs"
+    "test:reader-priority": "node --test test/reader-priority.test.cjs && node test/reader-font-editor.e2e.cjs",
+    "format:desktop": "prettier --write src/main.cjs src/renderer.js \"src/{collector,harvestts,shared}/**/*.{cjs,js}\" test/desktop-features.test.cjs test/desktop-separation.e2e.cjs scripts/check-desktop.cjs",
+    "format:desktop:check": "prettier --check src/main.cjs src/renderer.js \"src/{collector,harvestts,shared}/**/*.{cjs,js}\" test/desktop-features.test.cjs test/desktop-separation.e2e.cjs scripts/check-desktop.cjs",
+    "check:desktop": "node scripts/check-desktop.cjs && npm run format:desktop:check",
+    "test:desktop": "node --test test/desktop-features.test.cjs && node test/desktop-separation.e2e.cjs",
+    "test:tabs": "node test/harvest-tabs.e2e.cjs",
+    "test:history": "node test/history-favicons.e2e.cjs",
+    "test:launcher": "node test/launcher-layout.e2e.cjs && node test/launcher-zoom.e2e.cjs",
+    "test:input": "node test/harvest-input-popup.e2e.cjs",
+    "test:ocr:corpus": "node scripts/check-ocr-corpus.cjs",
+    "review:ocr:corpus": "node scripts/review-ocr-corpus.cjs",
+    "benchmark:ocr-accuracy": "node scripts/benchmark-ocr-accuracy.cjs",
+    "test:ocr-effects": "node test/ocr-effects.e2e.cjs",
+    "benchmark:reader-pipeline": "node scripts/benchmark-reader-pipeline.cjs && node scripts/render-reader-pipeline.cjs && node scripts/report-reader-pipeline.cjs",
+    "test:reader-font-scale": "node test/reader-font-scale.e2e.cjs"
   },
   "devDependencies": {
     "@electron/packager": "20.3.0",
     "electron": "44.4.1",
-    "electron-builder": "26.15.3"
+    "electron-builder": "26.15.3",
+    "prettier": "3.9.9"
   },
   "engines": {
     "node": ">=22.12.0"

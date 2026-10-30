@@ -179,7 +179,12 @@ class MinimalChrome {
       let version;
       for (let i = 0; i < 100; i++) {
         if (launchError) throw launchError;
-        if (this.child.exitCode !== null) throw new Error('Chrome exited before startup');
+        // Windows Chrome may detach its initial launcher (exit 0) before the
+        // app-owned browser opens its debugging port. Only a nonzero exit or
+        // signal is an immediate launch failure; endpoint readiness is the proof.
+        if (this.child.exitCode !== null && this.child.exitCode !== 0)
+          throw new Error('Chrome launcher failed with exit ' + this.child.exitCode);
+        if (this.child.signalCode) throw new Error('Chrome launcher stopped by ' + this.child.signalCode);
         try { version = await info('/json/version'); if (version?.webSocketDebuggerUrl) break; } catch {}
         await sleep(150);
       }

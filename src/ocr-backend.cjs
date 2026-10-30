@@ -1,6 +1,7 @@
 'use strict';
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 const {spawn}=require('node:child_process'),{createHash}=require('node:crypto'),readline=require('node:readline');
+const {materializeWorkerFile}=require('./ocr-worker-files.cjs');
 const runtimeRoot=()=>path.join(process.env.LOCALAPPDATA||os.homedir(),'ImageHarvest','ocr-runtime');
 // Keep runtime binaries and downloaded model data separate. A model directory
 // created by an elevated updater/test can carry a protected Windows ACL even
@@ -8,6 +9,7 @@ const runtimeRoot=()=>path.join(process.env.LOCALAPPDATA||os.homedir(),'ImageHar
 // read inference.yml. v2 gives the app a clean per-user cache namespace.
 const ocrCacheRoot=()=>process.env.IMAGEHARVEST_OCR_CACHE||path.join(process.env.LOCALAPPDATA||os.homedir(),'ImageHarvest','ocr-models-v2');
 class LocalOcrBackend {
+  get supportsLearnedCleanup(){return true;}
   constructor({python,timeout=240000,device='auto',cacheRoot}={}){this.python=python||path.join(runtimeRoot(),'Scripts','python.exe');this.cacheRoot=cacheRoot||ocrCacheRoot();this.timeout=timeout;this.device=device;this.pending=new Map();this.sequence=0;this.logs='';this.timings=new Map();this.readQueue=[];this.batchEnabled=false;this.commandQueue=Promise.resolve();}
   stats(){return Object.fromEntries([...this.timings].map(([key,value])=>[key,{...value}]));}
   async start(){
@@ -20,9 +22,11 @@ class LocalOcrBackend {
     await fs.access(this.python).catch(()=>{throw Error('ยังไม่ได้ติดตั้งเอนจิน OCR เพิ่มเติม • ใช้ scripts/setup-ocr-runtime.ps1');});
     const source=await fs.readFile(path.join(__dirname,'ocr-backend.py'));
     const geometry=await fs.readFile(path.join(__dirname,'reader_surface.py'));
+    const learned=await fs.readFile(path.join(__dirname,'reader_learned_mask.py'));
     await fs.mkdir(this.cacheRoot,{recursive:true});
-    const dir=path.join(runtimeRoot(),'worker',createHash('sha256').update(source).update(geometry).digest('hex').slice(0,16));await fs.mkdir(dir,{recursive:true});
-    const script=path.join(dir,'ocr-backend.py');await fs.writeFile(script,source);await fs.writeFile(path.join(dir,'reader_surface.py'),geometry);
+    const dir=path.join(runtimeRoot(),'worker',createHash('sha256').update(source).update(geometry).update(learned).digest('hex').slice(0,16));await fs.mkdir(dir,{recursive:true});
+    const script=path.join(dir,'ocr-backend.py');await materializeWorkerFile(script,source);await materializeWorkerFile(path.join(dir,'reader_surface.py'),geometry);
+    await materializeWorkerFile(path.join(dir,'reader_learned_mask.py'),learned);
     const child=this.child=spawn(this.python,['-u',script],{windowsHide:true,stdio:['pipe','pipe','pipe'],env:{...process.env,PYTHONIOENCODING:'utf-8',IMAGEHARVEST_OCR_CACHE:this.cacheRoot,...(this.device!=='auto'?{IMAGEHARVEST_OCR_DEVICE:this.device}:{})}});
     child.stderr.on('data',chunk=>{this.logs=(this.logs+chunk).slice(-8000);});
     readline.createInterface({input:child.stdout}).on('line',line=>{
@@ -53,13 +57,13 @@ class LocalOcrBackend {
       this.child.stdin.write(JSON.stringify({...data,id})+'\n',error=>{if(error){this.pending.delete(id);cleanup();reject(error);}});
     });
   }
-  read(image,{engine='paddle',language='en',variant='original',signal}={}){
+  read(image,{engine='paddle',language='en',variant='original',recognizeOnly=false,signal}={}){
     if(signal?.aborted)return Promise.reject(Error('ยกเลิก OCR'));
-    if(!this.batchEnabled)return this.request({image:Buffer.from(image).toString('base64'),engine,language,variant},{signal});
+    if(!this.batchEnabled)return this.request({image:Buffer.from(image).toString('base64'),engine,language,variant,recognizeOnly},{signal});
     return new Promise((resolve,reject)=>{
       const abort=()=>this.close(Error('ยกเลิก OCR'));
       signal?.addEventListener('abort',abort,{once:true});
-      this.readQueue.push({image,engine,language,variant,signal,resolve,reject,cleanup:()=>signal?.removeEventListener('abort',abort)});
+      this.readQueue.push({image,engine,language,variant,recognizeOnly,signal,resolve,reject,cleanup:()=>signal?.removeEventListener('abort',abort)});
       if(!this.batchTimer)this.batchTimer=setTimeout(()=>this.flushReads(),8);
     });
   }
@@ -79,7 +83,7 @@ class LocalOcrBackend {
       // Two region crops at a time keeps VRAM bounded alongside a local AI model.
       const next=queue.findIndex(r=>r.engine===first.engine&&r.language===first.language&&r.signal===first.signal);
       if(next>=0)group.push(queue.splice(next,1)[0]);
-      this.readBatch(group.map(({image,engine,language,variant})=>({image,engine,language,variant})),{signal:first.signal})
+      this.readBatch(group.map(({image,engine,language,variant,recognizeOnly})=>({image,engine,language,variant,recognizeOnly})),{signal:first.signal})
         .then(results=>group.forEach((r,i)=>r.resolve(results[i])),error=>group.forEach(r=>r.reject(error)))
         .finally(()=>group.forEach(r=>r.cleanup()));
     }

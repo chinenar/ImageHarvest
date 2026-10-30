@@ -1,0 +1,255 @@
+{
+  "scope": "Detection-only visual reference. Japanese case uses the complete non-explicit sibling page 0007.avif, not the manifest original 0003.avif. Chinese case uses a complete isolated nonsexual text-only crop; its coverage is partial relative to the original page. No transcription or OCR predictions were used.",
+  "cases": [
+    {
+      "id": "case-14-sibling-0007",
+      "corpusCaseId": "case-14",
+      "source": "C:\\Users\\jinna\\Downloads\\manga test ocr\\6\\かわいそうなのはかわいい! _ Hitomi.la_2026-10-05T22-15-52\\0007.avif",
+      "sourceHash": "f0375752f444e285d56a7d95670661ad12235c93e8baf89436becfab75f44d9f",
+      "originalSource": "C:\\Users\\jinna\\Downloads\\manga test ocr\\6\\かわいそうなのはかわいい! _ Hitomi.la_2026-10-05T22-15-52\\0003.avif",
+      "language": "ja",
+      "width": 1128,
+      "height": 1600,
+      "coverage": "complete-page",
+      "units": [
+        {
+          "id": "ja-sign-01",
+          "box": [
+            26,
+            55,
+            353,
+            163
+          ],
+          "text": null,
+          "orientation": "horizontal",
+          "kind": "caption"
+        },
+        {
+          "id": "ja-sign-02",
+          "box": [
+            432,
+            42,
+            562,
+            197
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "caption"
+        },
+        {
+          "id": "ja-speech-01",
+          "box": [
+            218,
+            233,
+            478,
+            600
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "speech"
+        },
+        {
+          "id": "ja-speech-02",
+          "box": [
+            936,
+            234,
+            1023,
+            426
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "speech"
+        },
+        {
+          "id": "ja-speech-03",
+          "box": [
+            128,
+            499,
+            156,
+            534
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "speech"
+        },
+        {
+          "id": "ja-speech-04",
+          "box": [
+            254,
+            648,
+            332,
+            880
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "speech"
+        },
+        {
+          "id": "ja-speech-05",
+          "box": [
+            17,
+            886,
+            123,
+            1114
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "speech"
+        },
+        {
+          "id": "ja-speech-06",
+          "box": [
+            269,
+            1021,
+            300,
+            1107
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "speech"
+        },
+        {
+          "id": "ja-speech-07",
+          "box": [
+            38,
+            1209,
+            104,
+            1318
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "speech"
+        },
+        {
+          "id": "ja-speech-08",
+          "box": [
+            58,
+            1500,
+            80,
+            1573
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "speech"
+        },
+        {
+          "id": "ja-speech-09",
+          "box": [
+            209,
+            1365,
+            247,
+            1518
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "speech"
+        },
+        {
+          "id": "ja-speech-10",
+          "box": [
+            803,
+            1304,
+            951,
+            1548
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "speech"
+        }
+      ],
+      "ignore": [
+        [
+          365,
+          0,
+          447,
+          59
+        ],
+        [
+          390,
+          60,
+          435,
+          107
+        ],
+        [
+          600,
+          0,
+          1055,
+          166
+        ],
+        [
+          8,
+          648,
+          94,
+          783
+        ],
+        [
+          296,
+          909,
+          345,
+          989
+        ],
+        [
+          938,
+          737,
+          1054,
+          868
+        ],
+        [
+          218,
+          1158,
+          278,
+          1252
+        ],
+        [
+          253,
+          1285,
+          281,
+          1321
+        ],
+        [
+          0,
+          1327,
+          83,
+          1390
+        ]
+      ],
+      "notes": "All speech and sign/caption blocks in the complete sibling page were visually accounted for. Main upper-left connected balloon is one unit with five vertical columns. Central school sign is one caption block including its small header and differently sized columns. Stylized upper-left banner is a horizontal caption. Small enclosed interjections are speech; free-standing effects, laughter, gesture lettering and decorative skirt glyph are explicitly ignored. Coordinates bound glyphs rather than balloon outlines; hand-marked edges carry approximately 3-6 px uncertainty, and sign grouping is semantically uncertain."
+    },
+    {
+      "id": "case-16-safe-caption-crop",
+      "corpusCaseId": "case-16",
+      "source": "E:\\Shared\\ExportImagefromWeb\\test-results\\vertical-reference-audit\\case-16-safe-caption-crop.png",
+      "sourceHash": "f148e074220f0308b89ab8db22fe0f1ccb545e352e3b50ae63fb94e3d3353aa4",
+      "originalSource": "C:\\Users\\jinna\\Downloads\\manga test ocr\\6\\茵蒂克丝的无尽凌辱第2话_400公里马拉松大挑战(Toaru Majutsu no Index) [Chinese]【简+繁】 _ Hito_2026-10-05T22-19-43\\0003.avif",
+      "originalSourceHash": "077bfdd8f7ff9a41683709990f3ced285c5b190047d162b503df1b19ea5d1588",
+      "originalWidth": 2036,
+      "originalHeight": 2880,
+      "crop": [
+        1900,
+        40,
+        2028,
+        430
+      ],
+      "language": "zh",
+      "width": 128,
+      "height": 390,
+      "coverage": "partial",
+      "units": [
+        {
+          "id": "zh-caption-01",
+          "box": [
+            3,
+            19,
+            116,
+            374
+          ],
+          "text": null,
+          "orientation": "vertical",
+          "kind": "caption"
+        }
+      ],
+      "ignore": [],
+      "notes": "Complete-crop visual audit: one complete isolated vertical caption column, including terminal punctuation, is annotated. This reference does not audit the full original case-16 page. Crop coordinates use original pixels; unit coordinates use crop pixels. No effects or watermark are present inside the chosen crop. Hand-marked glyph edges carry approximately 3-5 px uncertainty."
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "scope": "Three targeted dialogue units on case-04 sibling page 0003.webp. Development cases; not whole-page accuracy.",
+  "units": [
+    {"text":"MASTER!","box":[475,201,558,235]},
+    {"text":"IS -99 THE LIMIT?","box":[590,143,666,239]},
+    {"text":"THAT'S PRACTICALLY MURDEROUS INTENT!","box":[649,746,772,870]}
+  ],
+  "negative": []
+}

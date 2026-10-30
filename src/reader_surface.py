@@ -6,6 +6,7 @@ import math
 import cv2
 import numpy as np
 from PIL import Image
+from reader_learned_mask import supported_components, fill_supported_mask
 
 
 def bbox(value, width, height):
@@ -203,7 +204,125 @@ def split_hints(surface, region, rgb):
     return sorted(hints,key=lambda a:(a['bbox']['y0'], -a['bbox']['x0']))
 
 
-def cleanup_patch(rgb, region, surface, geometry):
+def foreign_reading_lines(region, peer):
+    lines=peer.get('recognitionLines') or [{'bbox':peer['bbox']}]
+    if not peer.get('excludeFromLayoutCompetition'):return lines
+    own=region.get('recognitionLines',[])
+    def covered(line):
+        b=line['bbox'];area=max(1,(b['x1']-b['x0'])*(b['y1']-b['y0']))
+        for host in own:
+            a=host['bbox']
+            overlap=max(0,min(a['x1'],b['x1'])-max(a['x0'],b['x0']))*max(0,min(a['y1'],b['y1'])-max(a['y0'],b['y0']))
+            if overlap/area>=.90 and host.get('confidence',0)>=95 and len(str(host.get('text','')))>=len(str(line.get('text','')))*1.5:return True
+        return False
+    # A rejected crop can re-read a fragment of an accepted complete line.
+    # Keep its independent lines protected, but do not give the duplicate
+    # fragment ownership over the longer high-confidence reading.
+    return [line for line in lines if not covered(line)]
+
+
+def protect_neighbor_ink(ink, structural, region, peers, origin):
+    """Preserve whole connected strokes touching another reading's source zone."""
+    x0,y0=origin
+    foreign=np.zeros_like(ink)
+    foreign_evidence=np.zeros_like(ink)
+    zones=list(region.get('protectedLines',[]))
+    for peer in peers:
+        if peer is region:continue
+        zones.extend(foreign_reading_lines(region,peer))
+    used=0
+    for line in zones:
+        b=line.get('bbox')
+        if not b:continue
+        ax=max(0,int(math.floor(b['x0']))-x0);ay=max(0,int(math.floor(b['y0']))-y0)
+        bx=min(ink.shape[1],int(math.ceil(b['x1']))-x0);by=min(ink.shape[0],int(math.ceil(b['y1']))-y0)
+        if bx<=ax or by<=ay:continue
+        points=line.get('polygon')
+        if points and len(points)>=3:
+            cv2.fillPoly(foreign,[np.rint(np.asarray(points)-[x0,y0]).astype(np.int32)],255)
+            if str(line.get('text','')).strip():
+                cv2.fillPoly(foreign_evidence,[np.rint(np.asarray(points)-[x0,y0]).astype(np.int32)],255)
+        else:foreign[ay:by,ax:bx]=255
+        used+=1
+    if not used:return ink,{'neighborZones':0,'protectedPixels':0,'ambiguousPixels':0}
+    # Do not assign a stroke by centroid or cut it at the rectangle midpoint.
+    # A touching N/W, for example, is one unresolved connected component.
+    count,labels,_,_=cv2.connectedComponentsWithStats(structural,8)
+    ids=np.unique(labels[(foreign>0)&(structural>0)])
+    ids=ids[ids!=0]
+    own=np.zeros_like(ink)
+    own_evidence=np.zeros_like(ink)
+    for line in region.get('recognitionLines') or [{'bbox':region['bbox']}]:
+        b=line['bbox'];ax=max(0,int(math.floor(b['x0']))-x0);ay=max(0,int(math.floor(b['y0']))-y0)
+        bx=min(ink.shape[1],int(math.ceil(b['x1']))-x0);by=min(ink.shape[0],int(math.ceil(b['y1']))-y0)
+        if bx>ax and by>ay:
+            points=line.get('polygon')
+            if points and len(points)>=3:
+                cv2.fillPoly(own,[np.rint(np.asarray(points)-[x0,y0]).astype(np.int32)],255)
+                if str(line.get('text','')).strip():
+                    cv2.fillPoly(own_evidence,[np.rint(np.asarray(points)-[x0,y0]).astype(np.int32)],255)
+            else:own[ay:by,ax:bx]=255
+    # Padded line quadrilaterals can graze a neighboring complete glyph.
+    # Assign only whole, fully contained components, never a centroid or a cut.
+    # Components shared in full, crossing both zones, or clipped at the patch
+    # edge retain the conservative ambiguity gate.
+    sizes=np.bincount(labels.ravel(),minlength=count)
+    own_counts=np.bincount(labels[own>0],minlength=count)
+    foreign_counts=np.bincount(labels[foreign>0],minlength=count)
+    own_evidence_counts=np.bincount(labels[own_evidence>0],minlength=count)
+    foreign_evidence_counts=np.bincount(labels[foreign_evidence>0],minlength=count)
+    edge_ids=np.unique(np.concatenate((labels[0],labels[-1],labels[:,0],labels[:,-1])))
+    complete_own=(own_counts==sizes)&(sizes>0)
+    complete_foreign=(foreign_counts==sizes)&(sizes>0)
+    complete_own[edge_ids]=False;complete_foreign[edge_ids]=False
+    # A fallback region rectangle is not positioned recognition evidence.
+    owned_ids=np.flatnonzero(complete_own&~complete_foreign&(own_evidence_counts==sizes))
+    foreign_only_ids=np.flatnonzero(complete_foreign&~complete_own&(foreign_evidence_counts==sizes))
+    ids=ids[~np.isin(ids,owned_ids)]
+    connected=np.isin(labels,ids).astype(np.uint8)*255
+    protected=cv2.bitwise_or(foreign,cv2.dilate(connected,np.ones((3,3),np.uint8)))
+    protected[np.isin(labels,owned_ids)]=0
+    removed=(ink>0)&(protected>0)
+    ambiguous=removed&(own>0)&(structural>0)&~np.isin(labels,foreign_only_ids)
+    evidence={'neighborZones':used,'protectedPixels':int(removed.sum()),'ambiguousPixels':int(ambiguous.sum())}
+    return cv2.bitwise_and(ink,cv2.bitwise_not(protected)),evidence
+
+
+def protect_unread_shapes(ink, structural, region, origin, diagnostic=False):
+    """Reject foreground shapes mostly outside the measured reading lines.
+
+    A paragraph rectangle is not evidence that the artwork between lines is
+    text. Keep connected shapes intact, including shapes crossing a crop edge.
+    """
+    lines=region.get('recognitionLines',[])
+    if not lines:return ink,{'unreadShapePixels':0,'uncertainSourcePixels':0}
+    x0,y0=origin;source=np.zeros_like(ink)
+    for line in lines:
+        b=line.get('bbox')
+        if not b:continue
+        points=line.get('polygon')
+        if not points or len(points)<3:
+            points=[[b['x0'],b['y0']],[b['x1'],b['y0']],[b['x1'],b['y1']],[b['x0'],b['y1']]]
+        cv2.fillPoly(source,[np.rint(np.asarray(points)-[x0,y0]).astype(np.int32)],255)
+    # Allow small detector clipping errors; do not grow to paragraph bounds.
+    support=cv2.dilate(source,np.ones((3,3),np.uint8))
+    count,labels,stats,_=cv2.connectedComponentsWithStats(structural,8)
+    supported=np.bincount(labels[support>0],minlength=count)
+    # Partly supported components are uncertain, not proven artwork. Only an
+    # already blocked diagnostic may try the stricter majority-support filter.
+    reject=(supported/np.maximum(1,stats[:,cv2.CC_STAT_AREA])<.65) if diagnostic else supported==0
+    reject[0]=False
+    rejected=reject[labels].astype(np.uint8)*255
+    rejected=cv2.dilate(rejected,np.ones((5,5),np.uint8))
+    retained=(~reject)[labels]&(labels>0)
+    rejected[cv2.dilate(retained.astype(np.uint8),np.ones((3,3),np.uint8))>0]=0
+    removed=(ink>0)&(rejected>0)
+    evidence={'unreadShapePixels':int(removed.sum()),
+              'uncertainSourcePixels':int((removed&(source>0)&(structural>0)).sum())}
+    return cv2.bitwise_and(ink,cv2.bitwise_not(rejected)),evidence
+
+
+def cleanup_patch(rgb, region, surface, geometry, peers=()):
     height,width=rgb.shape[:2]
     rows=[l['bbox'] for l in region.get('recognitionLines',[]) if l.get('bbox')]
     if not rows:rows=[region['bbox']]
@@ -215,7 +334,7 @@ def cleanup_patch(rgb, region, surface, geometry):
     if surface and geometry and complete_bounds:rows=rows+[rb]
     text_heights=[l['bbox']['y1']-l['bbox']['y0'] for l in region.get('recognitionLines',[]) if l.get('bbox')]
     padding=max(6,min(16,int((float(np.median(text_heights)) if text_heights else 24)*.25)))
-    crop_padding=padding+8
+    crop_padding=max(24,padding+8)
     b=bbox({'x0':min(r['x0'] for r in rows)-crop_padding,'y0':min(r['y0'] for r in rows)-crop_padding,
             'x1':max(r['x1'] for r in rows)+crop_padding,'y1':max(r['y1'] for r in rows)+crop_padding},width,height)
     x0,y0,x1,y1=b;local=rgb[y0:y1,x0:x1].copy();gray=cv2.cvtColor(local,cv2.COLOR_RGB2GRAY)
@@ -268,21 +387,135 @@ def cleanup_patch(rgb, region, surface, geometry):
             ink=cv2.bitwise_and(ink,cv2.bitwise_not(protect))
         ink=cv2.bitwise_and(ink,cv2.bitwise_not(outline))
         spill=bool(np.any((ink>0)&(inside==0)))
+    learned=False
+    probability=region.get('cleanupProbability')
+    if probability and luminance>190:
+        pb=probability['bbox'];decoded=cv2.imdecode(np.frombuffer(base64.b64decode(probability['png']),np.uint8),cv2.IMREAD_GRAYSCALE)
+        if decoded is not None and decoded.shape==(pb['y1']-pb['y0'],pb['x1']-pb['x0']):
+            local_probability=np.zeros(gray.shape,np.float32)
+            ax=max(x0,pb['x0']);ay=max(y0,pb['y0']);bx=min(x1,pb['x1']);by=min(y1,pb['y1'])
+            if bx>ax and by>ay:local_probability[ay-y0:by-y0,ax-x0:bx-x0]=decoded[ay-pb['y0']:by-pb['y0'],ax-pb['x0']:bx-pb['x0']]/255.0
+            lines=[]
+            for line in region.get('recognitionLines') or [{'bbox':rb,'text':region.get('text','')}]:
+                bline=line['bbox'];shifted={**line,'bbox':{k:v-(x0 if k[0]=='x' else y0) for k,v in bline.items()}}
+                if line.get('polygon'):shifted['polygon']=[[x-x0,y-y0] for x,y in line['polygon']]
+                lines.append(shifted)
+            candidate=supported_components(gray,local_probability,np.full_like(ink,255),lines)
+            if np.any(candidate):ink=candidate;learned=True
     if not np.any(ink):return None
+    ink,ownership=protect_neighbor_ink(ink,structural,region,peers,(x0,y0))
+    ink,source_support=protect_unread_shapes(ink,structural,region,(x0,y0),ownership.get('ambiguousPixels',0)>2)
+    ownership.update(source_support)
     # Only glyph-shaped pixels are changed. Textured scenes use local inpainting,
     # never a solid rectangle masquerading as a cleaned background.
     uniform=surface is not None and not spill and float(np.std(border.mean(axis=1)))<14
     result=local.copy()
-    if uniform:result[ink>0]=np.clip(background,0,255).astype(np.uint8)
+    if learned:result,_=fill_supported_mask(local,ink)
+    elif uniform:result[ink>0]=np.clip(background,0,255).astype(np.uint8)
     else:
         result=cv2.inpaint(local,ink,3,cv2.INPAINT_TELEA)
         if surface is not None and geometry and geometry.get('polygon'):
             result[(ink>0)&(inside>0)]=np.clip(background,0,255).astype(np.uint8)
-    bgra=cv2.cvtColor(result,cv2.COLOR_RGB2BGRA);bgra[:,:,3]=ink
-    return {'bbox':as_box(b),'png':png64(bgra),'pixels':int(np.count_nonzero(ink)),
+    # Give the resampler an opaque copy of unchanged bright pixels around the
+    # erased ink. Otherwise independently downscaled transparent patch edges
+    # blend with the still-dark original glyph underneath and create ghosts.
+    # This changes coverage, not cleanup: result outside ink is the source.
+    alpha=ink.copy()
+    background_pixels=(gray>=245)|((gray>180)&(np.abs(gray.astype(np.float32)-luminance)<12))
+    rim=(cv2.dilate(ink,np.ones((5,5),np.uint8))>0)&background_pixels
+    alpha[rim]=255
+    bgra=cv2.cvtColor(result,cv2.COLOR_RGB2BGRA);bgra[:,:,3]=alpha
+    return {'bbox':as_box(b),'png':png64(bgra),'pixels':int(np.count_nonzero(alpha)),
+            'cleanupPixels':int(np.count_nonzero(ink)),
             'backgroundColor':'#%02x%02x%02x' % tuple(int(v) for v in np.clip(background,0,255)),
-            'method':'glyph-flat-fill' if uniform else 'glyph-inpaint',
-            'sourceBoundsCovered':bool(complete_bounds),'maskVersion':3}
+            'method':'model-supported-glyph-fill' if learned else 'glyph-flat-fill' if uniform else 'glyph-inpaint',
+            'sourceBoundsCovered':bool(complete_bounds),'maskVersion':5,'ownership':ownership}
+
+
+def text_area(rgb, region, placement, peers):
+    """Place text near its source, excluding remaining ink and other readings.
+
+    Cleanup permission is independent: a diagnostic patch does not authorize
+    painting. Filled residual contours also protect the inside of line art.
+    """
+    height,width=rgb.shape[:2];rb=bbox(region['bbox'],width,height)
+    x0=max(0,rb[0]-24);y0=max(0,rb[1]-24);x1=min(width,rb[2]+24);y1=min(height,rb[3]+24)
+    gray=cv2.cvtColor(rgb[y0:y1,x0:x1],cv2.COLOR_RGB2GRAY)
+    color=placement.get('fillColor','#ffffff').lstrip('#')
+    dark=sum(int(color[i:i+2],16) for i in (0,2,4))/3<125
+    ink=(gray>190 if dark else gray<105).astype(np.uint8)*255
+    patch=placement.get('erasePatch')
+    if patch:
+        decoded=cv2.imdecode(np.frombuffer(base64.b64decode(patch['png']),np.uint8),cv2.IMREAD_UNCHANGED)
+        pb=patch['bbox'];ax=max(x0,pb['x0']);ay=max(y0,pb['y0']);bx=min(x1,pb['x1']);by=min(y1,pb['y1'])
+        if bx>ax and by>ay:
+            erased=decoded[ay-pb['y0']:by-pb['y0'],ax-pb['x0']:bx-pb['x0'],3]>0
+            ink[ay-y0:by-y0,ax-x0:bx-x0][erased]=0
+    interior=None
+    if placement.get('surfaceValidated') and placement.get('polygon'):
+        interior=np.zeros_like(ink)
+        cv2.fillPoly(interior,[np.asarray(placement['polygon'],np.int32)-[x0,y0]],1)
+        # A closed balloon border surrounds usable space, unlike an interior
+        # drawing such as a bottle. Do not fill that border as an art obstacle.
+        ink[cv2.erode(interior,np.ones((3,3),np.uint8))==0]=0
+    remaining=cv2.morphologyEx(ink,cv2.MORPH_CLOSE,np.ones((3,3),np.uint8))
+    contours,_=cv2.findContours(remaining,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    obstacles=np.zeros_like(ink)
+    for contour in contours:
+        if cv2.contourArea(contour)>=4:cv2.drawContours(obstacles,[contour],-1,255,-1)
+    obstacles=cv2.dilate(obstacles,np.ones((7,7),np.uint8))
+    allowed=np.zeros_like(ink);allowed[rb[1]-y0:rb[3]-y0,rb[0]-x0:rb[2]-x0]=1
+    if placement.get('polygon'):
+        interior=np.zeros_like(ink);cv2.fillPoly(interior,[np.asarray(placement['polygon'],np.int32)-[x0,y0]],1)
+        allowed&=interior
+    for peer in peers:
+        if peer is region:continue
+        for line in foreign_reading_lines(region,peer):
+            b=line['bbox'];ax=max(0,int(b['x0'])-x0-2);ay=max(0,int(b['y0'])-y0-2)
+            bx=min(allowed.shape[1],int(math.ceil(b['x1']))-x0+2);by=min(allowed.shape[0],int(math.ceil(b['y1']))-y0+2)
+            if bx>ax and by>ay:
+                points=line.get('polygon')
+                if points and len(points)>=3:
+                    foreign=np.zeros_like(allowed)
+                    cv2.fillPoly(foreign,[np.rint(np.asarray(points)-[x0,y0]).astype(np.int32)],1)
+                    allowed[cv2.dilate(foreign,np.ones((5,5),np.uint8))>0]=0
+                else:allowed[ay:by,ax:bx]=0
+    allowed[obstacles>0]=0
+    lines=region.get('recognitionLines',[])
+    if len(lines)==1 and not lines[0].get('polygon') and region.get('textRotation') in (90,270):
+        line=lines[0];b=line['bbox']
+        points=[[b['x0'],b['y1']],[b['x0'],b['y0']],[b['x1'],b['y0']],[b['x1'],b['y1']]] if region['textRotation']==90 else [[b['x1'],b['y0']],[b['x1'],b['y1']],[b['x0'],b['y1']],[b['x0'],b['y0']]]
+        lines=[{**line,'polygon':points}]
+    if len(lines)==1 and lines[0].get('polygon') and any(ch.isascii() and ch.isalpha() for ch in str(region.get('text',''))):
+        points=np.asarray(lines[0]['polygon'],np.float32)
+        if len(points)==4:
+            delta=points[1]-points[0];angle=math.degrees(math.atan2(float(delta[1]),float(delta[0])))
+            long=min(np.linalg.norm(points[1]-points[0]),np.linalg.norm(points[2]-points[3]))*.92
+            short=min(np.linalg.norm(points[3]-points[0]),np.linalg.norm(points[2]-points[1]))*.85
+            if 20<=abs(angle)<=100 and long>short*2 and short>=8:
+                center=points.mean(axis=0);quad=cv2.boxPoints((tuple(center),(float(long),float(short)),angle))
+                footprint=np.zeros_like(allowed);cv2.fillPoly(footprint,[np.rint(quad-[x0,y0]).astype(np.int32)],1)
+                if footprint.sum()>0 and np.count_nonzero((footprint>0)&(allowed==0))/footprint.sum()<.01:
+                    placement['rotatedTextBox']={'cx':float(center[0]),'cy':float(center[1]),'width':float(long),'height':float(short),'angle':angle,'polygon':quad.tolist()}
+                    return as_box((quad[:,0].min(),quad[:,1].min(),quad[:,0].max(),quad[:,1].max()))
+    # Largest empty rectangle, with source-center distance as a tie breaker.
+    heights=np.zeros(allowed.shape[1],np.int32);best=None;best_score=(-1,-1)
+    cx=(rb[0]+rb[2])/2-x0;cy=(rb[1]+rb[3])/2-y0
+    for y,row in enumerate(allowed):
+        heights=np.where(row>0,heights+1,0);stack=[]
+        for x in range(len(heights)+1):
+            h=int(heights[x]) if x<len(heights) else 0;start=x
+            while stack and stack[-1][1]>h:
+                start,hh=stack.pop();w=x-start
+                if w>=8 and hh>=8:
+                    score=(w*hh,-((start+x)/2-cx)**2-((2*y-hh+1)/2-cy)**2)
+                    if score>best_score:best_score=score;best=(start,y-hh+1,x,y+1)
+            if not stack or stack[-1][1]<h:stack.append((start,h))
+    if not best:return None
+    if region.get('textRotation') in (90,270) and len(lines)==1 and best[3]-best[1]>(best[2]-best[0])*2:
+        box=as_box((best[0]+x0,best[1]+y0,best[2]+x0,best[3]+y0))
+        placement['rotatedTextBox']={'cx':(box['x0']+box['x1'])/2,'cy':(box['y0']+box['y1'])/2,'width':box['y1']-box['y0'],'height':box['x1']-box['x0'],'angle':-90 if region['textRotation']==90 else 90,'polygon':[[box['x0'],box['y0']],[box['x1'],box['y0']],[box['x1'],box['y1']],[box['x0'],box['y1']]]}
+    return as_box((best[0]+x0,best[1]+y0,best[2]+x0,best[3]+y0))
 
 
 def layout_safe(request):
@@ -327,9 +560,22 @@ def layout_safe(request):
             p={'surfaceType':'scene','shape':'rect','polygon':[],'eraseBox':as_box(b),'safeBox':as_box(b),
                'fillColor':'#ffffff','confidence':0,'surfaceValidated':False,'reviewRequired':True,
                'paintMode':'glyph-patch','flatFillSafe':False,'requiresInpaint':True,'detectionMode':'source-glyph-mask-only'}
-        p['erasePatch']=cleanup_patch(rgb,r,s,geometry)
+        p['erasePatch']=cleanup_patch(rgb,r,s,geometry,regions)
+        if r.get('cleanupModelError'):p['cleanupModelError']=r['cleanupModelError']
+        ownership=(p['erasePatch'] or {}).get('ownership',{})
+        if ownership.get('ambiguousPixels',0)>2:
+            p.update(paintMode='none',reviewRequired=True,cleanupReview='shared-ink-needs-review')
+        elif ownership.get('uncertainSourcePixels',0)>2:
+            p.update(paintMode='none',reviewRequired=True,cleanupReview='source-shape-needs-review')
+        elif r.get('excludeFromLayoutCompetition'):
+            p.update(paintMode='none',reviewRequired=True)
         if p['erasePatch']:
             p['fillColor']=p['erasePatch']['backgroundColor']
+        safe=text_area(rgb,r,p,regions)
+        if safe:
+            p['safeBox']=safe;p['textAreaMethod']='source-local-residual-ink-v1'
+        else:
+            p.update(paintMode='none',reviewRequired=True,layoutReview='no-safe-text-area')
         p['referenceLineHeight']=float(np.median([l['bbox']['y1']-l['bbox']['y0'] for l in r.get('recognitionLines',[]) if l.get('bbox')])) if r.get('recognitionLines') else max(12,(b[3]-b[1])/max(1,len(str(r.get('text','')).split('\n'))))
         if (b[2]<width*.10 or b[0]>width*.90) and (b[3]-b[1])>30 and ((b[3]-b[1])>(b[2]-b[0])*1.2 or r.get('orientation')=='vertical'):
             crop=rgb[b[1]:b[3],b[0]:b[2]].astype(np.int16)

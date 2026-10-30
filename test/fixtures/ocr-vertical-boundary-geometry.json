@@ -1,0 +1,6002 @@
+{
+  "scope": "Positioned detector observations only; no pixels or text. Native pages matched to user attachments 6-8. Long caption blocks must not duplicate partial tile observations or absorb adjacent balloons.",
+  "cases": [
+    {
+      "id": "native-page-4",
+      "width": 2000,
+      "height": 2824,
+      "rawBlocks": [
+        {
+          "bbox": {
+            "x0": 1803,
+            "y0": 1053,
+            "x1": 1990,
+            "y1": 2525
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.46124298593643687,
+          "detectedLanguage": "ja",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1,
+            "y0": 1068,
+            "x1": 207,
+            "y1": 1903
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8380076098315925,
+          "detectedLanguage": "ja",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 260,
+            "y0": 1482,
+            "x1": 368,
+            "y1": 1855
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.9492570019626534,
+          "detectedLanguage": "ja",
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 5,
+            "y0": 1800,
+            "x1": 203,
+            "y1": 2298
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.589391020516036,
+          "detectedLanguage": "ja",
+          "tileIndex": 10,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 48,
+            "y0": 1967,
+            "x1": 195,
+            "y1": 2558
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.3600250562963634,
+          "detectedLanguage": "ja",
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1799,
+            "y0": 2164,
+            "x1": 2000,
+            "y1": 2751
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.5915128092498989,
+          "detectedLanguage": "ja",
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 45,
+            "y0": 2261,
+            "x1": 197,
+            "y1": 2824
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.5922304900928452,
+          "detectedLanguage": "ja",
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        }
+      ],
+      "lines": [
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 983,
+            "x1": 284,
+            "y1": 1624
+          },
+          "coreBbox": {
+            "x0": 12,
+            "y0": 1074,
+            "x1": 194,
+            "y1": 1565
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7319881584667881,
+          "detectedLanguage": "unknown",
+          "tileIndex": 4,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 100,
+            "y0": 1063,
+            "x1": 151,
+            "y1": 2809
+          },
+          "coreBbox": {
+            "x0": 113.10344827586206,
+            "y0": 1075.546875,
+            "x1": 140.68965517241378,
+            "y1": 2799.1796875
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7750405632945768,
+          "detectedLanguage": "unknown",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 48,
+            "y0": 1065,
+            "x1": 98,
+            "y1": 2536
+          },
+          "coreBbox": {
+            "x0": 60.689655172413794,
+            "y0": 1078.3046875,
+            "x1": 88.27586206896552,
+            "y1": 2526.15625
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7656869433864334,
+          "detectedLanguage": "unknown",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1761,
+            "y0": 1066,
+            "x1": 2000,
+            "y1": 1360
+          },
+          "coreBbox": {
+            "x0": 1834,
+            "y0": 1139,
+            "x1": 1981,
+            "y1": 1288
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6729328205043819,
+          "detectedLanguage": "unknown",
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 154,
+            "y0": 1067,
+            "x1": 199,
+            "y1": 2631
+          },
+          "coreBbox": {
+            "x0": 165.51724137931035,
+            "y0": 1078.3046875,
+            "x1": 190.3448275862069,
+            "y1": 2622.6796875
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8148146115590122,
+          "detectedLanguage": "unknown",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 4,
+            "y0": 1068,
+            "x1": 43,
+            "y1": 1803
+          },
+          "coreBbox": {
+            "x0": 13.793103448275861,
+            "y0": 1078.3046875,
+            "x1": 35.86206896551724,
+            "y1": 1795.3359375
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.751016711835535,
+          "detectedLanguage": "unknown",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1939,
+            "y0": 1133,
+            "x1": 1984,
+            "y1": 1575
+          },
+          "coreBbox": {
+            "x0": 1950.344827586207,
+            "y0": 1144.4921875,
+            "x1": 1975.1724137931035,
+            "y1": 1566.4375
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7849921125759662,
+          "detectedLanguage": "unknown",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1875,
+            "y0": 1133,
+            "x1": 1932,
+            "y1": 2797
+          },
+          "coreBbox": {
+            "x0": 1889.655172413793,
+            "y0": 1147.25,
+            "x1": 1920,
+            "y1": 2785.390625
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8274146286618485,
+          "detectedLanguage": "unknown",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1817,
+            "y0": 1133,
+            "x1": 1874,
+            "y1": 2692
+          },
+          "coreBbox": {
+            "x0": 1831.7241379310344,
+            "y0": 1147.25,
+            "x1": 1862.0689655172414,
+            "y1": 2680.59375
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7963109921891365,
+          "detectedLanguage": "unknown",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 329,
+            "y0": 1355,
+            "x1": 420,
+            "y1": 1448
+          },
+          "coreBbox": {
+            "x0": 352,
+            "y0": 1378,
+            "x1": 398,
+            "y1": 1426
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6090604304227718,
+          "detectedLanguage": "unknown",
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 438,
+            "y0": 1359,
+            "x1": 514,
+            "y1": 1439
+          },
+          "coreBbox": {
+            "x0": 457,
+            "y0": 1378,
+            "x1": 496,
+            "y1": 1421
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6264180666710957,
+          "detectedLanguage": "unknown",
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 265,
+            "y0": 1365,
+            "x1": 337,
+            "y1": 1438
+          },
+          "coreBbox": {
+            "x0": 283,
+            "y0": 1383,
+            "x1": 320,
+            "y1": 1421
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6037254368234997,
+          "detectedLanguage": "unknown",
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 236,
+            "y0": 1411,
+            "x1": 311,
+            "y1": 1482
+          },
+          "coreBbox": {
+            "x0": 254,
+            "y0": 1429,
+            "x1": 294,
+            "y1": 1465
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6793015864363477,
+          "detectedLanguage": "unknown",
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 229,
+            "y0": 1457,
+            "x1": 401,
+            "y1": 1624
+          },
+          "coreBbox": {
+            "x0": 272,
+            "y0": 1500,
+            "x1": 359,
+            "y1": 1617
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7743956071215117,
+          "detectedLanguage": "unknown",
+          "tileIndex": 4,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 295,
+            "y0": 1479,
+            "x1": 378,
+            "y1": 1852
+          },
+          "coreBbox": {
+            "x0": 316,
+            "y0": 1500,
+            "x1": 358,
+            "y1": 1842.21875
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.863967030209155,
+          "detectedLanguage": "unknown",
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 253,
+            "y0": 1483,
+            "x1": 321,
+            "y1": 1699
+          },
+          "coreBbox": {
+            "x0": 270,
+            "y0": 1497.4921875,
+            "x1": 305,
+            "y1": 1683
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8377781985755196,
+          "detectedLanguage": "unknown",
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1825,
+            "y0": 1597,
+            "x1": 1977,
+            "y1": 1656
+          },
+          "coreBbox": {
+            "x0": 1840,
+            "y0": 1612,
+            "x1": 1963,
+            "y1": 1642
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.627334332746388,
+          "detectedLanguage": "unknown",
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1939,
+            "y0": 1599,
+            "x1": 1984,
+            "y1": 2265
+          },
+          "coreBbox": {
+            "x0": 1950.344827586207,
+            "y0": 1610.5625,
+            "x1": 1975.1724137931035,
+            "y1": 2255.890625
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7316905853477512,
+          "detectedLanguage": "unknown",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1667,
+            "x1": 152,
+            "y1": 1727
+          },
+          "coreBbox": {
+            "x0": 10,
+            "y0": 1682,
+            "x1": 138,
+            "y1": 1713
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6485676121892971,
+          "detectedLanguage": "unknown",
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1719,
+            "x1": 142,
+            "y1": 1778
+          },
+          "coreBbox": {
+            "x0": 14,
+            "y0": 1734,
+            "x1": 128,
+            "y1": 1764
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6611236604311133,
+          "detectedLanguage": "unknown",
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 47,
+            "y0": 1779,
+            "x1": 242,
+            "y1": 2224
+          },
+          "coreBbox": {
+            "x0": 96,
+            "y0": 1828,
+            "x1": 194,
+            "y1": 2190
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7291370519242915,
+          "detectedLanguage": "unknown",
+          "tileIndex": 7,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1790,
+            "x1": 152,
+            "y1": 2218
+          },
+          "coreBbox": {
+            "x0": 11,
+            "y0": 1837,
+            "x1": 106,
+            "y1": 2172
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6526961359462751,
+          "detectedLanguage": "unknown",
+          "tileIndex": 7,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1794,
+            "y0": 1800,
+            "x1": 1958,
+            "y1": 1972
+          },
+          "coreBbox": {
+            "x0": 1835,
+            "y0": 1833,
+            "x1": 1918,
+            "y1": 1932
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.614315155656192,
+          "detectedLanguage": "unknown",
+          "tileIndex": 12,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1800,
+            "x1": 285,
+            "y1": 2824
+          },
+          "coreBbox": {
+            "x0": 9,
+            "y0": 1836,
+            "x1": 194,
+            "y1": 2801
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7538956022764417,
+          "detectedLanguage": "unknown",
+          "tileIndex": 10,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1748,
+            "y0": 1869,
+            "x1": 2000,
+            "y1": 2178
+          },
+          "coreBbox": {
+            "x0": 1823,
+            "y0": 1944,
+            "x1": 1974,
+            "y1": 2104
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6365077281824459,
+          "detectedLanguage": "unknown",
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1749,
+            "y0": 2019,
+            "x1": 2000,
+            "y1": 2824
+          },
+          "coreBbox": {
+            "x0": 1826,
+            "y0": 2096,
+            "x1": 1981,
+            "y1": 2781
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7221297364867713,
+          "detectedLanguage": "unknown",
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 321,
+            "y0": 2137,
+            "x1": 542,
+            "y1": 2357
+          },
+          "coreBbox": {
+            "x0": 376,
+            "y0": 2192,
+            "x1": 488,
+            "y1": 2303
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6134862802669748,
+          "detectedLanguage": "unknown",
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1943,
+            "y0": 2276,
+            "x1": 1983,
+            "y1": 2443
+          },
+          "coreBbox": {
+            "x0": 1953.103448275862,
+            "y0": 2286.2265625,
+            "x1": 1975.1724137931035,
+            "y1": 2435.1484375
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6722636986759645,
+          "detectedLanguage": "unknown",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        }
+      ],
+      "observations": [
+        {
+          "bbox": {
+            "x0": 101,
+            "y0": 2366,
+            "x1": 147,
+            "y1": 2402
+          },
+          "coreBbox": {
+            "x0": 101,
+            "y0": 2366,
+            "x1": 147,
+            "y1": 2402
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6779718216178783,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 49,
+            "y0": 1624,
+            "x1": 84,
+            "y1": 1666
+          },
+          "coreBbox": {
+            "x0": 49,
+            "y0": 1624,
+            "x1": 84,
+            "y1": 1666
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6812399714253843,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1818,
+            "y0": 1594,
+            "x1": 1875,
+            "y1": 1646
+          },
+          "coreBbox": {
+            "x0": 1818,
+            "y0": 1594,
+            "x1": 1875,
+            "y1": 1646
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7584884427376978,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1566,
+            "x1": 163,
+            "y1": 1624
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1566,
+            "x1": 163,
+            "y1": 1624
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8143749147593043,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1812,
+            "y0": 1533,
+            "x1": 1883,
+            "y1": 1594
+          },
+          "coreBbox": {
+            "x0": 1812,
+            "y0": 1533,
+            "x1": 1883,
+            "y1": 1594
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7285425894602932,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 3,
+            "y0": 1517,
+            "x1": 209,
+            "y1": 1575
+          },
+          "coreBbox": {
+            "x0": 3,
+            "y0": 1517,
+            "x1": 209,
+            "y1": 1575
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.723497991771079,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1812,
+            "y0": 1478,
+            "x1": 1883,
+            "y1": 1539
+          },
+          "coreBbox": {
+            "x0": 1812,
+            "y0": 1478,
+            "x1": 1883,
+            "y1": 1539
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7241477689557505,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1870,
+            "y0": 1475,
+            "x1": 1938,
+            "y1": 1533
+          },
+          "coreBbox": {
+            "x0": 1870,
+            "y0": 1475,
+            "x1": 1938,
+            "y1": 1533
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7644422252827401,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 301,
+            "y0": 1464,
+            "x1": 384,
+            "y1": 1859
+          },
+          "coreBbox": {
+            "x0": 301,
+            "y0": 1464,
+            "x1": 384,
+            "y1": 1859
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8752951326222415,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1924,
+            "y0": 1475,
+            "x1": 1989,
+            "y1": 1528
+          },
+          "coreBbox": {
+            "x0": 1924,
+            "y0": 1475,
+            "x1": 1989,
+            "y1": 1528
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6776775964403483,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 247,
+            "y0": 1462,
+            "x1": 323,
+            "y1": 1702
+          },
+          "coreBbox": {
+            "x0": 247,
+            "y0": 1462,
+            "x1": 323,
+            "y1": 1702
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8135009517498079,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1459,
+            "x1": 209,
+            "y1": 1528
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1459,
+            "x1": 209,
+            "y1": 1528
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7067995862735188,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1951,
+            "y0": 1420,
+            "x1": 1984,
+            "y1": 1464
+          },
+          "coreBbox": {
+            "x0": 1951,
+            "y0": 1420,
+            "x1": 1984,
+            "y1": 1464
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6104607103610193,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1406,
+            "x1": 204,
+            "y1": 1467
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1406,
+            "x1": 204,
+            "y1": 1467
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8074793869511458,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1360,
+            "x1": 209,
+            "y1": 1423
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1360,
+            "x1": 209,
+            "y1": 1423
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8698407106648954,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1921,
+            "y0": 1357,
+            "x1": 1992,
+            "y1": 1418
+          },
+          "coreBbox": {
+            "x0": 1921,
+            "y0": 1357,
+            "x1": 1992,
+            "y1": 1418
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.75524168448076,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1815,
+            "y0": 1351,
+            "x1": 1948,
+            "y1": 1426
+          },
+          "coreBbox": {
+            "x0": 1815,
+            "y0": 1351,
+            "x1": 1948,
+            "y1": 1426
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6483181575396364,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1310,
+            "x1": 204,
+            "y1": 1368
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1310,
+            "x1": 204,
+            "y1": 1368
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9449896805389569,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1791,
+            "y0": 1274,
+            "x1": 1897,
+            "y1": 1382
+          },
+          "coreBbox": {
+            "x0": 1791,
+            "y0": 1274,
+            "x1": 1897,
+            "y1": 1382
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6385995035498505,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1260,
+            "x1": 204,
+            "y1": 1321
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1260,
+            "x1": 204,
+            "y1": 1321
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9184134215468189,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1208,
+            "x1": 201,
+            "y1": 1266
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1208,
+            "x1": 201,
+            "y1": 1266
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8908486339409137,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1916,
+            "y0": 1172,
+            "x1": 1997,
+            "y1": 1371
+          },
+          "coreBbox": {
+            "x0": 1916,
+            "y0": 1172,
+            "x1": 1997,
+            "y1": 1371
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6507091447555771,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1856,
+            "y0": 1163,
+            "x1": 1948,
+            "y1": 1265
+          },
+          "coreBbox": {
+            "x0": 1856,
+            "y0": 1163,
+            "x1": 1948,
+            "y1": 1265
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6938320782274304,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1810,
+            "y0": 1169,
+            "x1": 1883,
+            "y1": 1313
+          },
+          "coreBbox": {
+            "x0": 1810,
+            "y0": 1169,
+            "x1": 1883,
+            "y1": 1313
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6859106577371227,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1156,
+            "x1": 212,
+            "y1": 1222
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1156,
+            "x1": 212,
+            "y1": 1222
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8600797555377779,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1807,
+            "y0": 1114,
+            "x1": 2000,
+            "y1": 1197
+          },
+          "coreBbox": {
+            "x0": 1807,
+            "y0": 1114,
+            "x1": 2000,
+            "y1": 1197
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8057941573425308,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1100,
+            "x1": 209,
+            "y1": 1169
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1100,
+            "x1": 209,
+            "y1": 1169
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8677853433288296,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1045,
+            "x1": 213,
+            "y1": 1120
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1045,
+            "x1": 213,
+            "y1": 1120
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8525914025913448,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 101,
+            "y0": 2366,
+            "x1": 147,
+            "y1": 2402
+          },
+          "coreBbox": {
+            "x0": 101,
+            "y0": 2366,
+            "x1": 147,
+            "y1": 2402
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7017420282257565,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 160,
+            "y0": 1988,
+            "x1": 188,
+            "y1": 2013
+          },
+          "coreBbox": {
+            "x0": 160,
+            "y0": 1988,
+            "x1": 188,
+            "y1": 2013
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6209800313892109,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1829,
+            "y0": 1773,
+            "x1": 1851,
+            "y1": 1809
+          },
+          "coreBbox": {
+            "x0": 1829,
+            "y0": 1773,
+            "x1": 1851,
+            "y1": 1809
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6035312607139349,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1818,
+            "y0": 1704,
+            "x1": 1870,
+            "y1": 1759
+          },
+          "coreBbox": {
+            "x0": 1818,
+            "y0": 1704,
+            "x1": 1870,
+            "y1": 1759
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6926843578664538,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 46,
+            "y0": 1624,
+            "x1": 84,
+            "y1": 1666
+          },
+          "coreBbox": {
+            "x0": 46,
+            "y0": 1624,
+            "x1": 84,
+            "y1": 1666
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6852729385097822,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1878,
+            "y0": 1594,
+            "x1": 1927,
+            "y1": 1652
+          },
+          "coreBbox": {
+            "x0": 1878,
+            "y0": 1594,
+            "x1": 1927,
+            "y1": 1652
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6363942238106091,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1812,
+            "y0": 1591,
+            "x1": 1878,
+            "y1": 1652
+          },
+          "coreBbox": {
+            "x0": 1812,
+            "y0": 1591,
+            "x1": 1878,
+            "y1": 1652
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7034090628608679,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1566,
+            "x1": 166,
+            "y1": 1624
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1566,
+            "x1": 166,
+            "y1": 1624
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8367900784848733,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1812,
+            "y0": 1533,
+            "x1": 1886,
+            "y1": 1594
+          },
+          "coreBbox": {
+            "x0": 1812,
+            "y0": 1533,
+            "x1": 1886,
+            "y1": 1594
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7454097501129613,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 3,
+            "y0": 1517,
+            "x1": 209,
+            "y1": 1575
+          },
+          "coreBbox": {
+            "x0": 3,
+            "y0": 1517,
+            "x1": 209,
+            "y1": 1575
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7492897378767912,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1812,
+            "y0": 1478,
+            "x1": 1883,
+            "y1": 1539
+          },
+          "coreBbox": {
+            "x0": 1812,
+            "y0": 1478,
+            "x1": 1883,
+            "y1": 1539
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7627106911836748,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 301,
+            "y0": 1464,
+            "x1": 384,
+            "y1": 1862
+          },
+          "coreBbox": {
+            "x0": 301,
+            "y0": 1464,
+            "x1": 384,
+            "y1": 1862
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8742974411349821,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1860,
+            "y0": 1466,
+            "x1": 1993,
+            "y1": 1537
+          },
+          "coreBbox": {
+            "x0": 1860,
+            "y0": 1466,
+            "x1": 1993,
+            "y1": 1537
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6857752572623841,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 247,
+            "y0": 1462,
+            "x1": 323,
+            "y1": 1702
+          },
+          "coreBbox": {
+            "x0": 247,
+            "y0": 1462,
+            "x1": 323,
+            "y1": 1702
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.820443695923703,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1459,
+            "x1": 209,
+            "y1": 1528
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1459,
+            "x1": 209,
+            "y1": 1528
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7340984998743352,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1948,
+            "y0": 1420,
+            "x1": 1984,
+            "y1": 1467
+          },
+          "coreBbox": {
+            "x0": 1948,
+            "y0": 1420,
+            "x1": 1984,
+            "y1": 1467
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6539690418479343,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1406,
+            "x1": 204,
+            "y1": 1467
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1406,
+            "x1": 204,
+            "y1": 1467
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.808863374105837,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1360,
+            "x1": 209,
+            "y1": 1423
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1360,
+            "x1": 209,
+            "y1": 1423
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8736711576834036,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1810,
+            "y0": 1349,
+            "x1": 2000,
+            "y1": 1429
+          },
+          "coreBbox": {
+            "x0": 1810,
+            "y0": 1349,
+            "x1": 2000,
+            "y1": 1429
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7106489371998211,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1310,
+            "x1": 204,
+            "y1": 1368
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1310,
+            "x1": 204,
+            "y1": 1368
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9484906029300048,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1260,
+            "x1": 209,
+            "y1": 1324
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1260,
+            "x1": 209,
+            "y1": 1324
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9220313250892809,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1818,
+            "y0": 1233,
+            "x1": 1875,
+            "y1": 1304
+          },
+          "coreBbox": {
+            "x0": 1818,
+            "y0": 1233,
+            "x1": 1875,
+            "y1": 1304
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8057103209224913,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1208,
+            "x1": 201,
+            "y1": 1266
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1208,
+            "x1": 201,
+            "y1": 1266
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9073919282905991,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1908,
+            "y0": 1161,
+            "x1": 2000,
+            "y1": 1266
+          },
+          "coreBbox": {
+            "x0": 1908,
+            "y0": 1161,
+            "x1": 2000,
+            "y1": 1266
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7041268942637784,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1859,
+            "y0": 1166,
+            "x1": 1947,
+            "y1": 1256
+          },
+          "coreBbox": {
+            "x0": 1859,
+            "y0": 1166,
+            "x1": 1947,
+            "y1": 1256
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7417323768649495,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1815,
+            "y0": 1172,
+            "x1": 1880,
+            "y1": 1258
+          },
+          "coreBbox": {
+            "x0": 1815,
+            "y0": 1172,
+            "x1": 1880,
+            "y1": 1258
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.731203025744225,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1149,
+            "x1": 210,
+            "y1": 1222
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1149,
+            "x1": 210,
+            "y1": 1222
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8514041017589941,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1807,
+            "y0": 1114,
+            "x1": 2000,
+            "y1": 1197
+          },
+          "coreBbox": {
+            "x0": 1807,
+            "y0": 1114,
+            "x1": 2000,
+            "y1": 1197
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8105639526534583,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1100,
+            "x1": 209,
+            "y1": 1169
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1100,
+            "x1": 209,
+            "y1": 1169
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8696780211099359,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1045,
+            "x1": 213,
+            "y1": 1120
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1045,
+            "x1": 213,
+            "y1": 1120
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8534822609421062,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 258,
+            "y0": 1586,
+            "x1": 368,
+            "y1": 1624
+          },
+          "coreBbox": {
+            "x0": 258,
+            "y0": 1586,
+            "x1": 368,
+            "y1": 1624
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8341776578328206,
+          "tileIndex": 4,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1567,
+            "x1": 199,
+            "y1": 1623
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1567,
+            "x1": 199,
+            "y1": 1623
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8961690628665265,
+          "tileIndex": 4,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 252,
+            "y0": 1524,
+            "x1": 377,
+            "y1": 1597
+          },
+          "coreBbox": {
+            "x0": 252,
+            "y0": 1524,
+            "x1": 377,
+            "y1": 1597
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8677065876778469,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1516,
+            "x1": 208,
+            "y1": 1574
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1516,
+            "x1": 208,
+            "y1": 1574
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9130448598869876,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 253,
+            "y0": 1472,
+            "x1": 376,
+            "y1": 1542
+          },
+          "coreBbox": {
+            "x0": 253,
+            "y0": 1472,
+            "x1": 376,
+            "y1": 1542
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8946802808972666,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1464,
+            "x1": 210,
+            "y1": 1525
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1464,
+            "x1": 210,
+            "y1": 1525
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9099802791625324,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1415,
+            "x1": 205,
+            "y1": 1472
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1415,
+            "x1": 205,
+            "y1": 1472
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9049102433557152,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1362,
+            "x1": 207,
+            "y1": 1422
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1362,
+            "x1": 207,
+            "y1": 1422
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.869762326587789,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1310,
+            "x1": 206,
+            "y1": 1372
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1310,
+            "x1": 206,
+            "y1": 1372
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9092851794867748,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1257,
+            "x1": 207,
+            "y1": 1321
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1257,
+            "x1": 207,
+            "y1": 1321
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8514462922244581,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1197,
+            "x1": 209,
+            "y1": 1276
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1197,
+            "x1": 209,
+            "y1": 1276
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6919048452462566,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 3,
+            "y0": 1163,
+            "x1": 47,
+            "y1": 1214
+          },
+          "coreBbox": {
+            "x0": 3,
+            "y0": 1163,
+            "x1": 47,
+            "y1": 1214
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.854039921269723,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1,
+            "y0": 1111,
+            "x1": 51,
+            "y1": 1163
+          },
+          "coreBbox": {
+            "x0": 1,
+            "y0": 1111,
+            "x1": 51,
+            "y1": 1163
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8110184828390374,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1048,
+            "x1": 213,
+            "y1": 1123
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1048,
+            "x1": 213,
+            "y1": 1123
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8281972394296959,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 256,
+            "y0": 1585,
+            "x1": 369,
+            "y1": 1624
+          },
+          "coreBbox": {
+            "x0": 256,
+            "y0": 1585,
+            "x1": 369,
+            "y1": 1624
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8525690027809815,
+          "tileIndex": 4,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1567,
+            "x1": 200,
+            "y1": 1623
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1567,
+            "x1": 200,
+            "y1": 1623
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9064117187029525,
+          "tileIndex": 4,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 252,
+            "y0": 1524,
+            "x1": 377,
+            "y1": 1597
+          },
+          "coreBbox": {
+            "x0": 252,
+            "y0": 1524,
+            "x1": 377,
+            "y1": 1597
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8865929115382252,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1515,
+            "x1": 208,
+            "y1": 1574
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1515,
+            "x1": 208,
+            "y1": 1574
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8996472261281947,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 252,
+            "y0": 1470,
+            "x1": 376,
+            "y1": 1543
+          },
+          "coreBbox": {
+            "x0": 252,
+            "y0": 1470,
+            "x1": 376,
+            "y1": 1543
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8916461541508769,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1466,
+            "x1": 210,
+            "y1": 1523
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1466,
+            "x1": 210,
+            "y1": 1523
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9240861703674531,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1413,
+            "x1": 207,
+            "y1": 1473
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1413,
+            "x1": 207,
+            "y1": 1473
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8970643076959446,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1360,
+            "x1": 208,
+            "y1": 1423
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1360,
+            "x1": 208,
+            "y1": 1423
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.874806984592649,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1310,
+            "x1": 207,
+            "y1": 1373
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1310,
+            "x1": 207,
+            "y1": 1373
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9022111198898629,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1257,
+            "x1": 207,
+            "y1": 1321
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1257,
+            "x1": 207,
+            "y1": 1321
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8678236431072793,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1197,
+            "x1": 209,
+            "y1": 1276
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1197,
+            "x1": 209,
+            "y1": 1276
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7210753909233651,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1100,
+            "x1": 213,
+            "y1": 1176
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1100,
+            "x1": 213,
+            "y1": 1176
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7514979586408826,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1054,
+            "x1": 212,
+            "y1": 1121
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1054,
+            "x1": 212,
+            "y1": 1121
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8750396324042943,
+          "tileIndex": 4,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1813,
+            "y0": 1592,
+            "x1": 1993,
+            "y1": 1623
+          },
+          "coreBbox": {
+            "x0": 1813,
+            "y0": 1592,
+            "x1": 1993,
+            "y1": 1623
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7984679612563795,
+          "tileIndex": 6,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1809,
+            "y0": 1530,
+            "x1": 1996,
+            "y1": 1595
+          },
+          "coreBbox": {
+            "x0": 1809,
+            "y0": 1530,
+            "x1": 1996,
+            "y1": 1595
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9294267778887093,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1808,
+            "y0": 1470,
+            "x1": 1995,
+            "y1": 1538
+          },
+          "coreBbox": {
+            "x0": 1808,
+            "y0": 1470,
+            "x1": 1995,
+            "y1": 1538
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9018273038163078,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1806,
+            "y0": 1409,
+            "x1": 1996,
+            "y1": 1483
+          },
+          "coreBbox": {
+            "x0": 1806,
+            "y0": 1409,
+            "x1": 1996,
+            "y1": 1483
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8973040361370208,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1809,
+            "y0": 1356,
+            "x1": 1994,
+            "y1": 1420
+          },
+          "coreBbox": {
+            "x0": 1809,
+            "y0": 1356,
+            "x1": 1994,
+            "y1": 1420
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9227712878208051,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1815,
+            "y0": 1305,
+            "x1": 1874,
+            "y1": 1359
+          },
+          "coreBbox": {
+            "x0": 1815,
+            "y0": 1305,
+            "x1": 1874,
+            "y1": 1359
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8317277908665157,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1805,
+            "y0": 1114,
+            "x1": 1886,
+            "y1": 1314
+          },
+          "coreBbox": {
+            "x0": 1805,
+            "y0": 1114,
+            "x1": 1886,
+            "y1": 1314
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6710892215771002,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1813,
+            "y0": 1592,
+            "x1": 1993,
+            "y1": 1623
+          },
+          "coreBbox": {
+            "x0": 1813,
+            "y0": 1592,
+            "x1": 1993,
+            "y1": 1623
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8208324474575489,
+          "tileIndex": 6,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1809,
+            "y0": 1530,
+            "x1": 1996,
+            "y1": 1595
+          },
+          "coreBbox": {
+            "x0": 1809,
+            "y0": 1530,
+            "x1": 1996,
+            "y1": 1595
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9439996488951453,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1808,
+            "y0": 1470,
+            "x1": 1995,
+            "y1": 1538
+          },
+          "coreBbox": {
+            "x0": 1808,
+            "y0": 1470,
+            "x1": 1995,
+            "y1": 1538
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9205542856656286,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1806,
+            "y0": 1408,
+            "x1": 1996,
+            "y1": 1484
+          },
+          "coreBbox": {
+            "x0": 1806,
+            "y0": 1408,
+            "x1": 1996,
+            "y1": 1484
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9024742505376967,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1809,
+            "y0": 1353,
+            "x1": 1996,
+            "y1": 1422
+          },
+          "coreBbox": {
+            "x0": 1809,
+            "y0": 1353,
+            "x1": 1996,
+            "y1": 1422
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8540169804208025,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1815,
+            "y0": 1304,
+            "x1": 1873,
+            "y1": 1359
+          },
+          "coreBbox": {
+            "x0": 1815,
+            "y0": 1304,
+            "x1": 1873,
+            "y1": 1359
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8374654945144486,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1805,
+            "y0": 1114,
+            "x1": 1885,
+            "y1": 1319
+          },
+          "coreBbox": {
+            "x0": 1805,
+            "y0": 1114,
+            "x1": 1885,
+            "y1": 1319
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7006951183045167,
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 108,
+            "y0": 1871,
+            "x1": 143,
+            "y1": 1906
+          },
+          "coreBbox": {
+            "x0": 108,
+            "y0": 1871,
+            "x1": 143,
+            "y1": 1906
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6750684630858571,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 49,
+            "y0": 1864,
+            "x1": 97,
+            "y1": 1930
+          },
+          "coreBbox": {
+            "x0": 49,
+            "y0": 1864,
+            "x1": 97,
+            "y1": 1930
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7717914745814158,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 51,
+            "y0": 1818,
+            "x1": 100,
+            "y1": 1884
+          },
+          "coreBbox": {
+            "x0": 51,
+            "y0": 1818,
+            "x1": 100,
+            "y1": 1884
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7801031545278356,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1815,
+            "x1": 49,
+            "y1": 2028
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1815,
+            "x1": 49,
+            "y1": 2028
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7311379234351036,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 146,
+            "y0": 1763,
+            "x1": 205,
+            "y1": 1884
+          },
+          "coreBbox": {
+            "x0": 146,
+            "y0": 1763,
+            "x1": 205,
+            "y1": 1884
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6909178560061654,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 94,
+            "y0": 1762,
+            "x1": 153,
+            "y1": 1883
+          },
+          "coreBbox": {
+            "x0": 94,
+            "y0": 1762,
+            "x1": 153,
+            "y1": 1883
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7327588656880697,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 147,
+            "y0": 1718,
+            "x1": 204,
+            "y1": 1785
+          },
+          "coreBbox": {
+            "x0": 147,
+            "y0": 1718,
+            "x1": 204,
+            "y1": 1785
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7981431074750032,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 154,
+            "y0": 1670,
+            "x1": 203,
+            "y1": 1723
+          },
+          "coreBbox": {
+            "x0": 154,
+            "y0": 1670,
+            "x1": 203,
+            "y1": 1723
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7648307571958607,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 99,
+            "y0": 1624,
+            "x1": 148,
+            "y1": 1670
+          },
+          "coreBbox": {
+            "x0": 99,
+            "y0": 1624,
+            "x1": 148,
+            "y1": 1670
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.813055392831311,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 154,
+            "y0": 1620,
+            "x1": 200,
+            "y1": 1667
+          },
+          "coreBbox": {
+            "x0": 154,
+            "y0": 1620,
+            "x1": 200,
+            "y1": 1667
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8096450778928883,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 42,
+            "y0": 1612,
+            "x1": 105,
+            "y1": 1829
+          },
+          "coreBbox": {
+            "x0": 42,
+            "y0": 1612,
+            "x1": 105,
+            "y1": 1829
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7311030172008809,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1565,
+            "x1": 55,
+            "y1": 1834
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1565,
+            "x1": 55,
+            "y1": 1834
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.749443785883355,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 46,
+            "y0": 1568,
+            "x1": 101,
+            "y1": 1623
+          },
+          "coreBbox": {
+            "x0": 46,
+            "y0": 1568,
+            "x1": 101,
+            "y1": 1623
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8159256083325488,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 101,
+            "y0": 1568,
+            "x1": 151,
+            "y1": 1621
+          },
+          "coreBbox": {
+            "x0": 101,
+            "y0": 1568,
+            "x1": 151,
+            "y1": 1621
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7974409019809549,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 2,
+            "y0": 1521,
+            "x1": 56,
+            "y1": 1571
+          },
+          "coreBbox": {
+            "x0": 2,
+            "y0": 1521,
+            "x1": 56,
+            "y1": 1571
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7135527877538741,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 93,
+            "y0": 1511,
+            "x1": 210,
+            "y1": 1582
+          },
+          "coreBbox": {
+            "x0": 93,
+            "y0": 1511,
+            "x1": 210,
+            "y1": 1582
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6980030760462651,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 35,
+            "y0": 1506,
+            "x1": 113,
+            "y1": 1585
+          },
+          "coreBbox": {
+            "x0": 35,
+            "y0": 1506,
+            "x1": 113,
+            "y1": 1585
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7271570377171088,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 310,
+            "y0": 1474,
+            "x1": 376,
+            "y1": 1858
+          },
+          "coreBbox": {
+            "x0": 310,
+            "y0": 1474,
+            "x1": 376,
+            "y1": 1858
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.9230561629923371,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 253,
+            "y0": 1471,
+            "x1": 317,
+            "y1": 1697
+          },
+          "coreBbox": {
+            "x0": 253,
+            "y0": 1471,
+            "x1": 317,
+            "y1": 1697
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.9202097697784453,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 86,
+            "y0": 1459,
+            "x1": 213,
+            "y1": 1532
+          },
+          "coreBbox": {
+            "x0": 86,
+            "y0": 1459,
+            "x1": 213,
+            "y1": 1532
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7403025331461106,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1362,
+            "x1": 51,
+            "y1": 1475
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1362,
+            "x1": 51,
+            "y1": 1475
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7086475204677211,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1308,
+            "x1": 210,
+            "y1": 1380
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1308,
+            "x1": 210,
+            "y1": 1380
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6556937485069628,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1258,
+            "x1": 208,
+            "y1": 1322
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1258,
+            "x1": 208,
+            "y1": 1322
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8311578122891975,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1211,
+            "x1": 202,
+            "y1": 1268
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1211,
+            "x1": 202,
+            "y1": 1268
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8798165847718745,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 106,
+            "y0": 2057,
+            "x1": 139,
+            "y1": 2089
+          },
+          "coreBbox": {
+            "x0": 106,
+            "y0": 2057,
+            "x1": 139,
+            "y1": 2089
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6010200032510942,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 53,
+            "y0": 1974,
+            "x1": 92,
+            "y1": 2023
+          },
+          "coreBbox": {
+            "x0": 53,
+            "y0": 1974,
+            "x1": 92,
+            "y1": 2023
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6012913458795414,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 103,
+            "y0": 1865,
+            "x1": 146,
+            "y1": 1931
+          },
+          "coreBbox": {
+            "x0": 103,
+            "y0": 1865,
+            "x1": 146,
+            "y1": 1931
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6388623567579685,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 158,
+            "y0": 1864,
+            "x1": 199,
+            "y1": 1923
+          },
+          "coreBbox": {
+            "x0": 158,
+            "y0": 1864,
+            "x1": 199,
+            "y1": 1923
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6384624266060847,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 49,
+            "y0": 1814,
+            "x1": 101,
+            "y1": 1934
+          },
+          "coreBbox": {
+            "x0": 49,
+            "y0": 1814,
+            "x1": 101,
+            "y1": 1934
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7937489763587358,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 147,
+            "y0": 1764,
+            "x1": 203,
+            "y1": 1886
+          },
+          "coreBbox": {
+            "x0": 147,
+            "y0": 1764,
+            "x1": 203,
+            "y1": 1886
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7269748518908873,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 96,
+            "y0": 1761,
+            "x1": 152,
+            "y1": 1884
+          },
+          "coreBbox": {
+            "x0": 96,
+            "y0": 1761,
+            "x1": 152,
+            "y1": 1884
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7465088887871418,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 146,
+            "y0": 1717,
+            "x1": 203,
+            "y1": 1785
+          },
+          "coreBbox": {
+            "x0": 146,
+            "y0": 1717,
+            "x1": 203,
+            "y1": 1785
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7939037037474305,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 153,
+            "y0": 1670,
+            "x1": 202,
+            "y1": 1723
+          },
+          "coreBbox": {
+            "x0": 153,
+            "y0": 1670,
+            "x1": 202,
+            "y1": 1723
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.825663190177043,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 96,
+            "y0": 1665,
+            "x1": 153,
+            "y1": 1783
+          },
+          "coreBbox": {
+            "x0": 96,
+            "y0": 1665,
+            "x1": 153,
+            "y1": 1783
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6400000441690369,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 98,
+            "y0": 1621,
+            "x1": 149,
+            "y1": 1672
+          },
+          "coreBbox": {
+            "x0": 98,
+            "y0": 1621,
+            "x1": 149,
+            "y1": 1672
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8045947393644706,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 42,
+            "y0": 1612,
+            "x1": 106,
+            "y1": 1836
+          },
+          "coreBbox": {
+            "x0": 42,
+            "y0": 1612,
+            "x1": 106,
+            "y1": 1836
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6976540157148063,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 151,
+            "y0": 1617,
+            "x1": 201,
+            "y1": 1670
+          },
+          "coreBbox": {
+            "x0": 151,
+            "y0": 1617,
+            "x1": 201,
+            "y1": 1670
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8212310246991952,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1561,
+            "x1": 63,
+            "y1": 2034
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1561,
+            "x1": 63,
+            "y1": 2034
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6150072094179183,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 45,
+            "y0": 1568,
+            "x1": 101,
+            "y1": 1624
+          },
+          "coreBbox": {
+            "x0": 45,
+            "y0": 1568,
+            "x1": 101,
+            "y1": 1624
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.804352656634777,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 95,
+            "y0": 1559,
+            "x1": 156,
+            "y1": 1626
+          },
+          "coreBbox": {
+            "x0": 95,
+            "y0": 1559,
+            "x1": 156,
+            "y1": 1626
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7390083886866534,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1,
+            "y0": 1519,
+            "x1": 59,
+            "y1": 1572
+          },
+          "coreBbox": {
+            "x0": 1,
+            "y0": 1519,
+            "x1": 59,
+            "y1": 1572
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6866741935666678,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 90,
+            "y0": 1508,
+            "x1": 212,
+            "y1": 1584
+          },
+          "coreBbox": {
+            "x0": 90,
+            "y0": 1508,
+            "x1": 212,
+            "y1": 1584
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7235040944073116,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 29,
+            "y0": 1500,
+            "x1": 117,
+            "y1": 1588
+          },
+          "coreBbox": {
+            "x0": 29,
+            "y0": 1500,
+            "x1": 117,
+            "y1": 1588
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7223751049975116,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 309,
+            "y0": 1473,
+            "x1": 375,
+            "y1": 1857
+          },
+          "coreBbox": {
+            "x0": 309,
+            "y0": 1473,
+            "x1": 375,
+            "y1": 1857
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.9238240470058334,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 252,
+            "y0": 1470,
+            "x1": 319,
+            "y1": 1698
+          },
+          "coreBbox": {
+            "x0": 252,
+            "y0": 1470,
+            "x1": 319,
+            "y1": 1698
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8955175643672081,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1257,
+            "x1": 209,
+            "y1": 1325
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1257,
+            "x1": 209,
+            "y1": 1325
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8332036794213551,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1211,
+            "x1": 203,
+            "y1": 1268
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1211,
+            "x1": 203,
+            "y1": 1268
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8954983046904827,
+          "tileIndex": 7,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 12,
+            "y0": 1200,
+            "x1": 177,
+            "y1": 1212
+          },
+          "coreBbox": {
+            "x0": 12,
+            "y0": 1200,
+            "x1": 177,
+            "y1": 1212
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6942684041928571,
+          "tileIndex": 7,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1815,
+            "y0": 2166,
+            "x1": 1943,
+            "y1": 2221
+          },
+          "coreBbox": {
+            "x0": 1815,
+            "y0": 2166,
+            "x1": 1943,
+            "y1": 2221
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.698902749541661,
+          "tileIndex": 9,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1932,
+            "y0": 2161,
+            "x1": 1995,
+            "y1": 2217
+          },
+          "coreBbox": {
+            "x0": 1932,
+            "y0": 2161,
+            "x1": 1995,
+            "y1": 2217
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.674556097956992,
+          "tileIndex": 9,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1814,
+            "y0": 2115,
+            "x1": 1915,
+            "y1": 2168
+          },
+          "coreBbox": {
+            "x0": 1814,
+            "y0": 2115,
+            "x1": 1915,
+            "y1": 2168
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6018345614141853,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1811,
+            "y0": 2051,
+            "x1": 1934,
+            "y1": 2113
+          },
+          "coreBbox": {
+            "x0": 1811,
+            "y0": 2051,
+            "x1": 1934,
+            "y1": 2113
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6997369605350732,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1934,
+            "y0": 2048,
+            "x1": 1989,
+            "y1": 2098
+          },
+          "coreBbox": {
+            "x0": 1934,
+            "y0": 2048,
+            "x1": 1989,
+            "y1": 2098
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8050485139166743,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1821,
+            "y0": 2006,
+            "x1": 1874,
+            "y1": 2048
+          },
+          "coreBbox": {
+            "x0": 1821,
+            "y0": 2006,
+            "x1": 1874,
+            "y1": 2048
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6856006336531809,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1868,
+            "y0": 2001,
+            "x1": 1933,
+            "y1": 2053
+          },
+          "coreBbox": {
+            "x0": 1868,
+            "y0": 2001,
+            "x1": 1933,
+            "y1": 2053
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6199176689948447,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1937,
+            "y0": 1928,
+            "x1": 1992,
+            "y1": 1984
+          },
+          "coreBbox": {
+            "x0": 1937,
+            "y0": 1928,
+            "x1": 1992,
+            "y1": 1984
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7601684038478804,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1938,
+            "y0": 1857,
+            "x1": 1988,
+            "y1": 1932
+          },
+          "coreBbox": {
+            "x0": 1938,
+            "y0": 1857,
+            "x1": 1988,
+            "y1": 1932
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7334674366949534,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1881,
+            "y0": 1822,
+            "x1": 1926,
+            "y1": 1862
+          },
+          "coreBbox": {
+            "x0": 1881,
+            "y0": 1822,
+            "x1": 1926,
+            "y1": 1862
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6822397743651563,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1830,
+            "y0": 1777,
+            "x1": 1863,
+            "y1": 1807
+          },
+          "coreBbox": {
+            "x0": 1830,
+            "y0": 1777,
+            "x1": 1863,
+            "y1": 1807
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7918095427565277,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1809,
+            "y0": 1584,
+            "x1": 1881,
+            "y1": 1774
+          },
+          "coreBbox": {
+            "x0": 1809,
+            "y0": 1584,
+            "x1": 1881,
+            "y1": 1774
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8068987152622078,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1870,
+            "y0": 1582,
+            "x1": 1936,
+            "y1": 1841
+          },
+          "coreBbox": {
+            "x0": 1870,
+            "y0": 1582,
+            "x1": 1936,
+            "y1": 1841
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8023760163517352,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1815,
+            "y0": 1532,
+            "x1": 1876,
+            "y1": 1593
+          },
+          "coreBbox": {
+            "x0": 1815,
+            "y0": 1532,
+            "x1": 1876,
+            "y1": 1593
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8465226011381157,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1874,
+            "y0": 1530,
+            "x1": 1930,
+            "y1": 1597
+          },
+          "coreBbox": {
+            "x0": 1874,
+            "y0": 1530,
+            "x1": 1930,
+            "y1": 1597
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7970952654510248,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1815,
+            "y0": 1477,
+            "x1": 1877,
+            "y1": 1538
+          },
+          "coreBbox": {
+            "x0": 1815,
+            "y0": 1477,
+            "x1": 1877,
+            "y1": 1538
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8270770805686773,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1867,
+            "y0": 1475,
+            "x1": 1932,
+            "y1": 1539
+          },
+          "coreBbox": {
+            "x0": 1867,
+            "y0": 1475,
+            "x1": 1932,
+            "y1": 1539
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.799114366241548,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1867,
+            "y0": 1417,
+            "x1": 1933,
+            "y1": 1480
+          },
+          "coreBbox": {
+            "x0": 1867,
+            "y0": 1417,
+            "x1": 1933,
+            "y1": 1480
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8558613193879715,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1815,
+            "y0": 1417,
+            "x1": 1878,
+            "y1": 1478
+          },
+          "coreBbox": {
+            "x0": 1815,
+            "y0": 1417,
+            "x1": 1878,
+            "y1": 1478
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8777136691507291,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1811,
+            "y0": 1357,
+            "x1": 1948,
+            "y1": 1421
+          },
+          "coreBbox": {
+            "x0": 1811,
+            "y0": 1357,
+            "x1": 1948,
+            "y1": 1421
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7717582382030643,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1924,
+            "y0": 1350,
+            "x1": 1999,
+            "y1": 1885
+          },
+          "coreBbox": {
+            "x0": 1924,
+            "y0": 1350,
+            "x1": 1999,
+            "y1": 1885
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7425630642533458,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1807,
+            "y0": 1295,
+            "x1": 1996,
+            "y1": 1368
+          },
+          "coreBbox": {
+            "x0": 1807,
+            "y0": 1295,
+            "x1": 1996,
+            "y1": 1368
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7368181324455573,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1809,
+            "y0": 1232,
+            "x1": 1998,
+            "y1": 1311
+          },
+          "coreBbox": {
+            "x0": 1809,
+            "y0": 1232,
+            "x1": 1998,
+            "y1": 1311
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7652027570589834,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1806,
+            "y0": 2153,
+            "x1": 2000,
+            "y1": 2224
+          },
+          "coreBbox": {
+            "x0": 1806,
+            "y0": 2153,
+            "x1": 2000,
+            "y1": 2224
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7198527279178318,
+          "tileIndex": 9,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1810,
+            "y0": 2108,
+            "x1": 1939,
+            "y1": 2172
+          },
+          "coreBbox": {
+            "x0": 1810,
+            "y0": 2108,
+            "x1": 1939,
+            "y1": 2172
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8013812852713902,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1810,
+            "y0": 2047,
+            "x1": 1939,
+            "y1": 2116
+          },
+          "coreBbox": {
+            "x0": 1810,
+            "y0": 2047,
+            "x1": 1939,
+            "y1": 2116
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8300031931245884,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1932,
+            "y0": 2045,
+            "x1": 1991,
+            "y1": 2100
+          },
+          "coreBbox": {
+            "x0": 1932,
+            "y0": 2045,
+            "x1": 1991,
+            "y1": 2100
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.861808213418044,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1819,
+            "y0": 2002,
+            "x1": 1878,
+            "y1": 2050
+          },
+          "coreBbox": {
+            "x0": 1819,
+            "y0": 2002,
+            "x1": 1878,
+            "y1": 2050
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.759136682371046,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1865,
+            "y0": 1994,
+            "x1": 1936,
+            "y1": 2054
+          },
+          "coreBbox": {
+            "x0": 1865,
+            "y0": 1994,
+            "x1": 1936,
+            "y1": 2054
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7506475391420866,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1936,
+            "y0": 1922,
+            "x1": 1993,
+            "y1": 1987
+          },
+          "coreBbox": {
+            "x0": 1936,
+            "y0": 1922,
+            "x1": 1993,
+            "y1": 1987
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7555996923006717,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1824,
+            "y0": 1755,
+            "x1": 1868,
+            "y1": 1814
+          },
+          "coreBbox": {
+            "x0": 1824,
+            "y0": 1755,
+            "x1": 1868,
+            "y1": 1814
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7475091964698058,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1809,
+            "y0": 1581,
+            "x1": 1881,
+            "y1": 1775
+          },
+          "coreBbox": {
+            "x0": 1809,
+            "y0": 1581,
+            "x1": 1881,
+            "y1": 1775
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8208635124445275,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1814,
+            "y0": 1529,
+            "x1": 1876,
+            "y1": 1596
+          },
+          "coreBbox": {
+            "x0": 1814,
+            "y0": 1529,
+            "x1": 1876,
+            "y1": 1596
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8220143145760449,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1815,
+            "y0": 1476,
+            "x1": 1875,
+            "y1": 1539
+          },
+          "coreBbox": {
+            "x0": 1815,
+            "y0": 1476,
+            "x1": 1875,
+            "y1": 1539
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.856643019977929,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1861,
+            "y0": 1464,
+            "x1": 1941,
+            "y1": 1885
+          },
+          "coreBbox": {
+            "x0": 1861,
+            "y0": 1464,
+            "x1": 1941,
+            "y1": 1885
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6804099579669514,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1815,
+            "y0": 1416,
+            "x1": 1876,
+            "y1": 1479
+          },
+          "coreBbox": {
+            "x0": 1815,
+            "y0": 1416,
+            "x1": 1876,
+            "y1": 1479
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8767514366487875,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1869,
+            "y0": 1414,
+            "x1": 1932,
+            "y1": 1483
+          },
+          "coreBbox": {
+            "x0": 1869,
+            "y0": 1414,
+            "x1": 1932,
+            "y1": 1483
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8011538693507809,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1810,
+            "y0": 1356,
+            "x1": 1943,
+            "y1": 1423
+          },
+          "coreBbox": {
+            "x0": 1810,
+            "y0": 1356,
+            "x1": 1943,
+            "y1": 1423
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7694475073993783,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1926,
+            "y0": 1349,
+            "x1": 1997,
+            "y1": 1947
+          },
+          "coreBbox": {
+            "x0": 1926,
+            "y0": 1349,
+            "x1": 1997,
+            "y1": 1947
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7811899352503326,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1808,
+            "y0": 1296,
+            "x1": 1943,
+            "y1": 1365
+          },
+          "coreBbox": {
+            "x0": 1808,
+            "y0": 1296,
+            "x1": 1943,
+            "y1": 1365
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7750690511914541,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1929,
+            "y0": 1301,
+            "x1": 1989,
+            "y1": 1362
+          },
+          "coreBbox": {
+            "x0": 1929,
+            "y0": 1301,
+            "x1": 1989,
+            "y1": 1362
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8016090484601216,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1848,
+            "y0": 1236,
+            "x1": 1997,
+            "y1": 1311
+          },
+          "coreBbox": {
+            "x0": 1848,
+            "y0": 1236,
+            "x1": 1997,
+            "y1": 1311
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.684029673212276,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1819,
+            "y0": 1243,
+            "x1": 1876,
+            "y1": 1299
+          },
+          "coreBbox": {
+            "x0": 1819,
+            "y0": 1243,
+            "x1": 1876,
+            "y1": 1299
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8410428899755411,
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 144,
+            "y0": 2187,
+            "x1": 212,
+            "y1": 2644
+          },
+          "coreBbox": {
+            "x0": 144,
+            "y0": 2187,
+            "x1": 212,
+            "y1": 2644
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.744899547609019,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 89,
+            "y0": 2145,
+            "x1": 164,
+            "y1": 2824
+          },
+          "coreBbox": {
+            "x0": 89,
+            "y0": 2145,
+            "x1": 164,
+            "y1": 2824
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7064711464701663,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 40,
+            "y0": 2113,
+            "x1": 105,
+            "y1": 2540
+          },
+          "coreBbox": {
+            "x0": 40,
+            "y0": 2113,
+            "x1": 105,
+            "y1": 2540
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7751962326387519,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 51,
+            "y0": 2022,
+            "x1": 92,
+            "y1": 2083
+          },
+          "coreBbox": {
+            "x0": 51,
+            "y0": 2022,
+            "x1": 92,
+            "y1": 2083
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6374694191217241,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 117,
+            "y0": 2026,
+            "x1": 140,
+            "y1": 2049
+          },
+          "coreBbox": {
+            "x0": 117,
+            "y0": 2026,
+            "x1": 140,
+            "y1": 2049
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6190768242148416,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 93,
+            "y0": 1816,
+            "x1": 157,
+            "y1": 1970
+          },
+          "coreBbox": {
+            "x0": 93,
+            "y0": 1816,
+            "x1": 157,
+            "y1": 1970
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6899278349434791,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 38,
+            "y0": 1816,
+            "x1": 104,
+            "y1": 2034
+          },
+          "coreBbox": {
+            "x0": 38,
+            "y0": 1816,
+            "x1": 104,
+            "y1": 2034
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7115334545353594,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1817,
+            "x1": 51,
+            "y1": 2030
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1817,
+            "x1": 51,
+            "y1": 2030
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7402720703432735,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 144,
+            "y0": 1812,
+            "x1": 208,
+            "y1": 1983
+          },
+          "coreBbox": {
+            "x0": 144,
+            "y0": 1812,
+            "x1": 208,
+            "y1": 1983
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6869187045924606,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 308,
+            "y0": 1800,
+            "x1": 377,
+            "y1": 1865
+          },
+          "coreBbox": {
+            "x0": 308,
+            "y0": 1800,
+            "x1": 377,
+            "y1": 1865
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9054743715576956,
+          "tileIndex": 10,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 144,
+            "y0": 2159,
+            "x1": 212,
+            "y1": 2644
+          },
+          "coreBbox": {
+            "x0": 144,
+            "y0": 2159,
+            "x1": 212,
+            "y1": 2644
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7543218488128767,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 89,
+            "y0": 2144,
+            "x1": 164,
+            "y1": 2824
+          },
+          "coreBbox": {
+            "x0": 89,
+            "y0": 2144,
+            "x1": 164,
+            "y1": 2824
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7270706717057529,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 40,
+            "y0": 2008,
+            "x1": 105,
+            "y1": 2539
+          },
+          "coreBbox": {
+            "x0": 40,
+            "y0": 2008,
+            "x1": 105,
+            "y1": 2539
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7329431378509481,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 89,
+            "y0": 1815,
+            "x1": 158,
+            "y1": 2110
+          },
+          "coreBbox": {
+            "x0": 89,
+            "y0": 1815,
+            "x1": 158,
+            "y1": 2110
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.6223699062060956,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 37,
+            "y0": 1815,
+            "x1": 105,
+            "y1": 2043
+          },
+          "coreBbox": {
+            "x0": 37,
+            "y0": 1815,
+            "x1": 105,
+            "y1": 2043
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7182261342558963,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 0,
+            "y0": 1817,
+            "x1": 52,
+            "y1": 2029
+          },
+          "coreBbox": {
+            "x0": 0,
+            "y0": 1817,
+            "x1": 52,
+            "y1": 2029
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7695403346492933,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 144,
+            "y0": 1812,
+            "x1": 208,
+            "y1": 1986
+          },
+          "coreBbox": {
+            "x0": 144,
+            "y0": 1812,
+            "x1": 208,
+            "y1": 1986
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7848653097028053,
+          "tileIndex": 10,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 308,
+            "y0": 1800,
+            "x1": 377,
+            "y1": 1865
+          },
+          "coreBbox": {
+            "x0": 308,
+            "y0": 1800,
+            "x1": 377,
+            "y1": 1865
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.9011081069366105,
+          "tileIndex": 10,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1862,
+            "y0": 2221,
+            "x1": 1948,
+            "y1": 2819
+          },
+          "coreBbox": {
+            "x0": 1862,
+            "y0": 2221,
+            "x1": 1948,
+            "y1": 2819
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7067843196041322,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1924,
+            "y0": 2206,
+            "x1": 2000,
+            "y1": 2460
+          },
+          "coreBbox": {
+            "x0": 1924,
+            "y0": 2206,
+            "x1": 2000,
+            "y1": 2460
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8184167495850814,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1878,
+            "y0": 2172,
+            "x1": 1930,
+            "y1": 2237
+          },
+          "coreBbox": {
+            "x0": 1878,
+            "y0": 2172,
+            "x1": 1930,
+            "y1": 2237
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8133275039595447,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1802,
+            "y0": 2159,
+            "x1": 1887,
+            "y1": 2704
+          },
+          "coreBbox": {
+            "x0": 1802,
+            "y0": 2159,
+            "x1": 1887,
+            "y1": 2704
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7969865573357718,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1937,
+            "y0": 2156,
+            "x1": 1996,
+            "y1": 2227
+          },
+          "coreBbox": {
+            "x0": 1937,
+            "y0": 2156,
+            "x1": 1996,
+            "y1": 2227
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6969595571576571,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1813,
+            "y0": 2112,
+            "x1": 1880,
+            "y1": 2174
+          },
+          "coreBbox": {
+            "x0": 1813,
+            "y0": 2112,
+            "x1": 1880,
+            "y1": 2174
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7888002879453624,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1873,
+            "y0": 2111,
+            "x1": 1932,
+            "y1": 2172
+          },
+          "coreBbox": {
+            "x0": 1873,
+            "y0": 2111,
+            "x1": 1932,
+            "y1": 2172
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8000207221708618,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1938,
+            "y0": 2105,
+            "x1": 1988,
+            "y1": 2159
+          },
+          "coreBbox": {
+            "x0": 1938,
+            "y0": 2105,
+            "x1": 1988,
+            "y1": 2159
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6389558371571268,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1817,
+            "y0": 2061,
+            "x1": 1878,
+            "y1": 2108
+          },
+          "coreBbox": {
+            "x0": 1817,
+            "y0": 2061,
+            "x1": 1878,
+            "y1": 2108
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7685922485421404,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1934,
+            "y0": 2042,
+            "x1": 1993,
+            "y1": 2104
+          },
+          "coreBbox": {
+            "x0": 1934,
+            "y0": 2042,
+            "x1": 1993,
+            "y1": 2104
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8376443707702508,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1820,
+            "y0": 2003,
+            "x1": 1874,
+            "y1": 2051
+          },
+          "coreBbox": {
+            "x0": 1820,
+            "y0": 2003,
+            "x1": 1874,
+            "y1": 2051
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7625776022007872,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1928,
+            "y0": 1920,
+            "x1": 2000,
+            "y1": 1995
+          },
+          "coreBbox": {
+            "x0": 1928,
+            "y0": 1920,
+            "x1": 2000,
+            "y1": 1995
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7675586503249435,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1876,
+            "y0": 1887,
+            "x1": 1924,
+            "y1": 1934
+          },
+          "coreBbox": {
+            "x0": 1876,
+            "y0": 1887,
+            "x1": 1924,
+            "y1": 1934
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6398043218699601,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1934,
+            "y0": 1870,
+            "x1": 1986,
+            "y1": 1931
+          },
+          "coreBbox": {
+            "x0": 1934,
+            "y0": 1870,
+            "x1": 1986,
+            "y1": 1931
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.758722772765161,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1876,
+            "y0": 1823,
+            "x1": 1922,
+            "y1": 1862
+          },
+          "coreBbox": {
+            "x0": 1876,
+            "y0": 1823,
+            "x1": 1922,
+            "y1": 1862
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6629873117021022,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1862,
+            "y0": 2158,
+            "x1": 1947,
+            "y1": 2819
+          },
+          "coreBbox": {
+            "x0": 1862,
+            "y0": 2158,
+            "x1": 1947,
+            "y1": 2819
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7259472398186781,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1803,
+            "y0": 2155,
+            "x1": 1885,
+            "y1": 2702
+          },
+          "coreBbox": {
+            "x0": 1803,
+            "y0": 2155,
+            "x1": 1885,
+            "y1": 2702
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8323049245146947,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1923,
+            "y0": 2148,
+            "x1": 2000,
+            "y1": 2460
+          },
+          "coreBbox": {
+            "x0": 1923,
+            "y0": 2148,
+            "x1": 2000,
+            "y1": 2460
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8082053722586203,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1813,
+            "y0": 2112,
+            "x1": 1879,
+            "y1": 2176
+          },
+          "coreBbox": {
+            "x0": 1813,
+            "y0": 2112,
+            "x1": 1879,
+            "y1": 2176
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.811468095882144,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1873,
+            "y0": 2111,
+            "x1": 1931,
+            "y1": 2174
+          },
+          "coreBbox": {
+            "x0": 1873,
+            "y0": 2111,
+            "x1": 1931,
+            "y1": 2174
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8131027746807481,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1936,
+            "y0": 2099,
+            "x1": 1991,
+            "y1": 2165
+          },
+          "coreBbox": {
+            "x0": 1936,
+            "y0": 2099,
+            "x1": 1991,
+            "y1": 2165
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7702379319553,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1816,
+            "y0": 2059,
+            "x1": 1878,
+            "y1": 2111
+          },
+          "coreBbox": {
+            "x0": 1816,
+            "y0": 2059,
+            "x1": 1878,
+            "y1": 2111
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8350584014956748,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1869,
+            "y0": 2049,
+            "x1": 1935,
+            "y1": 2112
+          },
+          "coreBbox": {
+            "x0": 1869,
+            "y0": 2049,
+            "x1": 1935,
+            "y1": 2112
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7289594552672339,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1934,
+            "y0": 2041,
+            "x1": 1993,
+            "y1": 2106
+          },
+          "coreBbox": {
+            "x0": 1934,
+            "y0": 2041,
+            "x1": 1993,
+            "y1": 2106
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8538135035927339,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1814,
+            "y0": 1998,
+            "x1": 1879,
+            "y1": 2055
+          },
+          "coreBbox": {
+            "x0": 1814,
+            "y0": 1998,
+            "x1": 1879,
+            "y1": 2055
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8249498275731416,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1865,
+            "y0": 1994,
+            "x1": 1935,
+            "y1": 2055
+          },
+          "coreBbox": {
+            "x0": 1865,
+            "y0": 1994,
+            "x1": 1935,
+            "y1": 2055
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7635331717013869,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1814,
+            "y0": 1941,
+            "x1": 1885,
+            "y1": 1996
+          },
+          "coreBbox": {
+            "x0": 1814,
+            "y0": 1941,
+            "x1": 1885,
+            "y1": 1996
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6876767243130429,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1866,
+            "y0": 1940,
+            "x1": 1930,
+            "y1": 1996
+          },
+          "coreBbox": {
+            "x0": 1866,
+            "y0": 1940,
+            "x1": 1930,
+            "y1": 1996
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7558287878156544,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1933,
+            "y0": 1924,
+            "x1": 1996,
+            "y1": 1994
+          },
+          "coreBbox": {
+            "x0": 1933,
+            "y0": 1924,
+            "x1": 1996,
+            "y1": 1994
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8009745515760294,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1815,
+            "y0": 1885,
+            "x1": 1875,
+            "y1": 1937
+          },
+          "coreBbox": {
+            "x0": 1815,
+            "y0": 1885,
+            "x1": 1875,
+            "y1": 1937
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7031449740131059,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1874,
+            "y0": 1882,
+            "x1": 1930,
+            "y1": 1936
+          },
+          "coreBbox": {
+            "x0": 1874,
+            "y0": 1882,
+            "x1": 1930,
+            "y1": 1936
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7614281446329761,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1933,
+            "y0": 1868,
+            "x1": 1989,
+            "y1": 1933
+          },
+          "coreBbox": {
+            "x0": 1933,
+            "y0": 1868,
+            "x1": 1989,
+            "y1": 1933
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.8296025989868212,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1825,
+            "y0": 1825,
+            "x1": 1868,
+            "y1": 1876
+          },
+          "coreBbox": {
+            "x0": 1825,
+            "y0": 1825,
+            "x1": 1868,
+            "y1": 1876
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.631873651080241,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1874,
+            "y0": 1816,
+            "x1": 1930,
+            "y1": 1873
+          },
+          "coreBbox": {
+            "x0": 1874,
+            "y0": 1816,
+            "x1": 1930,
+            "y1": 1873
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.7386273772040931,
+          "tileIndex": 12,
+          "tileClipped": false,
+          "scanType": "detail"
+        }
+      ]
+    },
+    {
+      "id": "native-page-5",
+      "width": 2000,
+      "height": 2824,
+      "rawBlocks": [
+        {
+          "bbox": {
+            "x0": 1854,
+            "y0": 804,
+            "x1": 1972,
+            "y1": 1024
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8700970242519759,
+          "detectedLanguage": "ja",
+          "tileIndex": 3,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1853,
+            "y0": 860,
+            "x1": 1979,
+            "y1": 1464
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.44537512701056414,
+          "detectedLanguage": "ja",
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1856,
+            "y0": 1200,
+            "x1": 1975,
+            "y1": 1740
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7635049067676647,
+          "detectedLanguage": "ja",
+          "tileIndex": 9,
+          "tileClipped": true,
+          "scanType": "detail"
+        }
+      ],
+      "lines": [
+        {
+          "bbox": {
+            "x0": 1819,
+            "y0": 776,
+            "x1": 1999,
+            "y1": 1024
+          },
+          "coreBbox": {
+            "x0": 1864,
+            "y0": 821,
+            "x1": 1955,
+            "y1": 1012
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.828029884274163,
+          "detectedLanguage": "unknown",
+          "tileIndex": 3,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1843,
+            "y0": 806,
+            "x1": 1922,
+            "y1": 1730
+          },
+          "coreBbox": {
+            "x0": 1863,
+            "y0": 821.828125,
+            "x1": 1903,
+            "y1": 1712.6015625
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.86283345379102,
+          "detectedLanguage": "unknown",
+          "tileIndex": 9,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1904,
+            "y0": 808,
+            "x1": 1983,
+            "y1": 1733
+          },
+          "coreBbox": {
+            "x0": 1923,
+            "y0": 819.0703125,
+            "x1": 1964,
+            "y1": 1714
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8443405409618352,
+          "detectedLanguage": "unknown",
+          "tileIndex": 6,
+          "tileClipped": false,
+          "scanType": "detail"
+        }
+      ],
+      "observations": [
+        {
+          "bbox": {
+            "x0": 1908,
+            "y0": 791,
+            "x1": 1973,
+            "y1": 1721
+          },
+          "coreBbox": {
+            "x0": 1908,
+            "y0": 791,
+            "x1": 1973,
+            "y1": 1721
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7981024983741526,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1831,
+            "y0": 786,
+            "x1": 1921,
+            "y1": 1729
+          },
+          "coreBbox": {
+            "x0": 1831,
+            "y0": 786,
+            "x1": 1921,
+            "y1": 1729
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7379440256457601,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1905,
+            "y0": 789,
+            "x1": 1978,
+            "y1": 1724
+          },
+          "coreBbox": {
+            "x0": 1905,
+            "y0": 789,
+            "x1": 1978,
+            "y1": 1724
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7925412055472525,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1831,
+            "y0": 786,
+            "x1": 1921,
+            "y1": 1729
+          },
+          "coreBbox": {
+            "x0": 1831,
+            "y0": 786,
+            "x1": 1921,
+            "y1": 1729
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7392623394146274,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 1882,
+            "y0": 906,
+            "x1": 1983,
+            "y1": 1024
+          },
+          "coreBbox": {
+            "x0": 1882,
+            "y0": 906,
+            "x1": 1983,
+            "y1": 1024
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6300771221112718,
+          "tileIndex": 3,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1924,
+            "y0": 871,
+            "x1": 1958,
+            "y1": 911
+          },
+          "coreBbox": {
+            "x0": 1924,
+            "y0": 871,
+            "x1": 1958,
+            "y1": 911
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6136191214111291,
+          "tileIndex": 3,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1884,
+            "y0": 904,
+            "x1": 1983,
+            "y1": 1024
+          },
+          "coreBbox": {
+            "x0": 1884,
+            "y0": 904,
+            "x1": 1983,
+            "y1": 1024
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.6340496690881839,
+          "tileIndex": 3,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1920,
+            "y0": 860,
+            "x1": 1965,
+            "y1": 920
+          },
+          "coreBbox": {
+            "x0": 1920,
+            "y0": 860,
+            "x1": 1965,
+            "y1": 920
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.614131314533715,
+          "tileIndex": 3,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1845,
+            "y0": 798,
+            "x1": 1915,
+            "y1": 1618
+          },
+          "coreBbox": {
+            "x0": 1845,
+            "y0": 798,
+            "x1": 1915,
+            "y1": 1618
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.9072151091597812,
+          "tileIndex": 6,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1910,
+            "y0": 798,
+            "x1": 1978,
+            "y1": 1621
+          },
+          "coreBbox": {
+            "x0": 1910,
+            "y0": 798,
+            "x1": 1978,
+            "y1": 1621
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8426016638735249,
+          "tileIndex": 6,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1845,
+            "y0": 798,
+            "x1": 1915,
+            "y1": 1618
+          },
+          "coreBbox": {
+            "x0": 1845,
+            "y0": 798,
+            "x1": 1915,
+            "y1": 1618
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.9079050303589815,
+          "tileIndex": 6,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1909,
+            "y0": 797,
+            "x1": 1980,
+            "y1": 1622
+          },
+          "coreBbox": {
+            "x0": 1909,
+            "y0": 797,
+            "x1": 1980,
+            "y1": 1622
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8273049172661432,
+          "tileIndex": 6,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1909,
+            "y0": 1204,
+            "x1": 1977,
+            "y1": 1727
+          },
+          "coreBbox": {
+            "x0": 1909,
+            "y0": 1204,
+            "x1": 1977,
+            "y1": 1727
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8963358842010722,
+          "tileIndex": 9,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1845,
+            "y0": 1200,
+            "x1": 1916,
+            "y1": 1728
+          },
+          "coreBbox": {
+            "x0": 1845,
+            "y0": 1200,
+            "x1": 1916,
+            "y1": 1728
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8621674997980018,
+          "tileIndex": 9,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1909,
+            "y0": 1203,
+            "x1": 1980,
+            "y1": 1728
+          },
+          "coreBbox": {
+            "x0": 1909,
+            "y0": 1203,
+            "x1": 1980,
+            "y1": 1728
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.9075220803125597,
+          "tileIndex": 9,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 1845,
+            "y0": 1200,
+            "x1": 1916,
+            "y1": 1728
+          },
+          "coreBbox": {
+            "x0": 1845,
+            "y0": 1200,
+            "x1": 1916,
+            "y1": 1728
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8712827082685088,
+          "tileIndex": 9,
+          "tileClipped": true,
+          "scanType": "detail"
+        }
+      ]
+    },
+    {
+      "id": "screenshot-8",
+      "width": 145,
+      "height": 544,
+      "rawBlocks": [
+        {
+          "bbox": {
+            "x0": 51,
+            "y0": 29,
+            "x1": 113,
+            "y1": 64
+          },
+          "orientation": "horizontal",
+          "detectionConfidence": 0.409544928731151,
+          "detectedLanguage": "latin",
+          "tileIndex": 1,
+          "tileClipped": false,
+          "scanType": "detail"
+        }
+      ],
+      "lines": [
+        {
+          "bbox": {
+            "x0": 29,
+            "y0": 14,
+            "x1": 135,
+            "y1": 544
+          },
+          "coreBbox": {
+            "x0": 55.5,
+            "y0": 40,
+            "x1": 108.5,
+            "y1": 527.5
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8095286354560913,
+          "detectedLanguage": "unknown",
+          "tileIndex": 2,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 44,
+            "y0": 43,
+            "x1": 86,
+            "y1": 531
+          },
+          "coreBbox": {
+            "x0": 54.70695970695971,
+            "y0": 53.65625,
+            "x1": 75.95238095238095,
+            "y1": 520.625
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8374169011422048,
+          "detectedLanguage": "unknown",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 73,
+            "y0": 58,
+            "x1": 120,
+            "y1": 538
+          },
+          "coreBbox": {
+            "x0": 84.98168498168498,
+            "y0": 70.125,
+            "x1": 108.35164835164835,
+            "y1": 527
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8329589917652388,
+          "detectedLanguage": "unknown",
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        }
+      ],
+      "observations": [
+        {
+          "bbox": {
+            "x0": 50,
+            "y0": 30,
+            "x1": 78,
+            "y1": 528
+          },
+          "coreBbox": {
+            "x0": 50,
+            "y0": 30,
+            "x1": 78,
+            "y1": 528
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8615491405968326,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 78,
+            "y0": 25,
+            "x1": 118,
+            "y1": 532
+          },
+          "coreBbox": {
+            "x0": 78,
+            "y0": 25,
+            "x1": 118,
+            "y1": 532
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.753867929543935,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 48,
+            "y0": 29,
+            "x1": 79,
+            "y1": 530
+          },
+          "coreBbox": {
+            "x0": 48,
+            "y0": 29,
+            "x1": 79,
+            "y1": 530
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8557168533714827,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 80,
+            "y0": 26,
+            "x1": 116,
+            "y1": 531
+          },
+          "coreBbox": {
+            "x0": 80,
+            "y0": 26,
+            "x1": 116,
+            "y1": 531
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8402496488482979,
+          "tileIndex": 0,
+          "tileClipped": false,
+          "scanType": "full"
+        },
+        {
+          "bbox": {
+            "x0": 50,
+            "y0": 30,
+            "x1": 78,
+            "y1": 501
+          },
+          "coreBbox": {
+            "x0": 50,
+            "y0": 30,
+            "x1": 78,
+            "y1": 501
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8695690689352061,
+          "tileIndex": 1,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 78,
+            "y0": 25,
+            "x1": 118,
+            "y1": 503
+          },
+          "coreBbox": {
+            "x0": 78,
+            "y0": 25,
+            "x1": 118,
+            "y1": 503
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.757846580564908,
+          "tileIndex": 1,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 48,
+            "y0": 29,
+            "x1": 79,
+            "y1": 502
+          },
+          "coreBbox": {
+            "x0": 48,
+            "y0": 29,
+            "x1": 79,
+            "y1": 502
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8635320660735449,
+          "tileIndex": 1,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 80,
+            "y0": 26,
+            "x1": 116,
+            "y1": 502
+          },
+          "coreBbox": {
+            "x0": 80,
+            "y0": 26,
+            "x1": 116,
+            "y1": 502
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8480132667938156,
+          "tileIndex": 1,
+          "tileClipped": false,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 79,
+            "y0": 32,
+            "x1": 116,
+            "y1": 531
+          },
+          "coreBbox": {
+            "x0": 79,
+            "y0": 32,
+            "x1": 116,
+            "y1": 531
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.7937182576591232,
+          "tileIndex": 2,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 50,
+            "y0": 32,
+            "x1": 78,
+            "y1": 529
+          },
+          "coreBbox": {
+            "x0": 50,
+            "y0": 32,
+            "x1": 78,
+            "y1": 529
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8544468521470598,
+          "tileIndex": 2,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 79,
+            "y0": 32,
+            "x1": 115,
+            "y1": 531
+          },
+          "coreBbox": {
+            "x0": 79,
+            "y0": 32,
+            "x1": 115,
+            "y1": 531
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.8347808522296094,
+          "tileIndex": 2,
+          "tileClipped": true,
+          "scanType": "detail"
+        },
+        {
+          "bbox": {
+            "x0": 47,
+            "y0": 32,
+            "x1": 78,
+            "y1": 530
+          },
+          "coreBbox": {
+            "x0": 47,
+            "y0": 32,
+            "x1": 78,
+            "y1": 530
+          },
+          "orientation": "vertical",
+          "detectionConfidence": 0.846216547809211,
+          "tileIndex": 2,
+          "tileClipped": true,
+          "scanType": "detail"
+        }
+      ]
+    }
+  ]
+}

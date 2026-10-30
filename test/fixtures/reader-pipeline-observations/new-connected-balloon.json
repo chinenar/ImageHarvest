@@ -1,0 +1,1878 @@
+{
+  "schema": "imageharvest.frozen-layout-observations-v1",
+  "source": "C:\\Users\\jinna\\Downloads\\manga test ocr\\8\\10 _ Chapter 2.1 - Koke kara Hajimaru Isekai Life - MangaDex_2026-10-06T14-58-13\\0004.png",
+  "sourceHash": "de0beb485db2dcd1dfedc2ac49da06d188d947b0cdcaddd14f2e233cb00b5872",
+  "parameterFreeze": {
+    "source": "C:\\Users\\jinna\\Downloads\\manga test ocr\\8\\10 _ Chapter 2.1 - Koke kara Hajimaru Isekai Life - MangaDex_2026-10-06T14-58-13\\0004.png",
+    "sourceHash": "de0beb485db2dcd1dfedc2ac49da06d188d947b0cdcaddd14f2e233cb00b5872",
+    "candidateHash": "d376449cd915e633cf5eb577f1e16f93cb648d4402e7a4b7b41df2c67942b1ce",
+    "date": "2026-10-08T01:44:19.062Z",
+    "scope": "Parameters frozen before processing this page in this experiment; no claim that page was never examined in earlier sessions"
+  },
+  "observations": [
+    {
+      "id": "p1-0a48637b903a",
+      "text": "≠imell",
+      "bbox": {
+        "x0": 871,
+        "y0": 77,
+        "x1": 1034,
+        "y1": 386
+      },
+      "orientation": "vertical",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": true,
+      "recognitionLines": [
+        {
+          "text": "≠\"",
+          "confidence": 39.057159423828125,
+          "polygon": [
+            [
+              893,
+              93
+            ],
+            [
+              1017,
+              94
+            ],
+            [
+              1015,
+              329.5
+            ],
+            [
+              891,
+              328.5
+            ]
+          ],
+          "bbox": {
+            "x0": 891,
+            "y0": 93,
+            "x1": 1017,
+            "y1": 329.5
+          }
+        },
+        {
+          "text": "imell",
+          "confidence": 98.27542304992676,
+          "polygon": [
+            [
+              859,
+              364.5
+            ],
+            [
+              931.5,
+              362.5
+            ],
+            [
+              932.5,
+              395.5
+            ],
+            [
+              859,
+              397
+            ]
+          ],
+          "bbox": {
+            "x0": 859,
+            "y0": 362.5,
+            "x1": 932.5,
+            "y1": 397
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-b461a5d4c91a",
+      "text": "It's time!!\nTime to try\nwhat I've\nhoned over\nthe past few\ndays!!",
+      "bbox": {
+        "x0": 678,
+        "y0": 372,
+        "x1": 922,
+        "y1": 608
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "It's time!!",
+          "confidence": 99.96374249458313,
+          "polygon": [
+            [
+              767,
+              362.5
+            ],
+            [
+              932,
+              362.5
+            ],
+            [
+              932,
+              401
+            ],
+            [
+              767,
+              401
+            ]
+          ],
+          "bbox": {
+            "x0": 767,
+            "y0": 362.5,
+            "x1": 932,
+            "y1": 401
+          }
+        },
+        {
+          "text": "Time to try",
+          "confidence": 99.88027811050415,
+          "polygon": [
+            [
+              679,
+              414.5
+            ],
+            [
+              864.5,
+              418
+            ],
+            [
+              864,
+              458
+            ],
+            [
+              678,
+              454.5
+            ]
+          ],
+          "bbox": {
+            "x0": 678,
+            "y0": 414.5,
+            "x1": 864.5,
+            "y1": 458
+          }
+        },
+        {
+          "text": "what I've",
+          "confidence": 99.65911507606506,
+          "polygon": [
+            [
+              691,
+              456
+            ],
+            [
+              851.5,
+              456
+            ],
+            [
+              851.5,
+              493
+            ],
+            [
+              691,
+              493
+            ]
+          ],
+          "bbox": {
+            "x0": 691,
+            "y0": 456,
+            "x1": 851.5,
+            "y1": 493
+          }
+        },
+        {
+          "text": "honed over",
+          "confidence": 99.95527267456055,
+          "polygon": [
+            [
+              682,
+              495.5
+            ],
+            [
+              860.5,
+              496.5
+            ],
+            [
+              860.5,
+              533.5
+            ],
+            [
+              681.5,
+              532.5
+            ]
+          ],
+          "bbox": {
+            "x0": 681.5,
+            "y0": 495.5,
+            "x1": 860.5,
+            "y1": 533.5
+          }
+        },
+        {
+          "text": "the past few",
+          "confidence": 99.92660880088806,
+          "polygon": [
+            [
+              667,
+              535
+            ],
+            [
+              886,
+              536.5
+            ],
+            [
+              885.5,
+              580
+            ],
+            [
+              667,
+              579
+            ]
+          ],
+          "bbox": {
+            "x0": 667,
+            "y0": 535,
+            "x1": 886,
+            "y1": 580
+          }
+        },
+        {
+          "text": "days!!",
+          "confidence": 93.88988614082336,
+          "polygon": [
+            [
+              723,
+              575.5
+            ],
+            [
+              820,
+              573.5
+            ],
+            [
+              821,
+              616.5
+            ],
+            [
+              723.5,
+              618.5
+            ]
+          ],
+          "bbox": {
+            "x0": 723,
+            "y0": 573.5,
+            "x1": 821,
+            "y1": 618.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-43ccf399c460",
+      "text": "Well... Let's\ngo!!!,",
+      "bbox": {
+        "x0": 591,
+        "y0": 620,
+        "x1": 770,
+        "y1": 684
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "Well... Let's",
+          "confidence": 98.10482859611511,
+          "polygon": [
+            [
+              583.5,
+              612.5
+            ],
+            [
+              781,
+              611
+            ],
+            [
+              781,
+              646
+            ],
+            [
+              583.5,
+              647.5
+            ]
+          ],
+          "bbox": {
+            "x0": 583.5,
+            "y0": 611,
+            "x1": 781,
+            "y1": 647.5
+          }
+        },
+        {
+          "text": "go!!!",
+          "confidence": 99.97960925102234,
+          "polygon": [
+            [
+              639,
+              657
+            ],
+            [
+              708.5,
+              649
+            ],
+            [
+              713.5,
+              688
+            ],
+            [
+              644,
+              696
+            ]
+          ],
+          "bbox": {
+            "x0": 639,
+            "y0": 649,
+            "x1": 713.5,
+            "y1": 696
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-c09147d72efb",
+      "text": "Usagi-\nsan!!\n(mr\nrabbit)",
+      "bbox": {
+        "x0": 129,
+        "y0": 476,
+        "x1": 251,
+        "y1": 641
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "Usagi",
+          "confidence": 99.97547268867493,
+          "polygon": [
+            [
+              141,
+              479.5
+            ],
+            [
+              230.5,
+              485.5
+            ],
+            [
+              228,
+              517.5
+            ],
+            [
+              139,
+              511.5
+            ]
+          ],
+          "bbox": {
+            "x0": 139,
+            "y0": 479.5,
+            "x1": 230.5,
+            "y1": 517.5
+          }
+        },
+        {
+          "text": "san!!",
+          "confidence": 99.96848106384277,
+          "polygon": [
+            [
+              153,
+              523
+            ],
+            [
+              224.5,
+              520.5
+            ],
+            [
+              225.5,
+              553
+            ],
+            [
+              154.5,
+              555.5
+            ]
+          ],
+          "bbox": {
+            "x0": 153,
+            "y0": 520.5,
+            "x1": 225.5,
+            "y1": 555.5
+          }
+        },
+        {
+          "text": "(mr",
+          "confidence": 99.8335063457489,
+          "polygon": [
+            [
+              165,
+              562
+            ],
+            [
+              220,
+              562
+            ],
+            [
+              220,
+              595.5
+            ],
+            [
+              165,
+              595.5
+            ]
+          ],
+          "bbox": {
+            "x0": 165,
+            "y0": 562,
+            "x1": 220,
+            "y1": 595.5
+          }
+        },
+        {
+          "text": "rabbit)",
+          "confidence": 99.94580149650574,
+          "polygon": [
+            [
+              135,
+              599.5
+            ],
+            [
+              246,
+              599.5
+            ],
+            [
+              246,
+              633.5
+            ],
+            [
+              135,
+              633.5
+            ]
+          ],
+          "bbox": {
+            "x0": 135,
+            "y0": 599.5,
+            "x1": 246,
+            "y1": 633.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-be98d5e78a45",
+      "text": "e well",
+      "bbox": {
+        "x0": 759,
+        "y0": 796,
+        "x1": 933,
+        "y1": 1006
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": true,
+      "recognitionLines": [
+        {
+          "text": "e well",
+          "confidence": 95.66332697868347,
+          "polygon": [
+            [
+              766.75,
+              807.5
+            ],
+            [
+              847,
+              806
+            ],
+            [
+              847.25,
+              842.5
+            ],
+            [
+              767,
+              844
+            ]
+          ],
+          "bbox": {
+            "x0": 766.75,
+            "y0": 806,
+            "x1": 847.25,
+            "y1": 844
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-84ecb134322a",
+      "text": "Pun (i think) that didn't translate well",
+      "bbox": {
+        "x0": 246,
+        "y0": 803,
+        "x1": 851,
+        "y1": 849
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": true,
+      "recognitionLines": [
+        {
+          "text": "Pun (i think) that didn't translate well",
+          "confidence": 99.57553744316101,
+          "polygon": [
+            [
+              249.255,
+              808.8604651162791
+            ],
+            [
+              847.745,
+              806.3953488372093
+            ],
+            [
+              847.745,
+              844.6046511627907
+            ],
+            [
+              249.255,
+              846.453488372093
+            ]
+          ],
+          "bbox": {
+            "x0": 249.255,
+            "y0": 806.3953488372093,
+            "x1": 847.745,
+            "y1": 846.453488372093
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-92e2ba8201a8",
+      "text": "I don't kno",
+      "bbox": {
+        "x0": 138,
+        "y0": 807,
+        "x1": 247,
+        "y1": 990
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "I don't kno",
+          "confidence": 99.71064925193787,
+          "polygon": [
+            [
+              181.5,
+              817
+            ],
+            [
+              244.5,
+              971.5
+            ],
+            [
+              208.5,
+              980
+            ],
+            [
+              145.5,
+              830.5
+            ]
+          ],
+          "bbox": {
+            "x0": 145.5,
+            "y0": 817,
+            "x1": 244.5,
+            "y1": 980
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-c93374d59496",
+      "text": "Appraisa",
+      "bbox": {
+        "x0": 1030,
+        "y0": 859,
+        "x1": 1165,
+        "y1": 971
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "Appraisa",
+          "confidence": 98.83602261543274,
+          "polygon": [
+            [
+              1047,
+              865
+            ],
+            [
+              1162.5,
+              937
+            ],
+            [
+              1144,
+              965
+            ],
+            [
+              1032,
+              893
+            ]
+          ],
+          "bbox": {
+            "x0": 1032,
+            "y0": 865,
+            "x1": 1162.5,
+            "y1": 965
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-64116fb680d1",
+      "text": "A labeat\nWhat's\nthat?",
+      "bbox": {
+        "x0": 225,
+        "y0": 877,
+        "x1": 391,
+        "y1": 1008
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "A labeat",
+          "confidence": 98.7255334854126,
+          "polygon": [
+            [
+              222.8,
+              880.4
+            ],
+            [
+              392.4,
+              873.2
+            ],
+            [
+              394.4,
+              926.8
+            ],
+            [
+              225.2,
+              933.6
+            ]
+          ],
+          "bbox": {
+            "x0": 222.8,
+            "y0": 873.2,
+            "x1": 394.4,
+            "y1": 933.6
+          }
+        },
+        {
+          "text": "What's",
+          "confidence": 99.96705055236816,
+          "polygon": [
+            [
+              244,
+              928
+            ],
+            [
+              373.2,
+              928
+            ],
+            [
+              373.2,
+              967.6
+            ],
+            [
+              244,
+              967.6
+            ]
+          ],
+          "bbox": {
+            "x0": 244,
+            "y0": 928,
+            "x1": 373.2,
+            "y1": 967.6
+          }
+        },
+        {
+          "text": "that?",
+          "confidence": 99.86788630485535,
+          "polygon": [
+            [
+              257.2,
+              967.6
+            ],
+            [
+              354.4,
+              969.2
+            ],
+            [
+              353.6,
+              1008.8
+            ],
+            [
+              256.4,
+              1007.2
+            ]
+          ],
+          "bbox": {
+            "x0": 256.4,
+            "y0": 967.6,
+            "x1": 354.4,
+            "y1": 1008.8
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-9a5009eb1d86",
+      "text": "Regardless\nof that,",
+      "bbox": {
+        "x0": 151,
+        "y0": 1050,
+        "x1": 330,
+        "y1": 1142
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "Regardless",
+          "confidence": 95.88597416877747,
+          "polygon": [
+            [
+              154.5,
+              1054
+            ],
+            [
+              327.5,
+              1057.5
+            ],
+            [
+              326.5,
+              1108
+            ],
+            [
+              153.5,
+              1104.5
+            ]
+          ],
+          "bbox": {
+            "x0": 153.5,
+            "y0": 1054,
+            "x1": 327.5,
+            "y1": 1108
+          }
+        },
+        {
+          "text": "of that,",
+          "confidence": 98.52067232131958,
+          "polygon": [
+            [
+              185.5,
+              1102.5
+            ],
+            [
+              313.5,
+              1102.5
+            ],
+            [
+              313.5,
+              1139.5
+            ],
+            [
+              185.5,
+              1139.5
+            ]
+          ],
+          "bbox": {
+            "x0": 185.5,
+            "y0": 1102.5,
+            "x1": 313.5,
+            "y1": 1139.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-56f0c3ba82d0",
+      "text": "Labeat",
+      "bbox": {
+        "x0": 1112,
+        "y0": 1094,
+        "x1": 1205,
+        "y1": 1125
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "Labeat",
+          "confidence": 99.98990893363953,
+          "polygon": [
+            [
+              1114,
+              1096.5
+            ],
+            [
+              1202.5,
+              1097.5
+            ],
+            [
+              1202,
+              1123
+            ],
+            [
+              1114,
+              1121.5
+            ]
+          ],
+          "bbox": {
+            "x0": 1114,
+            "y0": 1096.5,
+            "x1": 1202.5,
+            "y1": 1123
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-407dc5396930",
+      "text": "Species:\nRank:\nLevel:\nSkills:",
+      "bbox": {
+        "x0": 944,
+        "y0": 1094,
+        "x1": 1056,
+        "y1": 1221
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "Species:",
+          "confidence": 99.99481439590454,
+          "polygon": [
+            [
+              949,
+              1096
+            ],
+            [
+              1053.5,
+              1096
+            ],
+            [
+              1053.5,
+              1125
+            ],
+            [
+              949,
+              1125
+            ]
+          ],
+          "bbox": {
+            "x0": 949,
+            "y0": 1096,
+            "x1": 1053.5,
+            "y1": 1125
+          }
+        },
+        {
+          "text": "Rank:",
+          "confidence": 99.95893239974976,
+          "polygon": [
+            [
+              946.5,
+              1127
+            ],
+            [
+              1017.5,
+              1127
+            ],
+            [
+              1017.5,
+              1155
+            ],
+            [
+              946.5,
+              1155
+            ]
+          ],
+          "bbox": {
+            "x0": 946.5,
+            "y0": 1127,
+            "x1": 1017.5,
+            "y1": 1155
+          }
+        },
+        {
+          "text": "Level:",
+          "confidence": 99.9880850315094,
+          "polygon": [
+            [
+              947,
+              1160
+            ],
+            [
+              1021,
+              1159
+            ],
+            [
+              1021,
+              1185.5
+            ],
+            [
+              947.5,
+              1186.5
+            ]
+          ],
+          "bbox": {
+            "x0": 947,
+            "y0": 1159,
+            "x1": 1021,
+            "y1": 1186.5
+          }
+        },
+        {
+          "text": "Skills:",
+          "confidence": 99.98679757118225,
+          "polygon": [
+            [
+              947.5,
+              1191.5
+            ],
+            [
+              1025,
+              1190
+            ],
+            [
+              1025.5,
+              1217.5
+            ],
+            [
+              948,
+              1219
+            ]
+          ],
+          "bbox": {
+            "x0": 947.5,
+            "y0": 1190,
+            "x1": 1025.5,
+            "y1": 1219
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-044f19467f79",
+      "text": "F\n12",
+      "bbox": {
+        "x0": 1110,
+        "y0": 1129,
+        "x1": 1146,
+        "y1": 1193
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "F",
+          "confidence": 99.93880987167358,
+          "polygon": [
+            [
+              1112.5,
+              1133
+            ],
+            [
+              1134,
+              1131
+            ],
+            [
+              1135.5,
+              1156.5
+            ],
+            [
+              1114.5,
+              1158.5
+            ]
+          ],
+          "bbox": {
+            "x0": 1112.5,
+            "y0": 1131,
+            "x1": 1135.5,
+            "y1": 1158.5
+          }
+        },
+        {
+          "text": "12",
+          "confidence": 99.9731957912445,
+          "polygon": [
+            [
+              1114.5,
+              1164.5
+            ],
+            [
+              1143.5,
+              1164.5
+            ],
+            [
+              1143.5,
+              1191
+            ],
+            [
+              1114.5,
+              1191
+            ]
+          ],
+          "bbox": {
+            "x0": 1114.5,
+            "y0": 1164.5,
+            "x1": 1143.5,
+            "y1": 1191
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-850928579186",
+      "text": "Level 12:\nIt's\nsuperior...",
+      "bbox": {
+        "x0": 87,
+        "y0": 1147,
+        "x1": 227,
+        "y1": 1257
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "Level 12:",
+          "confidence": 98.2903778553009,
+          "polygon": [
+            [
+              97.5,
+              1150.5
+            ],
+            [
+              223,
+              1149
+            ],
+            [
+              223.5,
+              1181
+            ],
+            [
+              98,
+              1182
+            ]
+          ],
+          "bbox": {
+            "x0": 97.5,
+            "y0": 1149,
+            "x1": 223.5,
+            "y1": 1182
+          }
+        },
+        {
+          "text": "It's",
+          "confidence": 99.94833469390869,
+          "polygon": [
+            [
+              129.5,
+              1186
+            ],
+            [
+              193,
+              1186
+            ],
+            [
+              193,
+              1218
+            ],
+            [
+              129.5,
+              1218
+            ]
+          ],
+          "bbox": {
+            "x0": 129.5,
+            "y0": 1186,
+            "x1": 193,
+            "y1": 1218
+          }
+        },
+        {
+          "text": "superior",
+          "confidence": 99.91799592971802,
+          "polygon": [
+            [
+              90,
+              1227
+            ],
+            [
+              209,
+              1227
+            ],
+            [
+              209,
+              1252
+            ],
+            [
+              90,
+              1252
+            ]
+          ],
+          "bbox": {
+            "x0": 90,
+            "y0": 1227,
+            "x1": 209,
+            "y1": 1252
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-fdfad69c9c90",
+      "text": "41",
+      "bbox": {
+        "x0": 455,
+        "y0": 1178,
+        "x1": 484,
+        "y1": 1206
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": true,
+      "recognitionLines": [
+        {
+          "text": "41",
+          "confidence": 88.32494020462036,
+          "polygon": [
+            [
+              457,
+              1179.5
+            ],
+            [
+              482,
+              1179.5
+            ],
+            [
+              482,
+              1204
+            ],
+            [
+              457,
+              1204
+            ]
+          ],
+          "bbox": {
+            "x0": 457,
+            "y0": 1179.5,
+            "x1": 482,
+            "y1": 1204
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-4b6e1e8be076",
+      "text": "Jump Lv.3",
+      "bbox": {
+        "x0": 1091,
+        "y0": 1189,
+        "x1": 1220,
+        "y1": 1230
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "Jump Lv.3",
+          "confidence": 99.96553063392639,
+          "polygon": [
+            [
+              1095.5,
+              1192
+            ],
+            [
+              1217.5,
+              1200
+            ],
+            [
+              1216,
+              1227.5
+            ],
+            [
+              1093.5,
+              1219
+            ]
+          ],
+          "bbox": {
+            "x0": 1093.5,
+            "y0": 1192,
+            "x1": 1217.5,
+            "y1": 1227.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-21bfd7edb34d",
+      "text": "# munct\n′",
+      "bbox": {
+        "x0": 897,
+        "y0": 1342,
+        "x1": 1049,
+        "y1": 1535
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "#",
+          "confidence": 75.30576586723328,
+          "polygon": [
+            [
+              902,
+              1377
+            ],
+            [
+              988,
+              1346
+            ],
+            [
+              1048,
+              1503
+            ],
+            [
+              962.5,
+              1534
+            ]
+          ],
+          "bbox": {
+            "x0": 902,
+            "y0": 1346,
+            "x1": 1048,
+            "y1": 1534
+          }
+        },
+        {
+          "text": "munct",
+          "confidence": 94.8868453502655,
+          "polygon": [
+            [
+              1007.5,
+              1480
+            ],
+            [
+              1039.5,
+              1399
+            ],
+            [
+              1061,
+              1410
+            ],
+            [
+              1037.5,
+              1491
+            ]
+          ],
+          "bbox": {
+            "x0": 1007.5,
+            "y0": 1399,
+            "x1": 1061,
+            "y1": 1491
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-9971ef9aa790",
+      "text": "munch or\nH\nt",
+      "bbox": {
+        "x0": 1001,
+        "y0": 1356,
+        "x1": 1118,
+        "y1": 1501
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "munch or",
+          "confidence": 99.77308511734009,
+          "polygon": [
+            [
+              1005.5,
+              1477.5
+            ],
+            [
+              1067,
+              1364.5
+            ],
+            [
+              1094.5,
+              1380
+            ],
+            [
+              1033,
+              1492.5
+            ]
+          ],
+          "bbox": {
+            "x0": 1005.5,
+            "y0": 1364.5,
+            "x1": 1094.5,
+            "y1": 1492.5
+          }
+        },
+        {
+          "text": "H",
+          "confidence": 94.0165638923645,
+          "polygon": [
+            [
+              989,
+              1469
+            ],
+            [
+              1014,
+              1460.5
+            ],
+            [
+              1024.5,
+              1493
+            ],
+            [
+              997.5,
+              1502
+            ]
+          ],
+          "bbox": {
+            "x0": 989,
+            "y0": 1460.5,
+            "x1": 1024.5,
+            "y1": 1502
+          }
+        },
+        {
+          "text": "t",
+          "confidence": 98.89362454414368,
+          "polygon": [
+            [
+              1090,
+              1459.5
+            ],
+            [
+              1130,
+              1469.5
+            ],
+            [
+              1120.5,
+              1507
+            ],
+            [
+              1080.5,
+              1497
+            ]
+          ],
+          "bbox": {
+            "x0": 1080.5,
+            "y0": 1459.5,
+            "x1": 1130,
+            "y1": 1507
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-53bfe2b4b1ef",
+      "text": "good thing\nI didn't\nevolve into\nthat",
+      "bbox": {
+        "x0": 455,
+        "y0": 1380,
+        "x1": 633,
+        "y1": 1551
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "good thing",
+          "confidence": 99.98345375061035,
+          "polygon": [
+            [
+              457.5,
+              1434
+            ],
+            [
+              596,
+              1386
+            ],
+            [
+              609.5,
+              1422
+            ],
+            [
+              471,
+              1470
+            ]
+          ],
+          "bbox": {
+            "x0": 457.5,
+            "y0": 1386,
+            "x1": 609.5,
+            "y1": 1470
+          }
+        },
+        {
+          "text": "I didn't",
+          "confidence": 99.0799069404602,
+          "polygon": [
+            [
+              485,
+              1460.5
+            ],
+            [
+              591.5,
+              1425
+            ],
+            [
+              602,
+              1455.5
+            ],
+            [
+              495.5,
+              1491
+            ]
+          ],
+          "bbox": {
+            "x0": 485,
+            "y0": 1425,
+            "x1": 602,
+            "y1": 1491
+          }
+        },
+        {
+          "text": "evolve into",
+          "confidence": 99.9371349811554,
+          "polygon": [
+            [
+              481,
+              1496.5
+            ],
+            [
+              619,
+              1450.5
+            ],
+            [
+              630.5,
+              1483.5
+            ],
+            [
+              492.5,
+              1529.5
+            ]
+          ],
+          "bbox": {
+            "x0": 481,
+            "y0": 1450.5,
+            "x1": 630.5,
+            "y1": 1529.5
+          }
+        },
+        {
+          "text": "that",
+          "confidence": 99.91674423217773,
+          "polygon": [
+            [
+              530,
+              1516.5
+            ],
+            [
+              593,
+              1499.5
+            ],
+            [
+              602,
+              1530.5
+            ],
+            [
+              538.5,
+              1547.5
+            ]
+          ],
+          "bbox": {
+            "x0": 530,
+            "y0": 1499.5,
+            "x1": 602,
+            "y1": 1547.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-25c50c39548d",
+      "text": "It's\nobsessed\nwith\neating\nthose\nherbs",
+      "bbox": {
+        "x0": 659,
+        "y0": 1395,
+        "x1": 784,
+        "y1": 1601
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "It's",
+          "confidence": 99.92648363113403,
+          "polygon": [
+            [
+              691.5,
+              1397
+            ],
+            [
+              752,
+              1397
+            ],
+            [
+              752,
+              1428
+            ],
+            [
+              691.5,
+              1428
+            ]
+          ],
+          "bbox": {
+            "x0": 691.5,
+            "y0": 1397,
+            "x1": 752,
+            "y1": 1428
+          }
+        },
+        {
+          "text": "obsessed",
+          "confidence": 99.98672008514404,
+          "polygon": [
+            [
+              661.5,
+              1435
+            ],
+            [
+              781.5,
+              1434
+            ],
+            [
+              782,
+              1460
+            ],
+            [
+              661.5,
+              1461
+            ]
+          ],
+          "bbox": {
+            "x0": 661.5,
+            "y0": 1434,
+            "x1": 782,
+            "y1": 1461
+          }
+        },
+        {
+          "text": "with",
+          "confidence": 99.99685287475586,
+          "polygon": [
+            [
+              691,
+              1466.5
+            ],
+            [
+              751,
+              1465
+            ],
+            [
+              751.5,
+              1494.5
+            ],
+            [
+              691.5,
+              1495.5
+            ]
+          ],
+          "bbox": {
+            "x0": 691,
+            "y0": 1465,
+            "x1": 751.5,
+            "y1": 1495.5
+          }
+        },
+        {
+          "text": "eating",
+          "confidence": 99.99668002128601,
+          "polygon": [
+            [
+              680.5,
+              1502
+            ],
+            [
+              762.5,
+              1504
+            ],
+            [
+              762,
+              1532
+            ],
+            [
+              680,
+              1530.5
+            ]
+          ],
+          "bbox": {
+            "x0": 680,
+            "y0": 1502,
+            "x1": 762.5,
+            "y1": 1532
+          }
+        },
+        {
+          "text": "those",
+          "confidence": 99.9893307685852,
+          "polygon": [
+            [
+              683,
+              1534.5
+            ],
+            [
+              760,
+              1536.5
+            ],
+            [
+              759.5,
+              1564.5
+            ],
+            [
+              682.5,
+              1562.5
+            ]
+          ],
+          "bbox": {
+            "x0": 682.5,
+            "y0": 1534.5,
+            "x1": 760,
+            "y1": 1564.5
+          }
+        },
+        {
+          "text": "herbs",
+          "confidence": 99.99221563339233,
+          "polygon": [
+            [
+              683,
+              1570.5
+            ],
+            [
+              761,
+              1569.5
+            ],
+            [
+              761.5,
+              1597.5
+            ],
+            [
+              683,
+              1599
+            ]
+          ],
+          "bbox": {
+            "x0": 683,
+            "y0": 1569.5,
+            "x1": 761.5,
+            "y1": 1599
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-e474ea4eee73",
+      "text": "t07",
+      "bbox": {
+        "x0": 1085,
+        "y0": 1412,
+        "x1": 1136,
+        "y1": 1550
+      },
+      "orientation": "vertical",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": true,
+      "recognitionLines": [
+        {
+          "text": "t07",
+          "confidence": 36.94957792758942,
+          "polygon": [
+            [
+              1073,
+              1400
+            ],
+            [
+              1148,
+              1400
+            ],
+            [
+              1148,
+              1556
+            ],
+            [
+              1073,
+              1556
+            ]
+          ],
+          "bbox": {
+            "x0": 1073,
+            "y0": 1400,
+            "x1": 1148,
+            "y1": 1556
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-3584f7a47019",
+      "text": "Now's\nthe\nchance!",
+      "bbox": {
+        "x0": 98,
+        "y0": 1411,
+        "x1": 215,
+        "y1": 1529
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "Now's",
+          "confidence": 99.94765520095825,
+          "polygon": [
+            [
+              107.5,
+              1413.5
+            ],
+            [
+              207,
+              1416
+            ],
+            [
+              206,
+              1449.5
+            ],
+            [
+              106.5,
+              1447
+            ]
+          ],
+          "bbox": {
+            "x0": 106.5,
+            "y0": 1413.5,
+            "x1": 207,
+            "y1": 1449.5
+          }
+        },
+        {
+          "text": "the",
+          "confidence": 99.97451901435852,
+          "polygon": [
+            [
+              128,
+              1452
+            ],
+            [
+              186.5,
+              1454
+            ],
+            [
+              185,
+              1488
+            ],
+            [
+              126.5,
+              1486
+            ]
+          ],
+          "bbox": {
+            "x0": 126.5,
+            "y0": 1452,
+            "x1": 186.5,
+            "y1": 1488
+          }
+        },
+        {
+          "text": "chance!",
+          "confidence": 99.95374083518982,
+          "polygon": [
+            [
+              100,
+              1497
+            ],
+            [
+              212,
+              1494
+            ],
+            [
+              213,
+              1523.5
+            ],
+            [
+              101,
+              1526.5
+            ]
+          ],
+          "bbox": {
+            "x0": 100,
+            "y0": 1494,
+            "x1": 213,
+            "y1": 1526.5
+          }
+        }
+      ]
+    }
+  ]
+}

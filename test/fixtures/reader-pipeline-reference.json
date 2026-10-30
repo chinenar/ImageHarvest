@@ -1,0 +1,475 @@
+{
+  "schema": "imageharvest.reader-pipeline-reference-v1",
+  "scope": "Development diagnostics, not whole-corpus accuracy. All three sources were previously inspected. Ink references use manually selected text polygons and a fixed grayscale threshold; antialiasing and touching N/W are ignored. Thai strings are fixed layout samples, not translation-provider quality measurements.",
+  "cases": [
+    {
+      "id": "plant-touching",
+      "split": "development",
+      "ocr": "test/fixtures/reader-pipeline-observations/plant-touching.json",
+      "crop": [
+        880,
+        780,
+        350,
+        275
+      ],
+      "regionIds": [
+        "p1-07661f7bc945",
+        "p1-f815442aeab6"
+      ],
+      "textPolygons": [
+        [
+          [
+            123,
+            25
+          ],
+          [
+            312,
+            25
+          ],
+          [
+            312,
+            67
+          ],
+          [
+            115,
+            67
+          ],
+          [
+            115,
+            30
+          ],
+          [
+            123,
+            30
+          ]
+        ],
+        [
+          [
+            133,
+            69
+          ],
+          [
+            302,
+            69
+          ],
+          [
+            302,
+            105
+          ],
+          [
+            133,
+            105
+          ]
+        ],
+        [
+          [
+            115,
+            109
+          ],
+          [
+            310,
+            109
+          ],
+          [
+            310,
+            144
+          ],
+          [
+            115,
+            144
+          ]
+        ],
+        [
+          [
+            124,
+            149
+          ],
+          [
+            307,
+            149
+          ],
+          [
+            307,
+            185
+          ],
+          [
+            124,
+            185
+          ]
+        ],
+        [
+          [
+            115,
+            188
+          ],
+          [
+            312,
+            188
+          ],
+          [
+            312,
+            227
+          ],
+          [
+            115,
+            227
+          ]
+        ],
+        [
+          [
+            31,
+            210
+          ],
+          [
+            55,
+            217
+          ],
+          [
+            90,
+            218
+          ],
+          [
+            125,
+            206
+          ],
+          [
+            128,
+            241
+          ],
+          [
+            31,
+            245
+          ]
+        ],
+        [
+          [
+            42,
+            211
+          ],
+          [
+            49,
+            211
+          ],
+          [
+            49,
+            217
+          ],
+          [
+            42,
+            217
+          ]
+        ]
+      ],
+      "ignoreBoxes": [
+        [
+          92,
+          185,
+          148,
+          246
+        ]
+      ],
+      "translations": [
+        "จริงด้วย! ฉันแค่ผสมพิษเข้ากับคมดาบวารีก็ได้!",
+        "พิษ"
+      ],
+      "expectedTexts": [
+        "That's right! I can just combine the poison with Water Edge!",
+        "POISON"
+      ],
+      "protectedArtBoxes": [
+        [
+          42,
+          137,
+          114,
+          218
+        ],
+        [
+          42,
+          28,
+          123,
+          95
+        ],
+        [
+          63,
+          98,
+          106,
+          134
+        ]
+      ]
+    },
+    {
+      "id": "alright-balloon",
+      "split": "regression",
+      "ocr": "test/fixtures/reader-pipeline-observations/alright-balloon.json",
+      "crop": [
+        80,
+        1630,
+        440,
+        230
+      ],
+      "regionIds": [
+        "p1-ce189ac2c6a7"
+      ],
+      "textPolygons": [
+        [
+          [
+            52,
+            78
+          ],
+          [
+            368,
+            78
+          ],
+          [
+            368,
+            160
+          ],
+          [
+            52,
+            160
+          ]
+        ]
+      ],
+      "ignoreBoxes": [],
+      "translations": [
+        "...เอาล่ะ"
+      ],
+      "expectedTexts": [
+        "...ALRIGHT."
+      ]
+    },
+    {
+      "id": "japanese-vertical",
+      "split": "regression",
+      "ocr": "test/fixtures/reader-pipeline-observations/japanese-vertical.json",
+      "crop": [
+        0,
+        0,
+        360,
+        290
+      ],
+      "regionIds": [
+        "p1-7cc9348cfdc9",
+        "p1-01db2ae8cfcb"
+      ],
+      "textPolygons": [
+        [
+          [
+            158,
+            49
+          ],
+          [
+            288,
+            49
+          ],
+          [
+            288,
+            213
+          ],
+          [
+            158,
+            213
+          ]
+        ],
+        [
+          [
+            47,
+            65
+          ],
+          [
+            145,
+            65
+          ],
+          [
+            145,
+            254
+          ],
+          [
+            47,
+            254
+          ]
+        ]
+      ],
+      "ignoreBoxes": [],
+      "translations": [
+        "ก็แค่งานโรงเรียน ทำไมถึงตั้งใจกันขนาดนั้น",
+        "เห็นชุดเมดนั่นไหม? ดูบรรยากาศบ้างสิ"
+      ],
+      "expectedTexts": [
+        "ただの学園祭なのにめっちゃ気合入ってんの",
+        "見た？あのメイド服空気読めっての"
+      ]
+    },
+    {
+      "id": "new-connected-balloon",
+      "split": "frozen-parameter-validation",
+      "ocr": "test/fixtures/reader-pipeline-observations/new-connected-balloon.json",
+      "crop": [
+        550,
+        330,
+        430,
+        400
+      ],
+      "regionIds": [
+        "p1-b461a5d4c91a",
+        "p1-43ccf399c460"
+      ],
+      "textPolygons": [
+        [
+          [
+            215,
+            34
+          ],
+          [
+            384,
+            34
+          ],
+          [
+            384,
+            70
+          ],
+          [
+            215,
+            70
+          ]
+        ],
+        [
+          [
+            128,
+            86
+          ],
+          [
+            326,
+            86
+          ],
+          [
+            326,
+            126
+          ],
+          [
+            128,
+            126
+          ]
+        ],
+        [
+          [
+            142,
+            128
+          ],
+          [
+            308,
+            128
+          ],
+          [
+            308,
+            168
+          ],
+          [
+            142,
+            168
+          ]
+        ],
+        [
+          [
+            132,
+            171
+          ],
+          [
+            317,
+            171
+          ],
+          [
+            317,
+            205
+          ],
+          [
+            132,
+            205
+          ]
+        ],
+        [
+          [
+            114,
+            211
+          ],
+          [
+            327,
+            211
+          ],
+          [
+            327,
+            246
+          ],
+          [
+            114,
+            246
+          ]
+        ],
+        [
+          [
+            174,
+            248
+          ],
+          [
+            271,
+            248
+          ],
+          [
+            271,
+            286
+          ],
+          [
+            174,
+            286
+          ]
+        ],
+        [
+          [
+            29,
+            281
+          ],
+          [
+            229,
+            281
+          ],
+          [
+            229,
+            319
+          ],
+          [
+            29,
+            319
+          ]
+        ],
+        [
+          [
+            89,
+            329
+          ],
+          [
+            161,
+            329
+          ],
+          [
+            161,
+            366
+          ],
+          [
+            89,
+            366
+          ]
+        ]
+      ],
+      "ignoreBoxes": [],
+      "translations": [
+        "ถึงเวลาแล้ว! ลองใช้สิ่งที่ฝึกฝนมาตลอดหลายวันนี่ดูสักที!",
+        "เอาล่ะ... ไปกันเลย!!!"
+      ],
+      "expectedTexts": [
+        "It's time!! Time to try what I've honed over the past few days!!",
+        "Well... Let's go!!!"
+      ]
+    }
+  ],
+  "referenceRevision": "3: visually audited moon/frame exclusions and g descender, t/p tips, P corner; rescore all candidates, development only"
+}

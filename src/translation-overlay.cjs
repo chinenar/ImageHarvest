@@ -15,7 +15,7 @@ function overlayPage(page,{documentUrl='',targetLanguage='th'}={}){
     if(p.paintMode==='glyph-patch'){
       const bounds=box(r.bbox),safe=box(p.safeBox)||bounds,erase=box(p.eraseBox)||bounds;
       const patch=p.erasePatch&&box(p.erasePatch.bbox)?{...p.erasePatch,bbox:box(p.erasePatch.bbox)}:null;
-      return {id:String(r.id),text:r.translation,original:r.text,bbox:bounds,eraseBox:erase,safeBox:safe,eraseBoxes:[],polygon:(p.polygon||[]).map(([x,y])=>[x/width,y/height]),surfaceType:p.surfaceType||'scene',fillColor:p.fillColor||'#ffffff',erasePatch:patch,paintMode:'glyph-patch',referenceLineHeight:p.referenceLineHeight||0,reviewRequired:Boolean(r.reviewRequired||p.reviewRequired),surfaceId:p.surfaceId||'',activeSubSurfaceId:p.activeSubSurfaceId||''};
+      return {id:String(r.id),text:r.translation,original:r.text,bbox:bounds,eraseBox:erase,safeBox:safe,eraseBoxes:[],polygon:(p.polygon||[]).map(([x,y])=>[x/width,y/height]),rotatedTextBox:p.rotatedTextBox,surfaceType:p.surfaceType||'scene',fillColor:p.fillColor||'#ffffff',erasePatch:patch,paintMode:'glyph-patch',referenceLineHeight:p.referenceLineHeight||0,reviewRequired:Boolean(r.reviewRequired||p.reviewRequired),surfaceId:p.surfaceId||'',activeSubSurfaceId:p.activeSubSurfaceId||''};
     }
     const sub=p.subSurfaces?.find(s=>s.id===p.activeSubSurfaceId||(s.regionIds||s.sourceRegionIds||[]).map(String).includes(String(r.id)));
     const bounds=box(r.bbox);
@@ -149,16 +149,29 @@ function createTranslationOverlay(documentKey){
   }
   function fitText(item,width,height,imageScale=1){
     const {text,span}=item;item.imageScale=imageScale;
+    const padding=2*imageScale;text.style.padding=padding+'px';
+    const availableW=Math.max(1,width-padding*2),availableH=Math.max(1,height-padding*2);
     const styleKey=styleKeyFor(item.page,item.region),manual=styleOverrides.has(styleKey)?styleOverrides.get(styleKey):item.region.userStyle,manualSize=Number(manual?.fontSizeImagePx);
-    if(manualSize>0){const size=manualSize*imageScale;text.style.fontSize=size+'px';text.dataset.fontSize=size.toFixed(2);text.dataset.manualFont='true';text.dataset.fitWarning=String(span.scrollHeight>text.clientHeight-4||span.scrollWidth>text.clientWidth-4);return;}
+    if(manualSize>0){const size=manualSize*imageScale;text.style.fontSize=size+'px';text.dataset.fontSize=size.toFixed(2);text.dataset.manualFont='true';text.dataset.fitWarning=String(span.scrollHeight>availableH+1||span.scrollWidth>availableW+1);return;}
     text.dataset.manualFont='false';
-    const reference=item.region.referenceLineHeight;let low=3,high=(reference?Math.max(12,Math.min(28,reference*imageScale*.95)):Math.max(14,Math.min(32,height*.52)))*fontScale,best=low;
-    const availableW=Math.max(1,text.clientWidth-4),availableH=Math.max(1,text.clientHeight-4);
+    // Font limits live in source-image pixels. A fixed CSS-pixel ceiling makes
+    // translated text grow relative to the image when the reader zooms out.
+    const reference=item.region.referenceLineHeight;let low=3*imageScale,high=(reference?Math.max(12,Math.min(28,reference*.95)):Math.max(14,Math.min(32,height/imageScale*.52)))*imageScale*fontScale,best=low;
+    // `overflow-wrap:anywhere` hides mid-word breaks from overflow metrics.
+    // Fit the longest language-aware word before optimizing line count.
+    if(typeof Intl.Segmenter==='function'){
+      let segmenter;try{segmenter=new Intl.Segmenter(item.page.targetLanguage||'th',{granularity:'word'});}catch{segmenter=new Intl.Segmenter(undefined,{granularity:'word'});}
+      const words=[...segmenter.segment(span.textContent)].filter(s=>s.isWordLike).map(s=>s.segment);
+      const ctx=document.createElement('canvas').getContext('2d'),computed=getComputedStyle(text);
+      ctx.font=`${computed.fontWeight} 100px ${computed.fontFamily}`;
+      const longest=Math.max(0,...words.map(word=>ctx.measureText(word).width));
+      if(longest>0)high=Math.max(low,Math.min(high,availableW*100/longest));
+    }
     text.style.fontSize=low+'px';
     for(let i=0;i<9;i++){const size=(low+high)/2;text.style.fontSize=size+'px';if(span.scrollHeight<=availableH+1&&span.scrollWidth<=availableW+1){best=size;low=size;}else high=size;}
     best=Math.floor(best*100)/100;text.style.fontSize=best.toFixed(2)+'px';
-    for(let n=0;n<12&&(span.scrollHeight>availableH+1||span.scrollWidth>availableW+1)&&best>3;n++){best=Math.max(3,best-.02);text.style.fontSize=best.toFixed(2)+'px';}
-    text.dataset.fontSize=best.toFixed(2);text.dataset.fitWarning=String(best<8||span.scrollHeight>availableH+1);
+    for(let n=0;n<12&&(span.scrollHeight>availableH+1||span.scrollWidth>availableW+1)&&best>3*imageScale;n++){best=Math.max(3*imageScale,best-.02);text.style.fontSize=best.toFixed(2)+'px';}
+    text.dataset.fontSize=best.toFixed(2);text.dataset.fitWarning=String(best/imageScale<8||span.scrollHeight>availableH+1||span.scrollWidth>availableW+1);
   }
   function mount(page,target){
     const frame=document.createElement('div');frame.className='frame';frame.dataset.pageId=page.id;
@@ -210,7 +223,7 @@ function createTranslationOverlay(documentKey){
       Object.assign(entry.image.style,{left:g.x+'px',top:g.y+'px',width:g.drawW+'px',height:g.drawH+'px'});
       const size=[g.drawW,g.drawH,fontScale,styleRevision].join('/');
       if(!visible)entry.lastSize='';
-      else if(entry.lastSize!==size){for(const item of entry.texts){const b=effectiveBox(item.page,item.region),w=(b.x1-b.x0)*g.drawW,h=(b.y1-b.y0)*g.drawH;item.drawW=g.drawW;item.drawH=g.drawH;item.currentBox={...b};Object.assign(item.text.style,{left:b.x0*g.drawW+'px',top:b.y0*g.drawH+'px',width:w+'px',height:h+'px'});fitText(item,w,h,g.drawH/entry.page.height);}entry.lastSize=size;}
+      else if(entry.lastSize!==size){for(const item of entry.texts){const b=effectiveBox(item.page,item.region),w=(b.x1-b.x0)*g.drawW,h=(b.y1-b.y0)*g.drawH;item.drawW=g.drawW;item.drawH=g.drawH;item.currentBox={...b};const rotated=item.region.rotatedTextBox,scale=g.drawH/entry.page.height;if(rotated&&!currentStyle(item.page,item.region)?.box){const rw=rotated.width*scale,rh=rotated.height*scale;Object.assign(item.text.style,{left:rotated.cx*scale-rw/2+'px',top:rotated.cy*scale-rh/2+'px',width:rw+'px',height:rh+'px',transform:'rotate('+rotated.angle+'deg)',transformOrigin:'center'});fitText(item,rw,rh,scale);}else{Object.assign(item.text.style,{left:b.x0*g.drawW+'px',top:b.y0*g.drawH+'px',width:w+'px',height:h+'px',transform:''});fitText(item,w,h,scale);}}entry.lastSize=size;}
       warnings+=entry.texts.filter(t=>t.text.dataset.fitWarning==='true').length;
     }
     const total=[...pages.values()].reduce((n,p)=>n+p.regions.length,0);host.dataset.regions=String(drawn);host.dataset.total=String(total);host.dataset.fitWarnings=String(warnings);host.dataset.visible=String(visible);

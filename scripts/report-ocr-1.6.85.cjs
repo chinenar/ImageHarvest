@@ -1,0 +1,11 @@
+'use strict';
+const fs=require('node:fs'),{pathToFileURL}=require('node:url');
+const before=require('../test-results/ocr-accuracy/romance-1.6.84.json').result;
+const after=require('../test-results/ocr-accuracy/new-romance-after.json');
+const a=before.result.regions.find(r=>/LOWER/.test(r.text)),b=after.result.regions.find(r=>/LOWER/.test(r.text));
+const expected="IT DOESN'T SEEM LIKE IT CAN GO ANY LOWER...",normalize=s=>s.replace(/\s+/g,' ').trim();
+if(normalize(b.text)!==expected||!b.spacingEvidence?.length)throw Error('Spaced sentence check failed');
+const escape=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+fs.writeFileSync('test-results/ocr-accuracy/romance-1.6.85.json',JSON.stringify({expected,before:a,after:b,result:after},null,2));
+fs.writeFileSync('test-results/ocr-accuracy/revision-1.6.85.html',`<!doctype html><meta charset="utf-8"><title>OCR 1.6.85</title><style>body{font:18px system-ui;max-width:1000px;margin:32px auto;padding:24px;background:#f5f6f9}.pair{display:grid;grid-template-columns:1fr 1fr;gap:24px}section{background:white;padding:24px}svg{width:100%;max-height:230px}rect{fill:#19af7240;stroke:#087c50;stroke-width:.7}pre{font:20px system-ui;white-space:pre-wrap}</style><h1>1.6.85 — คืนช่องว่างระหว่างคำจากภาพ</h1><svg viewBox="966 329 110 35"><image href="${pathToFileURL(after.source).href}" width="1132" height="1607"/>${b.spacingEvidence.flatMap(e=>e.gaps).map(g=>`<rect x="${g.x0}" y="338" width="${g.x1-g.x0}" height="15"/>`).join('')}</svg><div class="pair"><section><h2>ก่อน</h2><pre>${escape(a.text)}</pre></section><section><h2>หลัง</h2><pre>${escape(b.text)}</pre></section></div><p>ประโยคนี้ผ่านการเทียบตัวอักษร วรรคตอน และช่องว่าง โดยนับการขึ้นบรรทัดเป็นช่องว่างหนึ่งตัว</p><p>ยอมรับเฉพาะคำอ่านที่มีอยู่แล้วจากสองรอบซึ่งใช้ภาพประมวลผลต่างกัน ต้องสะกดตัวอักษรเหมือนเดิม และช่องว่างที่เสนอมีหลักฐานจากช่องระหว่างตัวอักษรในภาพที่กว้างกว่าช่องภายในคำ ตรวจด้วยสองเกณฑ์แยกสี</p><p>ขณะนี้กติกาครอบคลุมคำละตินไม่ใส่เครื่องหมาย 4–16 ตัวอักษรที่แยกตัวอักษรได้ชัด ไม่ได้แก้การเว้นวรรคทุกภาษา ฟอนต์ตัวติดกัน เอฟเฟกต์ หรือความแม่นทั้งหน้า</p>`);
+console.log('PASS: target sentence including spaces and punctuation');

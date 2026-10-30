@@ -10,6 +10,12 @@ test('confirmed watermark is not promoted to dialogue by an inferred closed surf
  assert.equal(contentRole({...mark,contentOverride:true,placement:{surfaceType:'bubble'}}).excluded,false);
 });
 const region=(id,extra={})=>({id,text:'HELLO',translation:'สวัสดี',bbox:{x0:20,y0:30,x1:80,y1:70},translationRecord:{status:'translated',sourceText:'HELLO',imageDigest:'digest',bbox:{x0:20,y0:30,x1:80,y1:70}},...extra});
+
+test('confirming an OCR reading cannot paint an unresolved shared-ink mask',()=>{
+ const rows=[region('blocked',{reviewed:true,placement:{paintMode:'glyph-patch',cleanupReview:'shared-ink-needs-review',erasePatch:{png:'not-for-painting'}}}),region('good')];
+ const page=overlayPage({id:'p',width:100,height:200,imageDigest:'digest',ocr:{regions:rows}});
+ assert.deepEqual(page.regions.map(r=>r.id),['good']);
+});
 test('overlay retains matching translation provenance and excludes failed, stale, watermark and uncertain readings',()=>{
  const rows=[region('good'),region('mark',{kind:'watermark'}),region('uncertain',{confidence:30,reviewRequired:true}),region('old',{text:'CHANGED'}),region('failed',{translationRecord:{status:'failed'}}),region('moved',{bbox:{x0:21,y0:30,x1:80,y1:70}}),region('wrong-image',{translationRecord:{status:'translated',sourceText:'HELLO',imageDigest:'other'}})];
  const page=overlayPage({id:'p',sourceUrl:'https://example.test/page.png',width:100,height:200,imageDigest:'digest',ocr:{regions:rows}});

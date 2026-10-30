@@ -7,6 +7,9 @@ import io
 import contextlib
 import traceback
 import time
+import hashlib
+import copy
+from collections import OrderedDict
 
 os.environ.setdefault("PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK", "True")
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
@@ -54,6 +57,8 @@ os.environ.setdefault("OMP_NUM_THREADS", str(CPU_THREADS) if accelerated else "1
 os.environ.setdefault("HF_HOME", os.path.join(root, "huggingface"))
 os.environ.setdefault("PADDLE_PDX_CACHE_HOME", os.path.join(root, "paddle"))
 models = {}
+recognition_cache = OrderedDict()
+recognition_cache_stats = {"hits": 0, "misses": 0}
 devices = None
 fallback_reason = startup_fallback_reason
 
@@ -88,6 +93,7 @@ def dispatch_with_fallback(request):
             if hasattr(model, "close"):
                 model.close()
         models.clear()
+        recognition_cache.clear()
         error.__traceback__ = None
     # Retry once on CPU, keeping the same image, model and scan coverage.
     import gc
@@ -119,7 +125,13 @@ def prepare_image(request):
     from PIL import Image, ImageOps, ImageEnhance
     image = Image.open(io.BytesIO(base64.b64decode(request["image"]))).convert("RGB")
     variant = request.get("variant", "original")
-    if variant == "grayscale":
+    if variant in ("wide", "wide-contrast", "wide-line", "wide-line-contrast"):
+        # Recovery for tall, squeezed display fonts. Preserve source geometry
+        # when returning polygons; this transform is never used on CJK text.
+        image = image.resize((image.width * 2, image.height), Image.Resampling.LANCZOS)
+        if variant in ("wide-contrast", "wide-line-contrast"):
+            image = ImageOps.autocontrast(ImageOps.grayscale(image)).convert("RGB")
+    elif variant == "grayscale":
         image = ImageOps.grayscale(image).convert("RGB")
     elif variant == "contrast":
         image = ImageOps.autocontrast(ImageOps.grayscale(image)).convert("RGB")
@@ -155,6 +167,55 @@ def recognize_batch(requests):
     if any(r.get("engine", "paddle") != engine or r.get("language", "en") != language for r in requests):
         raise ValueError("OCR batch must use one engine and language")
     images = [prepare_image(r) for r in requests]
+    keys = []
+    for request,image in zip(requests,images):
+        # Exact prepared pixels only. Language, device and coordinate transform
+        # are part of identity; similar-looking crops are never substituted.
+        wide = request.get("variant") in ("wide", "wide-contrast", "wide-line", "wide-line-contrast")
+        identity = (engine,language,device_config().get(engine),bool(request.get("recognizeOnly")),wide,image.mode,image.size)
+        keys.append(hashlib.sha256(repr(identity).encode()+image.tobytes()).hexdigest())
+    if os.environ.get("IMAGEHARVEST_OCR_CACHE_READS") == "0" or any(r.get("reuse") is False for r in requests):
+        values = _recognize_batch_uncached(requests, images)
+        if len(values) != len(requests):
+            raise ValueError("Incomplete recognition batch")
+        recognition_cache_stats["misses"] += len(values)
+        return [{**value,"inferenceReused":False,"inferenceFingerprint":key} for value,key in zip(values,keys)]
+    missing = {}
+    for index,key in enumerate(keys):
+        if key not in recognition_cache and key not in missing:
+            missing[key] = index
+    if missing:
+        indices = list(missing.values())
+        values = _recognize_batch_uncached([requests[i] for i in indices], [images[i] for i in indices])
+        if len(values) != len(indices):
+            raise ValueError("Incomplete cached recognition batch")
+        for key,value in zip(missing,values):
+            recognition_cache[key] = copy.deepcopy(value)
+        recognition_cache_stats["misses"] += len(values)
+    output,seen = [],set()
+    for request,key in zip(requests,keys):
+        reused = key not in missing or key in seen
+        seen.add(key)
+        row = copy.deepcopy(recognition_cache[key])
+        row.update(variant=request.get("variant","original"),batchSize=len(requests),inferenceReused=reused,inferenceFingerprint=key)
+        output.append(row)
+        recognition_cache.move_to_end(key)
+        recognition_cache_stats["hits"] += int(reused)
+    # Store text and coordinates only, never source image buffers or tensors.
+    while len(recognition_cache) > 64:
+        recognition_cache.popitem(last=False)
+    return output
+
+
+def _recognize_batch_uncached(requests, images=None):
+    if not isinstance(requests, list) or not 1 <= len(requests) <= 8:
+        raise ValueError("OCR batch must contain 1-8 crops")
+    engine = requests[0].get("engine", "paddle")
+    language = requests[0].get("language", "en")
+    if any(r.get("engine", "paddle") != engine or r.get("language", "en") != language for r in requests):
+        raise ValueError("OCR batch must use one engine and language")
+    if images is None:
+        images = [prepare_image(r) for r in requests]
     if engine == "manga":
         import torch
         from manga_ocr.ocr import post_process
@@ -163,14 +224,14 @@ def recognize_batch(requests):
             pixels = torch.stack([model._preprocess(im.convert("L").convert("RGB")) for im in images]).to(model.model.device)
             predictions = model.model.generate(pixels, max_length=300).cpu()
         return [{"engine":"manga-ocr", "model":"kha-white/manga-ocr-base", "text":post_process(model.tokenizer.decode(p, skip_special_tokens=True)), "confidence":None, "lines":[], "variant":r.get("variant","original"), "device":str(model.model.device), "batchSize":len(images)} for r,p in zip(requests,predictions)]
-    if engine != "paddle" or language not in ("en", "fr", "th", "japan"):
+    if engine != "paddle" or language not in ("en", "fr", "th", "japan", "zh"):
         raise ValueError("Unsupported OCR engine or language")
     from paddleocr import TextRecognition
     from paddlex.inference.pipelines.components import CropByPolys, SortQuadBoxes
     import numpy as np
     device = device_config()["paddle"]
-    key = "recognizer/" + language
-    model_name = {"en":"en_PP-OCRv5_mobile_rec", "fr":"latin_PP-OCRv5_mobile_rec", "th":"th_PP-OCRv5_mobile_rec", "japan":"PP-OCRv5_server_rec"}[language]
+    model_name = {"en":"en_PP-OCRv5_mobile_rec", "fr":"latin_PP-OCRv5_mobile_rec", "th":"th_PP-OCRv5_mobile_rec", "japan":"PP-OCRv5_server_rec", "zh":"PP-OCRv5_server_rec"}[language]
+    key = "recognizer/" + model_name
     if key not in models:
         models[key] = TextRecognition(model_name=model_name, device=device, enable_mkldnn=accelerated and device=="cpu", cpu_threads=PADDLE_THREADS)
     cropper, sorter = CropByPolys(det_box_type="quad"), SortQuadBoxes()
@@ -180,6 +241,11 @@ def recognize_batch(requests):
     # Preserve per-version detection: threshold/contrast can reveal missing ink.
     for i,image in enumerate(images):
         bgr = np.array(image)[:,:,::-1]
+        if requests[i].get("recognizeOnly"):
+            h, w = bgr.shape[:2]
+            crops.append(bgr)
+            owners.append((i, [[0,0], [w,0], [w,h], [0,h]]))
+            continue
         result = list(detector().predict(bgr, limit_side_len=960, limit_type="max", box_thresh=0.6))[0]
         polys = sorter(result["dt_polys"])
         for crop,poly in zip(cropper(bgr,polys),polys):
@@ -192,10 +258,17 @@ def recognize_batch(requests):
             raise ValueError("Recognition batch returned an incomplete result")
         for index,result in zip(order,results):
             owner,points = owners[index]
+            scale_x = 2 if requests[owner].get("variant") in ("wide", "wide-contrast", "wide-line", "wide-line-contrast") else 1
+            points = [[x / scale_x, y] for x, y in points]
             output[owner]["lines"].append({"text":str(result["rec_text"]), "confidence":float(result["rec_score"])*100, "polygon":points,
                 "bbox":{"x0":min(p[0] for p in points),"y0":min(p[1] for p in points),"x1":max(p[0] for p in points),"y1":max(p[1] for p in points)}})
     for row in output:
-        row["lines"].sort(key=lambda l:(round(l["bbox"]["y0"]/8),l["bbox"]["x0"]))
+        vertical = bool(row["lines"]) and sum(
+            l["bbox"]["y1"]-l["bbox"]["y0"] > 1.8*(l["bbox"]["x1"]-l["bbox"]["x0"])
+            for l in row["lines"]) > len(row["lines"])/2
+        row["orientation"] = "vertical" if vertical else "horizontal"
+        row["lines"].sort(key=(lambda l:(-l["bbox"]["x0"],l["bbox"]["y0"])) if vertical
+                          else (lambda l:(round(l["bbox"]["y0"]/8),l["bbox"]["x0"])))
         row["text"] = "\n".join(l["text"] for l in row["lines"])
         row["confidence"] = sum(l["confidence"] for l in row["lines"])/len(row["lines"]) if row["lines"] else 0
     return output
@@ -212,7 +285,7 @@ def recognize_legacy(request):
             torch.set_num_threads(CPU_THREADS)
             models["manga"] = MangaOcr()
         return {"engine": "manga-ocr", "model": "kha-white/manga-ocr-base", "text": models["manga"](image), "confidence": None, "lines": [], "variant": variant}
-    if engine != "paddle" or language not in ("en", "fr", "th", "japan"):
+    if engine != "paddle" or language not in ("en", "fr", "th", "japan", "zh"):
         raise ValueError("Unsupported OCR engine or language")
     from paddleocr import PaddleOCR
     import numpy as np
@@ -230,6 +303,36 @@ def recognize_legacy(request):
     return {"engine": "paddleocr", "model": "PP-OCRv5/" + language, "text": "\n".join(l["text"] for l in lines),
         "confidence": sum(l["confidence"] for l in lines) / len(lines) if lines else 0, "lines": lines, "variant": variant}
 
+def display_font_proposals(image):
+    """Conservative, review-only proposals for repeated tall Latin glyphs."""
+    import cv2
+    import numpy as np
+    gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+    _, _, stats, _ = cv2.connectedComponentsWithStats((gray < 100).astype("uint8"), 8)
+    glyphs = [(int(x),int(y),int(w),int(h)) for x,y,w,h,ink in stats[1:]
+              if h >= 25 and w >= 3 and h > w*2.2 and ink >= 50 and .08 < ink/(w*h) < .85]
+    groups = []
+    for glyph in sorted(glyphs):
+        x,y,w,h = glyph
+        group = next((g for g in groups if
+            -.5*min(w,g[-1][2]) <= x-(g[-1][0]+g[-1][2]) <= min(h,g[-1][3])*.6 and
+            .6 <= h/g[-1][3] <= 1.7 and
+            abs(y+h/2-g[-1][1]-g[-1][3]/2) < min(h,g[-1][3])*.45), None)
+        if group is None: groups.append([glyph])
+        else: group.append(glyph)
+    lines = []
+    for group in groups:
+        if len(group) < 5: continue
+        x0,y0 = min(g[0] for g in group),min(g[1] for g in group)
+        x1,y1 = max(g[0]+g[2] for g in group),max(g[1]+g[3] for g in group)
+        if x1-x0 < (y1-y0)*1.5: continue
+        box = {"x0":x0,"y0":y0,"x1":x1,"y1":y1}
+        lines.append({"bbox":box,"polygon":[[x0,y0],[x1,y0],[x1,y1],[x0,y1]],
+                      "detectionConfidence":.5,"displayFont":True,"reviewRequired":True,
+                      "observedBy":["glyph-components"]})
+    return lines
+
+
 def detect(request):
     import numpy as np
     image = prepare_image(request)
@@ -239,6 +342,8 @@ def detect(request):
         points = np.asarray(poly).tolist()
         lines.append({"polygon": points, "detectionConfidence": float(score),
             "bbox": {"x0": min(p[0] for p in points), "y0": min(p[1] for p in points), "x1": max(p[0] for p in points), "y1": max(p[1] for p in points)}})
+    if request.get("variant", "original") == "original":
+        lines.extend(display_font_proposals(image))
     return {"engine": "paddleocr", "model": "PP-OCRv5_server_det", "variant": request.get("variant", "original"), "lines": lines}
 
 
@@ -560,7 +665,7 @@ def dispatch(request):
         active = device_config()
         versions = {p: version(p) for p in ("manga-ocr", "paddleocr", "paddlepaddle", "torch", "transformers")}
         if gpu_ready: versions["paddlepaddle"] = version("paddlepaddle-gpu")
-        return {"ready": True, "versions": versions, "acceleration": {"engine": "cuda" if active["paddle"]!="cpu" else "onednn" if accelerated else "paddle-cpu", "devices":active,"fallbackReason":fallback_reason,"paddleThreads": PADDLE_THREADS, "torchThreads": CPU_THREADS}, "capabilities":{"batch":active["paddle"]!="cpu"}, "loaded": list(models)}
+        return {"ready": True, "versions": versions, "acceleration": {"engine": "cuda" if active["paddle"]!="cpu" else "onednn" if accelerated else "paddle-cpu", "devices":active,"fallbackReason":fallback_reason,"paddleThreads": PADDLE_THREADS, "torchThreads": CPU_THREADS}, "capabilities":{"batch":active["paddle"]!="cpu"}, "loaded": list(models), "inferenceCache": {**recognition_cache_stats,"entries":len(recognition_cache)}}
     if request.get("op") == "recognize-batch":
         return recognize_batch(request["items"])
     if request.get("op") == "layout-safe":
@@ -601,6 +706,22 @@ def segment(request):
     result = segment_surface(request, gray, labels)
     if result["groups"]:
         return {**result, "surfaceMode": "white-interior"}
+    if request.get('writingDirection') == 'vertical':
+        # White lettering in connected black balloons needs the same enclosed
+        # surface evidence; the exterior must not become a text surface.
+        inverse = 255 - gray
+        light = cv2.morphologyEx((inverse < 210).astype(np.uint8)*255, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
+        count, components, stats, _ = cv2.connectedComponentsWithStats((light == 0).astype(np.uint8), 8)
+        dark_labels = np.zeros(gray.shape, np.int32)
+        for index in range(1, count):
+            x, y, w, h, size = stats[index]
+            if size < 100 or x == 0 or y == 0 or x+w == gray.shape[1] or y+h == gray.shape[0]:
+                continue
+            contours, _ = cv2.findContours((components == index).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            cv2.drawContours(dark_labels, contours, -1, index, -1)
+        refined = segment_surface(request, inverse, dark_labels)
+        if refined['groups']:
+            return {**refined, 'surfaceMode': 'dark-interior'}
     # Colored and gradient balloons still have an outline even when their
     # interiors fail the white threshold. Discard the outside of open crops.
     edges = cv2.Canny(gray, 45, 120)
@@ -616,9 +737,124 @@ def segment(request):
     refined = segment_surface(request, gray, labels)
     return {**refined, "surfaceMode": "edge-outline"}
 
+def staggered_text_groups(lines, gray, vertical=False):
+    """Separate a shared row only with two stable, offset text alignments.
+
+    Both sides must have several complete rows and the shared row must contain
+    an actual ink-free gap. A normal centered paragraph is left untouched.
+    """
+    import numpy as np
+    ordered = sorted(lines, key=lambda l: l.get("coreBbox", l["bbox"])["y0"])
+    boxes = [l.get("coreBbox", l["bbox"]) for l in ordered]
+    minimum = 4 if vertical else 7
+    if len(boxes) < minimum:
+        return None
+    thickness = max(4, float(np.median([b["y1"]-b["y0"] for b in boxes])))
+    flank = 1 if vertical else 3
+    for index in range(flank, len(boxes)-flank):
+        upper, lower = boxes[:index], boxes[index+1:]
+        centers = lambda group: np.array([(b["x0"]+b["x1"])/2 for b in group])
+        a, b = float(np.median(centers(upper))), float(np.median(centers(lower)))
+        if abs(a-b) < thickness*3 or max(np.max(np.abs(centers(upper)-a)), np.max(np.abs(centers(lower)-b))) > thickness*2:
+            continue
+        shared = boxes[index]
+        cut = (a+b)/2
+        if not shared["x0"]+thickness < cut < shared["x1"]-thickness:
+            continue
+        x0, x1 = max(0,int(shared["x0"])), min(gray.shape[1],int(np.ceil(shared["x1"])))
+        y0, y1 = max(0,int(shared["y0"]-thickness*.4)), min(gray.shape[0],int(np.ceil(shared["y1"]+thickness*.4)))
+        patch = gray[y0:y1,x0:x1]
+        ink = (patch > 180 if np.median(patch) < 110 else patch < 180).sum(axis=0)
+        gaps = np.flatnonzero((ink == 0) & (np.abs(np.arange(x0,x1)-cut) < thickness*2))
+        if not len(gaps):
+            continue
+        runs = np.split(gaps,np.where(np.diff(gaps)>1)[0]+1)
+        gap = max(runs,key=len)
+        if len(gap) < max(3,thickness*.4):
+            continue
+        cut = float(x0+gap.mean())
+        left = {**shared,"x1":cut}; right = {**shared,"x0":cut}
+        first, second = (right,left) if a>b else (left,right)
+        edge_a, edge_b = ("x0","x1") if a>b else ("x1","x0")
+        return [ordered[:index]+[{**ordered[index],"bbox":first,"coreBbox":first,"cutEdge":edge_a}],
+                [{**ordered[index],"bbox":second,"coreBbox":second,"cutEdge":edge_b}]+ordered[index+1:]]
+    return None
+
+def contrast_text_groups(lines, gray):
+    """Split a shared row only with aligned companion rows and opposite backgrounds."""
+    import numpy as np
+    if len(lines) < 3:
+        return None
+    ordered = sorted(lines, key=lambda l: l.get('coreBbox', l['bbox'])['y0'])
+    boxes = [l.get('coreBbox', l['bbox']) for l in ordered]
+    h = max(4, float(np.median([b['y1']-b['y0'] for b in boxes])))
+    for index in (0, len(boxes)-1):
+        shared = boxes[index]
+        others = boxes[:index]+boxes[index+1:]
+        centers = [(b['x0']+b['x1'])/2 for b in others]
+        if max(centers)-min(centers) > h or any(b['x1']-b['x0'] > h*7 for b in others):
+            continue
+        anchor = min(b['x0'] for b in others)
+        if anchor-shared['x0'] < h*5 or shared['x1'] < max(b['x1'] for b in others)-h:
+            continue
+        y0,y1 = max(0,int(shared['y0']-h*.4)),min(gray.shape[0],int(shared['y1']+h*.4))
+        lo,hi = max(8,int(shared['x0']+h*2)),min(gray.shape[1]-8,int(anchor-h*.5))
+        if hi<=lo:
+            continue
+        profile = np.median(gray[y0:y1],axis=0)
+        candidates = [(float(np.median(profile[x-8:x])-np.median(profile[x:x+8])),x) for x in range(lo,hi)]
+        strength,cut = max(candidates)
+        if strength < 130 or np.median(profile[int(shared['x0']):cut]) < 190 or np.median(profile[cut:int(shared['x1'])]) > 100:
+            continue
+        # Companion rows must share the dark background, not merely alignment.
+        if any(np.median(gray[max(0,int(b['y0']-h*.4)):min(gray.shape[0],int(b['y1']+h*.4)),max(0,int(b['x0']-h)):min(gray.shape[1],int(b['x1']+h))]) > 110 for b in others):
+            continue
+        left={**shared,'x1':float(cut)};right={**shared,'x0':float(cut)}
+        return [[{**ordered[index],'bbox':left,'coreBbox':left,'cutEdge':'x1'}],
+                ordered[:index]+[{**ordered[index],'bbox':right,'coreBbox':right,'cutEdge':'x0'}]+ordered[index+1:]]
+    return None
+
+def offset_vertical_groups(lines):
+    """Two offset vertical text runs, after rotation, with an unusually wide gutter.
+
+    A lone short column may form the second lobe. At least two other columns
+    must agree on their alignment; ordinary unequal-length columns stay whole.
+    """
+    import numpy as np
+    ordered = sorted(lines, key=lambda l: l.get('coreBbox', l['bbox'])['y0'])
+    boxes = [l.get('coreBbox', l['bbox']) for l in ordered]
+    if len(boxes) < 3:
+        return None
+    h = max(4, float(np.median([b['y1']-b['y0'] for b in boxes])))
+    for index in range(1, len(boxes)):
+        a, b = boxes[:index], boxes[index:]
+        if min(p['y0'] for p in b)-max(p['y1'] for p in a) < h*1.2:
+            continue
+        centers = lambda rows: np.array([(p['x0']+p['x1'])/2 for p in rows])
+        ac, bc = centers(a), centers(b)
+        if max(float(np.ptp(ac)), float(np.ptp(bc))) > h*1.2 or abs(float(np.median(ac)-np.median(bc))) < h*3:
+            continue
+        starts = [float(np.median([p['x0'] for p in rows])) for rows in (a,b)]
+        ends = [float(np.median([p['x1'] for p in rows])) for rows in (a,b)]
+        overlap = max(0, min(ends)-max(starts))/max(1, min(ends[i]-starts[i] for i in (0,1)))
+        if overlap >= .65 or max(abs(starts[0]-starts[1]),abs(ends[0]-ends[1])) < h*3:
+            continue
+        return [ordered[:index], ordered[index:]]
+    return None
+
 def segment_surface(request, gray, labels):
     import cv2
     import numpy as np
+    contrast = contrast_text_groups(request.get('lines', []), gray)
+    if contrast:
+        return {'groups':contrast,'reason':'aligned-text-on-opposite-backgrounds'}
+    staggered = staggered_text_groups(request.get("lines", []), gray, request.get('writingDirection') == 'vertical')
+    if staggered:
+        return {"groups": staggered, "reason": "staggered-alignment-with-source-gap"}
+    if request.get('writingDirection') == 'vertical':
+        offset = offset_vertical_groups(request.get('lines', []))
+        if offset:
+            return {'groups': offset, 'reason': 'offset-vertical-columns-with-gutter'}
     # Connected balloons can have two lobes joined by a narrow neck. Partition
     # that white area only when its distance field contains a real bottleneck.
     sizes = [l.get("coreBbox", l["bbox"])["y1"] - l.get("coreBbox", l["bbox"])["y0"] for l in request.get("lines", [])]
@@ -746,7 +982,7 @@ def segment_surface(request, gray, labels):
             groups.setdefault(label, []).append({**line, "coreBbox": box, "bbox": box})
     values = list(groups.values())
     # Do not split off an isolated character hole or a tiny whitespace island.
-    if len(values) < 2 or any(len(g) < 2 for g in values):
+    if len(values) < 2 or any(len(g) < (1 if request.get('writingDirection') == 'vertical' else 2) for g in values):
         return {"groups": [], "reason": "single-area"}
     # Several continuous rows crossing the proposed boundary indicate one
     # paragraph. A staggered balloon pair can share one detector row.

@@ -5,9 +5,40 @@ const {planTiles,mergeTileObservations}=require('../src/comic-text-detector.cjs'
 const {reconcileDiscovery,discoverText}=require('../src/ocr-discovery.cjs');
 const {prepareCrop,validateCrop}=require('../src/ocr-crop.cjs');
 const {LocalOcrBackend,runtimeRoot}=require('../src/ocr-backend.cjs');
-const {PREPROCESSING,chooseReadings,EnhancedMangaOcrPool}=require('../src/enhanced-manga-ocr.cjs');
+const {PREPROCESSING,chooseReadings,EnhancedMangaOcrPool,refineBalloonGroups}=require('../src/enhanced-manga-ocr.cjs');
 const {confirmedDiscoveryLines,deduplicateReadings,shouldPromoteContainerReading}=require('../src/enhanced-manga-ocr.cjs');
 const ready=fs.existsSync(path.join(runtimeRoot(),'Scripts/python.exe'));
+
+test('a long-strip proposal cannot trigger balloon analysis over an entire chapter',async()=>{
+ let calls=0;
+ const b={x0:100,y0:100,x1:900,y1:8900};
+ const candidate={bbox:b,lines:Array.from({length:4},()=>({bbox:b}))};
+ const result=await refineBalloonGroups(Buffer.alloc(0),{width:1000,height:9000,boxes:[candidate]}, {request:async()=>{calls++;}});
+ assert.equal(calls,0);assert.equal(result.boxes.length,1);assert.deepEqual(result.boxes[0].bbox,b);
+ assert.equal(result.boxes[0].segmentationSkipped,'large-context');assert.equal(result.boxes[0].reviewRequired,true);
+});
+
+test('display-font recovery reads the complete crop after detector fragments, preserving alternatives and review status',async()=>{
+ const calls=[];
+ const backend={status:async()=>({ready:true}),read:async(image,options)=>{
+  calls.push(options);
+  const m=await sharp(image).metadata(),text=options.recognizeOnly?'GRAAAAAH!!!':options.variant.startsWith('wide')?'GRAA':'';
+  const confidence=text?(options.recognizeOnly?92:100):0;
+  return {engine:'paddleocr',text,confidence,lines:text?[{text,confidence,bbox:{x0:12,y0:12,x1:m.width-12,y1:m.height-12}}]:[]};
+ }};
+ const image=await sharp({create:{width:800,height:400,channels:3,background:'white'}}).png().toBuffer();
+ const pool=new EnhancedMangaOcrPool({backend,langPath:path.resolve(__dirname,'../assets/tessdata'),languages:['eng'],concurrency:1});
+ pool.detectPage=async()=>({width:800,height:400,boxes:[{bbox:{x0:100,y0:100,x1:700,y1:300},orientation:'horizontal',displayFont:true,discoveryOnly:true,lineOnly:true,reviewRequired:true,observedBy:['glyph-components'],lines:[]}],tiles:[]});
+ try{
+  const [result]=await pool.recognizePages([{filePath:image}]);assert.equal(result.error,undefined);
+  assert.equal(result.regions.length,1);
+  const row=result.regions[0];assert.equal(row.text,'GRAAAAAH!!!');assert.equal(row.selectionReason,'display-font-recovery');assert.equal(row.reviewRequired,true);
+  assert.ok(row.observedBy.includes('glyph-components'));
+  assert.equal(calls.filter(c=>c.recognizeOnly).length,2);
+  assert.ok(row.alternatives.some(r=>r.text==='GRAA'),'partial detector reading must remain reviewable');
+  assert.ok(row.recognitionLines.every(l=>l.bbox.x0>=0&&l.bbox.x1<=800&&l.bbox.y0>=0&&l.bbox.y1<=400));
+ }finally{await pool.close();}
+});
 test('recover an agreeing colored speech line from a broad proposal containing unreliable effects',()=>{
  const bbox={x0:241,y0:191,x1:350,y1:290},line=(text,confidence,box=bbox)=>({text,confidence,bbox:box});
  const reading=(variant,lines)=>({engine:'paddleocr',variant,textLines:lines});
@@ -43,7 +74,7 @@ test('independent Paddle discoveries retain missing lines and flag cross-balloon
  const r=reconcileDiscovery(ctd,[line(box(20,20,80,40)),line(box(40,50,175,70)),line(box(220,130,370,150)),line(box(225,155,365,175),'clahe'),line(box(221,130,371,150),'clahe')]);
  assert.equal(r.discovery.covered.length,1);assert.equal(r.discovery.conflicts.length,1);assert.equal(r.supplemental.length,1);
  assert.equal(r.supplemental[0].lines.length,2);assert.equal(r.supplemental[0].reviewRequired,true);assert.equal(r.boxes.length,3);
- assert.ok(ctd.boxes.every(b=>r.boxes.includes(b)));
+ assert.ok(ctd.boxes.every(b=>r.boxes.some(after=>JSON.stringify(after.bbox)===JSON.stringify(b.bbox))));
 });
 test('padded Paddle lines supporting small CTD glyph maps cannot create duplicate paragraphs',()=>{
  const ctd={boxes:[{bbox:{x0:324,y0:171,x1:372,y1:190},lines:[{bbox:{x0:324,y0:171,x1:372,y1:190},coreBbox:{x0:329,y0:176,x1:368,y1:186},orientation:'horizontal'}]}]};
@@ -52,11 +83,11 @@ test('padded Paddle lines supporting small CTD glyph maps cannot create duplicat
 });
 test('preview reconstructs the exact scaled and masked recognition crop',async()=>{
  const source=path.join(__dirname,'fixtures/ocr-thai-bubble.png');
- const crop={rectangle:{left:195,top:175,width:330,height:170},width:497,border:12,inputScale:2,maskPadding:8,maskLines:[{coreBbox:{x0:210,y0:180,x1:505,y1:324}}]};
+ const crop={rectangle:{left:195,top:175,width:330,height:170},width:497,border:12,inputScale:2,ownedPolygons:[[[200,180],[515,180],[510,325],[200,325]]],excludedPolygons:[[[200,180],[215,180],[215,200],[200,200]]],maskPadding:8,maskLines:[{coreBbox:{x0:210,y0:180,x1:505,y1:324}}]};
  validateCrop(crop,721,662);
  const original=await prepareCrop(source,crop);
  const scaled=await sharp(source).resize(1442,1324).png().toBuffer();
- const prepared=await prepareCrop(scaled,{...crop,rectangle:Object.fromEntries(Object.entries(crop.rectangle).map(([k,v])=>[k,v*2])),maskLines:crop.maskLines.map(l=>({coreBbox:Object.fromEntries(Object.entries(l.coreBbox).map(([k,v])=>[k,v*2]))}))},{prepared:true});
+ const prepared=await prepareCrop(scaled,{...crop,rectangle:Object.fromEntries(Object.entries(crop.rectangle).map(([k,v])=>[k,v*2])),ownedPolygons:crop.ownedPolygons.map(p=>p.map(v=>v.map(n=>n*2))),excludedPolygons:crop.excludedPolygons.map(p=>p.map(v=>v.map(n=>n*2))),maskLines:crop.maskLines.map(l=>({coreBbox:Object.fromEntries(Object.entries(l.coreBbox).map(([k,v])=>[k,v*2]))}))},{prepared:true});
  assert.deepEqual(original,prepared);
  for(const invalid of [{...crop,width:Infinity},{...crop,rectangle:{left:-1,top:0,width:10,height:10}},{...crop,inputScale:5},{...crop,maskLines:[{coreBbox:{x0:0,y0:0,x1:1e9,y1:5}}]}])assert.throws(()=>validateCrop(invalid,721,662));
 });

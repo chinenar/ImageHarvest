@@ -1,0 +1,38 @@
+{
+  "schema": "imageharvest.frozen-layout-observations-v1",
+  "provenance": "test-results/ocr-accuracy/after-1.6.88/japanese-connected.json",
+  "source": "test/fixtures/ocr-ja-connected.png",
+  "sourceHash": "ef0cc5ed748a9eb9f4a2e8219dd80c08539802fac82fb69a4db6fbc8c5453a95",
+  "observations": [
+    {
+      "id": "p1-7cc9348cfdc9",
+      "text": "ただの学園祭なのにめっちゃ気合入ってんの",
+      "bbox": {
+        "x0": 166,
+        "y0": 56,
+        "x1": 282,
+        "y1": 206
+      },
+      "orientation": "vertical",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": []
+    },
+    {
+      "id": "p1-01db2ae8cfcb",
+      "text": "見た？あのメイド服空気読めっての",
+      "bbox": {
+        "x0": 55,
+        "y0": 71,
+        "x1": 140,
+        "y1": 247
+      },
+      "orientation": "vertical",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": []
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "scope": "Source-checked Japanese text crops. Reading groups and lexical glyph sequence are required; literal punctuation and prolonged-sound-mark count are reported separately.",
+  "cases": [
+    {
+      "id": "native-1",
+      "segments": [
+        "何でしょう？この紙切れは",
+        "手紙？"
+      ]
+    },
+    {
+      "id": "native-2",
+      "segments": [
+        "なぁ見ろよ",
+        "あそこにいるのあの女の妹じゃねぇか"
+      ]
+    },
+    {
+      "id": "native-3",
+      "segments": [
+        "せっかく私が褒めてやったのに",
+        "一緒に学園祭回ろうとか言えないのか！"
+      ]
+    },
+    {
+      "id": "native-4",
+      "segments": [
+        "ごきげんよう！庶民の皆様ぁ〜！学園祭楽しんでいらっしゃるかしらぁ〜？"
+      ]
+    },
+    {
+      "id": "native-5",
+      "segments": [
+        "オーッホホホホ！"
+      ]
+    }
+  ]
+}

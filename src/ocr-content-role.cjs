@@ -1,4 +1,5 @@
 'use strict';
+const {pendingEffect}=require('./ocr-effect-candidates.cjs');
 // Exact publisher marks confirmed from the user's corpus. Words such as
 // "scans", short dialogue, colored text, or page edges alone are insufficient.
 function literalMark(text){
@@ -10,6 +11,13 @@ function numericOrSymbolMark(text){
  return Boolean(value&&!/\p{L}/u.test(value)&&/^[\p{N}\p{P}\p{S}]+$/u.test(value));
 }
 function contentRole(region={}){
+ if(region.partialReadingEvidence&&!region.reviewed&&!region.contentOverride)return {role:'uncertain',reason:'incomplete-japanese-reading-needs-review',excluded:true};
+ if(region.placement?.cleanupReview)return {role:'uncertain',reason:region.placement.cleanupReview,excluded:true};
+ if(!region.reviewed&&!region.contentOverride&&region.overlapReview?.signature===JSON.stringify([region.text,region.bbox]))return {role:'uncertain',reason:'overlapping-readings-need-review',excluded:true};
+ if(!region.reviewed&&!region.contentOverride&&region.scriptConflictEvidence?.signature===JSON.stringify([region.text,region.bbox]))return {role:'uncertain',reason:'script-conflict-needs-review',excluded:true};
+ if(!region.reviewed&&!region.contentOverride&&region.sparseReadingReview===JSON.stringify([region.text,region.bbox]))return {role:'uncertain',reason:'sparse-fragment-reading-needs-review',excluded:true};
+ if(region.kind==='sfx')return {role:'sfx',reason:'marked-sound-effect',excluded:true};
+ if(pendingEffect(region))return {role:'uncertain',reason:'possible-sound-effect-needs-review',excluded:true};
  if(region.layoutIssue)return {role:'uncertain',reason:region.layoutIssue,excluded:true};
  if(!region.contentOverride&&literalMark(region.text))return {role:'literal-mark',reason:'preserve-nonlexical-mark',excluded:true};
  if(!region.contentOverride&&!region.reviewed&&numericOrSymbolMark(region.text)){

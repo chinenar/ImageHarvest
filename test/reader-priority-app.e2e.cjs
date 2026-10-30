@@ -21,7 +21,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     const u = new URL(req.url, 'http://127.0.0.1');
     if(u.pathname==='/v1/models'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify({data:[{id:'qwen-text-mock'}]}));return;}
     if(u.pathname==='/v1/chat/completions'){
-      let raw='';req.on('data',data=>raw+=data);req.on('end',()=>{const body=JSON.parse(raw),input=JSON.parse(body.messages.at(-1).content);translationRequests.push(input);res.setHeader('Content-Type','application/json');res.end(JSON.stringify({choices:[{message:{content:JSON.stringify({items:input.items.map(r=>({id:r.id,translation:'คำท้าดวล'}))})}}]}));});return;
+      let raw='';req.on('data',data=>raw+=data);req.on('end',()=>{const body=JSON.parse(raw),content=String(body.messages.at(-1).content||'');let input=null;try{input=JSON.parse(content)}catch{};res.setHeader('Content-Type','application/json');if(!input?.items){res.end(JSON.stringify({choices:[{message:{content:'READY'}}]}));return;}translationRequests.push(input);res.end(JSON.stringify({choices:[{message:{content:JSON.stringify({items:input.items.map(r=>({id:r.id,translation:'คำท้าดวล'}))})}}]}));});return;
     }
     if (u.pathname === '/chapter') {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');

@@ -1,0 +1,14 @@
+'use strict';
+const fs=require('fs'),{pathToFileURL}=require('url');
+const page=require('../test-results/ocr-accuracy/display-page-1.6.88.json');
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const pairs=['scream','die'].map(id=>({id,before:require('../test-results/ocr-accuracy/'+id+'-before-1.6.88.json'),after:require('../test-results/ocr-accuracy/'+id+'-after-1.6.88.json')}));
+const expected={scream:'MEEEEEEEEEH!!!',die:'DIE!!'};
+for(const pair of pairs)if(pair.after.result.regions.length!==1||pair.after.result.regions[0].text!==expected[pair.id])throw Error('Attachment mismatch');
+const scream=page.result.regions.filter(r=>r.bbox.y0<850),die=page.result.regions.filter(r=>r.bbox.y0>3900&&r.bbox.y0<4300);
+if(scream.length!==1||scream[0].text!==expected.scream||die.length!==1||die[0].text!==expected.die||die[0].bbox.y1>4200)throw Error('Full-page mismatch');
+const rect=(b,color)=>`<rect x="${b.x0}" y="${b.y0}" width="${b.x1-b.x0}" height="${b.y1-b.y0}" fill="none" stroke="${color}" stroke-width="3"/>`;
+fs.writeFileSync('test-results/ocr-accuracy/revision-1.6.88.html',`<!doctype html><html lang="th"><meta charset="utf-8"><title>OCR 1.6.88 — ฟอนต์ยืดและคำสั้น</title><style>body{font:18px system-ui;max-width:1100px;margin:24px auto;padding:24px;background:#f3f5f9;color:#19233a}.cards{display:grid;grid-template-columns:1fr 1fr;gap:22px}article,aside{background:white;padding:20px;border-radius:12px}svg{width:100%;height:340px}p{line-height:1.6}pre{font:18px system-ui;white-space:pre-wrap}h2{font-size:23px}aside{margin-top:22px;border-left:5px solid #c88a30}@media(max-width:750px){.cards{grid-template-columns:1fr}}</style>
+<h1>1.6.88 — ฟอนต์ยืดและคำสั้นตัวใหญ่</h1><p>ตรวจทั้งสองภาพที่ส่งมาและหน้าต้นฉบับเต็ม กรอบส้มคือก่อนแก้ กรอบเขียวคือหลังแก้</p><div class="cards">${pairs.map(p=>{const a=p.before.result.regions[0],b=p.after.result.regions[0],w=p.id==='scream'?923:861,h=p.id==='scream'?635:592;return `<article><h2>${p.id==='scream'?'ตัวอักษรยืดและเครื่องหมายซ้ำ':'คำสั้นกับเอฟเฟกต์ข้างบอลลูน'}</h2><svg viewBox="0 0 ${w} ${h}"><image href="${pathToFileURL(p.after.source).href}" width="${w}" height="${h}"/>${rect(a.bbox,'#d89226')}${rect(b.bbox,'#18895b')}</svg><p>ก่อน: ${esc(a.text)}<br>หลัง: <b>${esc(b.text)}</b></p><p>${p.id==='scream'?'เลือกผลที่ตรวจพบบรรทัดและอ่านตรงกัน แทนผลอ่านทั้งครอปที่ทำตัว E และ ! หาย':'คำอ่านถูกอยู่แล้ว แก้กรอบที่ลากเอฟเฟกต์ด้านล่างมารวม โดยใช้บรรทัดที่หลายรอบยืนยันตรงกัน'}</p></article>`;}).join('')}</div>
+<aside><h2>ผลบนหน้าต้นฉบับเต็ม</h2><p>พบ <b>${esc(scream[0].text)}</b> และ <b>${esc(die[0].text)}</b> อย่างละหนึ่งกรอบ ตัดผลซ้ำ DIE! ที่เกิดจากครอปข้างเคียงไม่ครบ และเก็บไว้ในผลที่ถูกคัดออกสำหรับตรวจย้อนหลัง</p><p>การแยกนี้เป็นการแยกกลุ่มกรอบสำหรับ OCR ยังไม่ได้ยืนยันมาสก์ลบตัวอักษรที่แตะเอฟเฟกต์ทีละพิกเซล เอฟเฟกต์เกาหลีในภาพยังไม่ถือว่าอ่านสำเร็จ และผลสองจุดนี้ไม่ใช่ความแม่นทั้งหน้า</p></aside></html>`);
+console.log('PASS: attachment and full-page target assertions');

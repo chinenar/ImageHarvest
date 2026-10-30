@@ -55,9 +55,12 @@ let app, server, page, profile;
   if(minimal){
     assert.equal(info.compatibility.controlMode,'minimal');assert.equal(info.compatibility.scriptsModified,false);
     assert.equal(info.compatibility.applied,0);assert.equal(await page.isDisabled('#protectionCompatibility'),true);
-    for(const method of ['Runtime.enable','Console.enable','Debugger.enable','Fetch.enable','Page.setBypassCSP'])assert.ok(!info.compatibility.cdpMethods.includes(method),method);
+    for(const method of ['Runtime.enable','Console.enable','Debugger.enable','Page.setBypassCSP'])assert.ok(!info.compatibility.cdpMethods.includes(method),method);
+    // Fetch.enable is allowed for request-only ad blocking; Minimal does not patch scripts.
+    assert.equal(info.compatibility.scriptsModified,false);
+    assert.equal(info.compatibility.applied,0);
     assert.ok(info.compatibility.cdpMethods.includes('Runtime.evaluate'));
-    pass('Minimal uses CDP without event subscriptions or script rewriting; UI makes this explicit');
+    pass('Minimal uses isolated CDP without script rewriting; optional request-only ad blocking is permitted');
   }
   const dom=await app.evaluate(()=>global.__eiwTest.runPage('({checks:+document.documentElement.dataset.checks,url:location.href,ua:navigator.userAgent,node:typeof require,ipc:typeof window.eiw})'));
   assert.ok(dom.checks>=4);assert.match(dom.ua,/Chrome\//);assert.doesNotMatch(dom.ua,/Electron|Edg\//);

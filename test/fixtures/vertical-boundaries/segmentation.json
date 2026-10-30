@@ -1,0 +1,1049 @@
+{
+  "scope": "Native text-only crops; source geometry for CPU balloon-boundary regression.",
+  "cases": [
+    {
+      "id": "native-1",
+      "file": "test/fixtures/vertical-boundaries/native-1.png",
+      "detected": {
+        "engine": "comic-text-detector",
+        "width": 244,
+        "height": 302,
+        "boxes": [
+          {
+            "bbox": {
+              "x0": 56,
+              "y0": 55,
+              "x1": 169,
+              "y1": 255
+            },
+            "detectionConfidence": 0.9507976985295663,
+            "detectedLanguage": "ja",
+            "orientation": "vertical",
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false,
+            "lines": [
+              {
+                "bbox": {
+                  "x0": 107,
+                  "y0": 55,
+                  "x1": 134,
+                  "y1": 222
+                },
+                "coreBbox": {
+                  "x0": 114,
+                  "y0": 62,
+                  "x1": 128,
+                  "y1": 216
+                },
+                "detectionConfidence": 0.8906797833918106,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 142,
+                  "y0": 57,
+                  "x1": 169,
+                  "y1": 223
+                },
+                "coreBbox": {
+                  "x0": 149,
+                  "y0": 64,
+                  "x1": 163,
+                  "y1": 217
+                },
+                "detectionConfidence": 0.8661500109786235,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 56,
+                  "y0": 163,
+                  "x1": 83,
+                  "y1": 255
+                },
+                "coreBbox": {
+                  "x0": 63,
+                  "y0": 170,
+                  "x1": 77,
+                  "y1": 249
+                },
+                "detectionConfidence": 0.8605369793772697,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              }
+            ],
+            "kind": "text",
+            "lineOnly": false,
+            "containerId": "block-0",
+            "containerBBox": {
+              "x0": 55,
+              "y0": 52,
+              "x1": 171,
+              "y1": 254
+            }
+          }
+        ],
+        "rawBlocks": [
+          {
+            "bbox": {
+              "x0": 55,
+              "y0": 52,
+              "x1": 171,
+              "y1": 254
+            },
+            "detectionConfidence": 0.9507976985295663,
+            "detectedLanguage": "ja",
+            "orientation": "vertical",
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          }
+        ],
+        "lines": [
+          {
+            "bbox": {
+              "x0": 107,
+              "y0": 55,
+              "x1": 134,
+              "y1": 222
+            },
+            "coreBbox": {
+              "x0": 114,
+              "y0": 62,
+              "x1": 128,
+              "y1": 216
+            },
+            "detectionConfidence": 0.8906797833918106,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 142,
+              "y0": 57,
+              "x1": 169,
+              "y1": 223
+            },
+            "coreBbox": {
+              "x0": 149,
+              "y0": 64,
+              "x1": 163,
+              "y1": 217
+            },
+            "detectionConfidence": 0.8661500109786235,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 56,
+              "y0": 163,
+              "x1": 83,
+              "y1": 255
+            },
+            "coreBbox": {
+              "x0": 63,
+              "y0": 170,
+              "x1": 77,
+              "y1": 249
+            },
+            "detectionConfidence": 0.8605369793772697,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          }
+        ],
+        "tiles": [
+          {
+            "left": 0,
+            "top": 0,
+            "width": 244,
+            "height": 302,
+            "scanType": "full"
+          }
+        ],
+        "ms": 835
+      }
+    },
+    {
+      "id": "native-2",
+      "file": "test/fixtures/vertical-boundaries/native-2.png",
+      "detected": {
+        "engine": "comic-text-detector",
+        "width": 217,
+        "height": 433,
+        "boxes": [
+          {
+            "bbox": {
+              "x0": 56,
+              "y0": 62,
+              "x1": 195,
+              "y1": 383
+            },
+            "detectionConfidence": 0.9636587871778488,
+            "detectedLanguage": "ja",
+            "orientation": "vertical",
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false,
+            "lines": [
+              {
+                "bbox": {
+                  "x0": 159,
+                  "y0": 62,
+                  "x1": 195,
+                  "y1": 125
+                },
+                "coreBbox": {
+                  "x0": 168,
+                  "y0": 71,
+                  "x1": 187,
+                  "y1": 117
+                },
+                "detectionConfidence": 0.8913541118116751,
+                "detectedLanguage": "unknown",
+                "orientation": "horizontal",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 126,
+                  "y0": 63,
+                  "x1": 157,
+                  "y1": 383
+                },
+                "coreBbox": {
+                  "x0": 134,
+                  "y0": 71,
+                  "x1": 150,
+                  "y1": 376
+                },
+                "detectionConfidence": 0.8804661990879051,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 91,
+                  "y0": 173,
+                  "x1": 119,
+                  "y1": 292
+                },
+                "coreBbox": {
+                  "x0": 98,
+                  "y0": 180,
+                  "x1": 113,
+                  "y1": 286
+                },
+                "detectionConfidence": 0.8812845326120203,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 56,
+                  "y0": 173,
+                  "x1": 83,
+                  "y1": 350
+                },
+                "coreBbox": {
+                  "x0": 63,
+                  "y0": 180,
+                  "x1": 77,
+                  "y1": 344
+                },
+                "detectionConfidence": 0.8550039193763185,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              }
+            ],
+            "kind": "text",
+            "lineOnly": false,
+            "containerId": "block-0",
+            "containerBBox": {
+              "x0": 51,
+              "y0": 62,
+              "x1": 192,
+              "y1": 382
+            }
+          }
+        ],
+        "rawBlocks": [
+          {
+            "bbox": {
+              "x0": 51,
+              "y0": 62,
+              "x1": 192,
+              "y1": 382
+            },
+            "detectionConfidence": 0.9636587871778488,
+            "detectedLanguage": "ja",
+            "orientation": "vertical",
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          }
+        ],
+        "lines": [
+          {
+            "bbox": {
+              "x0": 159,
+              "y0": 62,
+              "x1": 195,
+              "y1": 125
+            },
+            "coreBbox": {
+              "x0": 168,
+              "y0": 71,
+              "x1": 187,
+              "y1": 117
+            },
+            "detectionConfidence": 0.8913541118116751,
+            "detectedLanguage": "unknown",
+            "orientation": "horizontal",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 126,
+              "y0": 63,
+              "x1": 157,
+              "y1": 383
+            },
+            "coreBbox": {
+              "x0": 134,
+              "y0": 71,
+              "x1": 150,
+              "y1": 376
+            },
+            "detectionConfidence": 0.8804661990879051,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 91,
+              "y0": 173,
+              "x1": 119,
+              "y1": 292
+            },
+            "coreBbox": {
+              "x0": 98,
+              "y0": 180,
+              "x1": 113,
+              "y1": 286
+            },
+            "detectionConfidence": 0.8812845326120203,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 56,
+              "y0": 173,
+              "x1": 83,
+              "y1": 350
+            },
+            "coreBbox": {
+              "x0": 63,
+              "y0": 180,
+              "x1": 77,
+              "y1": 344
+            },
+            "detectionConfidence": 0.8550039193763185,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          }
+        ],
+        "tiles": [
+          {
+            "left": 0,
+            "top": 0,
+            "width": 217,
+            "height": 433,
+            "scanType": "full"
+          }
+        ],
+        "ms": 52
+      }
+    },
+    {
+      "id": "native-3",
+      "file": "test/fixtures/vertical-boundaries/native-3.png",
+      "detected": {
+        "engine": "comic-text-detector",
+        "width": 252,
+        "height": 388,
+        "boxes": [
+          {
+            "bbox": {
+              "x0": 35,
+              "y0": 24,
+              "x1": 186,
+              "y1": 342
+            },
+            "detectionConfidence": 0.9626258714469031,
+            "detectedLanguage": "ja",
+            "orientation": "vertical",
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false,
+            "lines": [
+              {
+                "bbox": {
+                  "x0": 99,
+                  "y0": 24,
+                  "x1": 122,
+                  "y1": 319
+                },
+                "coreBbox": {
+                  "x0": 105,
+                  "y0": 30,
+                  "x1": 117,
+                  "y1": 314
+                },
+                "detectionConfidence": 0.8448785698405777,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false,
+                "lineObservations": [
+                  {
+                    "bbox": {
+                      "x0": 99,
+                      "y0": 147,
+                      "x1": 122,
+                      "y1": 319
+                    },
+                    "tileIndex": 0
+                  },
+                  {
+                    "bbox": {
+                      "x0": 99,
+                      "y0": 24,
+                      "x1": 122,
+                      "y1": 154
+                    },
+                    "tileIndex": 0
+                  }
+                ]
+              },
+              {
+                "bbox": {
+                  "x0": 162,
+                  "y0": 25,
+                  "x1": 186,
+                  "y1": 127
+                },
+                "coreBbox": {
+                  "x0": 168,
+                  "y0": 31,
+                  "x1": 181,
+                  "y1": 122
+                },
+                "detectionConfidence": 0.8969311792262379,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 130,
+                  "y0": 25,
+                  "x1": 154,
+                  "y1": 151
+                },
+                "coreBbox": {
+                  "x0": 136,
+                  "y0": 31,
+                  "x1": 149,
+                  "y1": 146
+                },
+                "detectionConfidence": 0.8906092665521761,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 35,
+                  "y0": 165,
+                  "x1": 59,
+                  "y1": 342
+                },
+                "coreBbox": {
+                  "x0": 41,
+                  "y0": 171,
+                  "x1": 54,
+                  "y1": 337
+                },
+                "detectionConfidence": 0.8757399406502125,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 67,
+                  "y0": 167,
+                  "x1": 90,
+                  "y1": 293
+                },
+                "coreBbox": {
+                  "x0": 73,
+                  "y0": 173,
+                  "x1": 85,
+                  "y1": 288
+                },
+                "detectionConfidence": 0.8875821560621262,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              }
+            ],
+            "kind": "text",
+            "lineOnly": false,
+            "containerId": "block-0",
+            "containerBBox": {
+              "x0": 33,
+              "y0": 22,
+              "x1": 190,
+              "y1": 342
+            }
+          }
+        ],
+        "rawBlocks": [
+          {
+            "bbox": {
+              "x0": 33,
+              "y0": 22,
+              "x1": 190,
+              "y1": 342
+            },
+            "detectionConfidence": 0.9626258714469031,
+            "detectedLanguage": "ja",
+            "orientation": "vertical",
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          }
+        ],
+        "lines": [
+          {
+            "bbox": {
+              "x0": 99,
+              "y0": 24,
+              "x1": 122,
+              "y1": 319
+            },
+            "coreBbox": {
+              "x0": 105,
+              "y0": 30,
+              "x1": 117,
+              "y1": 314
+            },
+            "detectionConfidence": 0.8448785698405777,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false,
+            "lineObservations": [
+              {
+                "bbox": {
+                  "x0": 99,
+                  "y0": 147,
+                  "x1": 122,
+                  "y1": 319
+                },
+                "tileIndex": 0
+              },
+              {
+                "bbox": {
+                  "x0": 99,
+                  "y0": 24,
+                  "x1": 122,
+                  "y1": 154
+                },
+                "tileIndex": 0
+              }
+            ]
+          },
+          {
+            "bbox": {
+              "x0": 162,
+              "y0": 25,
+              "x1": 186,
+              "y1": 127
+            },
+            "coreBbox": {
+              "x0": 168,
+              "y0": 31,
+              "x1": 181,
+              "y1": 122
+            },
+            "detectionConfidence": 0.8969311792262379,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 130,
+              "y0": 25,
+              "x1": 154,
+              "y1": 151
+            },
+            "coreBbox": {
+              "x0": 136,
+              "y0": 31,
+              "x1": 149,
+              "y1": 146
+            },
+            "detectionConfidence": 0.8906092665521761,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 35,
+              "y0": 165,
+              "x1": 59,
+              "y1": 342
+            },
+            "coreBbox": {
+              "x0": 41,
+              "y0": 171,
+              "x1": 54,
+              "y1": 337
+            },
+            "detectionConfidence": 0.8757399406502125,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 67,
+              "y0": 167,
+              "x1": 90,
+              "y1": 293
+            },
+            "coreBbox": {
+              "x0": 73,
+              "y0": 173,
+              "x1": 85,
+              "y1": 288
+            },
+            "detectionConfidence": 0.8875821560621262,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          }
+        ],
+        "tiles": [
+          {
+            "left": 0,
+            "top": 0,
+            "width": 252,
+            "height": 388,
+            "scanType": "full"
+          }
+        ],
+        "ms": 45
+      }
+    },
+    {
+      "id": "native-4",
+      "file": "test/fixtures/vertical-boundaries/native-4.png",
+      "detected": {
+        "engine": "comic-text-detector",
+        "width": 350,
+        "height": 440,
+        "boxes": [
+          {
+            "bbox": {
+              "x0": 28,
+              "y0": 23,
+              "x1": 279,
+              "y1": 385
+            },
+            "detectionConfidence": 0.8989597465909682,
+            "detectedLanguage": "ja",
+            "orientation": "vertical",
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false,
+            "lines": [
+              {
+                "bbox": {
+                  "x0": 195,
+                  "y0": 23,
+                  "x1": 238,
+                  "y1": 329
+                },
+                "coreBbox": {
+                  "x0": 206,
+                  "y0": 34,
+                  "x1": 228,
+                  "y1": 319
+                },
+                "detectionConfidence": 0.8760051562325087,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 244,
+                  "y0": 27,
+                  "x1": 279,
+                  "y1": 292
+                },
+                "coreBbox": {
+                  "x0": 253,
+                  "y0": 36,
+                  "x1": 271,
+                  "y1": 284
+                },
+                "detectionConfidence": 0.8780597131755814,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 124,
+                  "y0": 71,
+                  "x1": 183,
+                  "y1": 385
+                },
+                "coreBbox": {
+                  "x0": 139,
+                  "y0": 86,
+                  "x1": 169,
+                  "y1": 371
+                },
+                "detectionConfidence": 0.8289969623009864,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 28,
+                  "y0": 75,
+                  "x1": 79,
+                  "y1": 346
+                },
+                "coreBbox": {
+                  "x0": 41,
+                  "y0": 88,
+                  "x1": 67,
+                  "y1": 334
+                },
+                "detectionConfidence": 0.8412307288617374,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              },
+              {
+                "bbox": {
+                  "x0": 69,
+                  "y0": 77,
+                  "x1": 132,
+                  "y1": 351
+                },
+                "coreBbox": {
+                  "x0": 85,
+                  "y0": 93,
+                  "x1": 117,
+                  "y1": 336
+                },
+                "detectionConfidence": 0.8305499667500437,
+                "detectedLanguage": "unknown",
+                "orientation": "vertical",
+                "kind": "unboxed",
+                "lineOnly": true,
+                "scanType": "full",
+                "tileIndex": 0,
+                "tileClipped": false
+              }
+            ],
+            "kind": "text",
+            "lineOnly": false,
+            "containerId": "block-0",
+            "containerBBox": {
+              "x0": 31,
+              "y0": 34,
+              "x1": 288,
+              "y1": 386
+            }
+          }
+        ],
+        "rawBlocks": [
+          {
+            "bbox": {
+              "x0": 31,
+              "y0": 34,
+              "x1": 288,
+              "y1": 386
+            },
+            "detectionConfidence": 0.8989597465909682,
+            "detectedLanguage": "ja",
+            "orientation": "vertical",
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          }
+        ],
+        "lines": [
+          {
+            "bbox": {
+              "x0": 195,
+              "y0": 23,
+              "x1": 238,
+              "y1": 329
+            },
+            "coreBbox": {
+              "x0": 206,
+              "y0": 34,
+              "x1": 228,
+              "y1": 319
+            },
+            "detectionConfidence": 0.8760051562325087,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 244,
+              "y0": 27,
+              "x1": 279,
+              "y1": 292
+            },
+            "coreBbox": {
+              "x0": 253,
+              "y0": 36,
+              "x1": 271,
+              "y1": 284
+            },
+            "detectionConfidence": 0.8780597131755814,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 124,
+              "y0": 71,
+              "x1": 183,
+              "y1": 385
+            },
+            "coreBbox": {
+              "x0": 139,
+              "y0": 86,
+              "x1": 169,
+              "y1": 371
+            },
+            "detectionConfidence": 0.8289969623009864,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 28,
+              "y0": 75,
+              "x1": 79,
+              "y1": 346
+            },
+            "coreBbox": {
+              "x0": 41,
+              "y0": 88,
+              "x1": 67,
+              "y1": 334
+            },
+            "detectionConfidence": 0.8412307288617374,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          },
+          {
+            "bbox": {
+              "x0": 69,
+              "y0": 77,
+              "x1": 132,
+              "y1": 351
+            },
+            "coreBbox": {
+              "x0": 85,
+              "y0": 93,
+              "x1": 117,
+              "y1": 336
+            },
+            "detectionConfidence": 0.8305499667500437,
+            "detectedLanguage": "unknown",
+            "orientation": "vertical",
+            "kind": "unboxed",
+            "lineOnly": true,
+            "scanType": "full",
+            "tileIndex": 0,
+            "tileClipped": false
+          }
+        ],
+        "tiles": [
+          {
+            "left": 0,
+            "top": 0,
+            "width": 350,
+            "height": 440,
+            "scanType": "full"
+          }
+        ],
+        "ms": 47
+      }
+    }
+  ]
+}

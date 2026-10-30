@@ -1,0 +1,280 @@
+{
+  "schema": "imageharvest.frozen-layout-observations-v1",
+  "provenance": "test-results/ocr-accuracy/after-1.6.88/alright.json",
+  "source": "C:\\Users\\jinna\\Downloads\\manga test ocr\\8\\Trapped in a Crazy World as an Extra - Chapter 24 - MANHUAUS.COM_2026-10-07T12-30-00\\0002.webp",
+  "sourceHash": "3e0a1ebc70331855a2014eebbf3946f14356d1758943e6777c43a2412e384f0c",
+  "observations": [
+    {
+      "id": "p1-91d7783bb68a",
+      "text": "7",
+      "bbox": {
+        "x0": 0,
+        "y0": 690,
+        "x1": 197,
+        "y1": 965
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": true,
+      "recognitionLines": [
+        {
+          "text": "7",
+          "confidence": 92.1188235282898,
+          "polygon": [
+            [
+              24.25,
+              706.5
+            ],
+            [
+              163.75,
+              689
+            ],
+            [
+              171.5,
+              923
+            ],
+            [
+              32,
+              940.5
+            ]
+          ],
+          "bbox": {
+            "x0": 24.25,
+            "y0": 689,
+            "x1": 171.5,
+            "y1": 940.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-ce189ac2c6a7",
+      "text": "...ALRIGHT.",
+      "bbox": {
+        "x0": 136,
+        "y0": 1713,
+        "x1": 439,
+        "y1": 1782
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "...ALRIGHT.",
+          "confidence": 92.3761785030365,
+          "polygon": [
+            [
+              139.5,
+              1723
+            ],
+            [
+              434,
+              1722
+            ],
+            [
+              434,
+              1777.5
+            ],
+            [
+              139.5,
+              1778.5
+            ]
+          ],
+          "bbox": {
+            "x0": 139.5,
+            "y0": 1722,
+            "x1": 434,
+            "y1": 1778.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "p1-2df2e5facd3d",
+      "text": "AS LONG AS\nWE HAVE MARIA'S\nBARRIER!",
+      "bbox": {
+        "x0": 148,
+        "y0": 5671,
+        "x1": 560,
+        "y1": 5845
+      },
+      "orientation": "horizontal",
+      "layoutSplit": false,
+      "segmentationLocked": false,
+      "excludeFromLayoutCompetition": false,
+      "recognitionLines": [
+        {
+          "text": "AS",
+          "confidence": 99.86960291862488,
+          "polygon": [
+            [
+              198,
+              5675
+            ],
+            [
+              273.5,
+              5675
+            ],
+            [
+              273.5,
+              5721.5
+            ],
+            [
+              198,
+              5721.5
+            ]
+          ],
+          "bbox": {
+            "x0": 198,
+            "y0": 5675,
+            "x1": 273.5,
+            "y1": 5721.5
+          }
+        },
+        {
+          "text": "LONG",
+          "confidence": 99.98119473457336,
+          "polygon": [
+            [
+              279.5,
+              5675.5
+            ],
+            [
+              420.5,
+              5675.5
+            ],
+            [
+              420.5,
+              5720.5
+            ],
+            [
+              279.5,
+              5720.5
+            ]
+          ],
+          "bbox": {
+            "x0": 279.5,
+            "y0": 5675.5,
+            "x1": 420.5,
+            "y1": 5720.5
+          }
+        },
+        {
+          "text": "AS",
+          "confidence": 99.93990659713745,
+          "polygon": [
+            [
+              426,
+              5674.5
+            ],
+            [
+              505,
+              5674.5
+            ],
+            [
+              505,
+              5722
+            ],
+            [
+              426,
+              5722
+            ]
+          ],
+          "bbox": {
+            "x0": 426,
+            "y0": 5674.5,
+            "x1": 505,
+            "y1": 5722
+          }
+        },
+        {
+          "text": "WE HAVE",
+          "confidence": 99.98732209205627,
+          "polygon": [
+            [
+              151.5,
+              5734.5
+            ],
+            [
+              358,
+              5732.5
+            ],
+            [
+              358.5,
+              5780
+            ],
+            [
+              152,
+              5782
+            ]
+          ],
+          "bbox": {
+            "x0": 151.5,
+            "y0": 5732.5,
+            "x1": 358.5,
+            "y1": 5782
+          }
+        },
+        {
+          "text": "MARIA'S",
+          "confidence": 99.95208978652954,
+          "polygon": [
+            [
+              363,
+              5734.5
+            ],
+            [
+              557,
+              5733
+            ],
+            [
+              557.5,
+              5779.5
+            ],
+            [
+              363.5,
+              5780.5
+            ]
+          ],
+          "bbox": {
+            "x0": 363,
+            "y0": 5733,
+            "x1": 557.5,
+            "y1": 5780.5
+          }
+        },
+        {
+          "text": "BARRIER!",
+          "confidence": 99.93997812271118,
+          "polygon": [
+            [
+              237,
+              5793.5
+            ],
+            [
+              474.5,
+              5790.5
+            ],
+            [
+              475.5,
+              5838
+            ],
+            [
+              238,
+              5841
+            ]
+          ],
+          "bbox": {
+            "x0": 237,
+            "y0": 5790.5,
+            "x1": 475.5,
+            "y1": 5841
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "scope": "Manually transcribed from source pixels, before inspecting fresh OCR. Six selected Japanese speech units plus one complete isolated Chinese caption. Not full-page CER. columns are in right-to-left reading order; each reads top-to-bottom. Punctuation variants must be reported separately from lexical accuracy. Small-kana spellings were rechecked on enlarged source crops: そっすね and まぁ. Reference corrections are visual, not agreement-based.",
+  "cases": [
+    {
+      "id": "case-14-sibling-0007",
+      "source": "C:\\Users\\jinna\\Downloads\\manga test ocr\\6\\かわいそうなのはかわいい! _ Hitomi.la_2026-10-05T22-15-52\\0007.avif",
+      "sourceHash": "f0375752f444e285d56a7d95670661ad12235c93e8baf89436becfab75f44d9f",
+      "coverage": "partial-transcription",
+      "units": [
+        {
+          "id": "ja-speech-04",
+          "box": [
+            254,
+            648,
+            332,
+            880
+          ],
+          "text": "どうかしら私のメイド姿は",
+          "orientation": "vertical",
+          "kind": "speech",
+          "columns": [
+            "どうかしら",
+            "私のメイド姿は"
+          ]
+        },
+        {
+          "id": "ja-speech-06",
+          "box": [
+            269,
+            1021,
+            300,
+            1107
+          ],
+          "text": "そっすね",
+          "orientation": "vertical",
+          "kind": "speech",
+          "columns": [
+            "そっすね"
+          ]
+        },
+        {
+          "id": "ja-speech-07",
+          "box": [
+            38,
+            1209,
+            104,
+            1318
+          ],
+          "text": "あっありがとうございます…",
+          "orientation": "vertical",
+          "kind": "speech",
+          "columns": [
+            "あっ",
+            "ありがとう",
+            "ございます…"
+          ]
+        },
+        {
+          "id": "ja-speech-08",
+          "box": [
+            58,
+            1500,
+            80,
+            1573
+          ],
+          "text": "ほんと…",
+          "orientation": "vertical",
+          "kind": "speech",
+          "columns": [
+            "ほんと…"
+          ]
+        },
+        {
+          "id": "ja-speech-09",
+          "box": [
+            209,
+            1365,
+            247,
+            1518
+          ],
+          "text": "安っぽくて",
+          "orientation": "vertical",
+          "kind": "speech",
+          "columns": [
+            "安っぽくて"
+          ]
+        },
+        {
+          "id": "ja-speech-10",
+          "box": [
+            803,
+            1304,
+            951,
+            1548
+          ],
+          "text": "まぁアナタ達のコスプレも味があっていいと思うわよ",
+          "orientation": "vertical",
+          "kind": "speech",
+          "columns": [
+            "まぁアナタ達の",
+            "コスプレも",
+            "味があっていいと",
+            "思うわよ"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "case-16-safe-caption-crop",
+      "source": "E:\\Shared\\ExportImagefromWeb\\test-results\\vertical-reference-audit\\case-16-safe-caption-crop.png",
+      "sourceHash": "f148e074220f0308b89ab8db22fe0f1ccb545e352e3b50ae63fb94e3d3353aa4",
+      "coverage": "partial-transcription",
+      "units": [
+        {
+          "id": "zh-caption-01",
+          "box": [
+            3,
+            19,
+            116,
+            374
+          ],
+          "text": "主持人：",
+          "orientation": "vertical",
+          "kind": "caption",
+          "columns": [
+            "主持人："
+          ]
+        }
+      ]
+    }
+  ]
+}
